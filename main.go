@@ -6,6 +6,11 @@ import (
 	"github.com/cloudfoundry/cli/plugin"
 )
 
+// pluginCommand defines the name of the command that this plugin creates.
+// "oslo" is Object Storage Large Object
+const pluginCommand string = "oslo"
+const pluginName string = "LargeObjectsPlugin"
+
 // LargeObjectsPlugin is the struct implementing the interface defined by the core CLI.
 type LargeObjectsPlugin struct{}
 
@@ -20,21 +25,13 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	}
 }
 
-// GetMetadata must be implemented as part of the plugin interface
-// defined by the core CLI.
-//
-// GetMetadata() returns a PluginMetadata struct. The first field, Name,
-// determines the name of the plugin which should generally be without spaces.
-// If there are spaces in the name a user will need to properly quote the name
-// during uninstall otherwise the name will be treated as seperate arguments.
-// The second value is a slice of Command structs. Our slice only contains one
-// Command Struct, but could contain any number of them. The first field Name
-// defines the command `cf basic-plugin-command` once installed into the CLI. The
-// second field, HelpText, is used by the core CLI to display help information
-// to the user in the core commands `cf help`, `cf`, or `cf -h`.
+// GetMetadata() returns a PluginMetadata struct with information
+// about the current version of this plugin and how to use it. This
+// information is used to build the CF CLI helptext for this plugin's
+// commands.
 func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 	return plugin.PluginMetadata{
-		Name: "LargeObjectsPlugin",
+		Name: pluginName,
 		Version: plugin.VersionType{
 			Major: 0,
 			Minor: 1,
@@ -47,33 +44,20 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 		},
 		Commands: []plugin.Command{
 			{
-				Name:     "lo command",
+				Name:     pluginCommand,
 				HelpText: "LargeObjects plugin command's help text",
-
-				// UsageDetails is optional
-				// It is used to show help of usage of each command
 				UsageDetails: plugin.Usage{
-					Usage: "command\n   cf lo command",
+					Usage: "command\n   cf " + pluginCommand + " [args]",
 				},
 			},
 		},
 	}
 }
 
-// Unlike most Go programs, the `Main()` function will not be used to run all of the
-// commands provided in your plugin. Main will be used to initialize the plugin
-// process, as well as any dependencies you might require for your
-// plugin.
+// main initializes a plugin on install, but is not invoked when that plugin
+// is run from the CLI. See Run() function for logic invoked when CLI plugin
+// is actually used.
 func main() {
 	// Any initialization for your plugin can be handled here
-	//
-	// Note: to run the plugin.Start method, we pass in a pointer to the struct
-	// implementing the interface defined at "github.com/cloudfoundry/cli/plugin/plugin.go"
-	//
-	// Note: The plugin's main() method is invoked at install time to collect
-	// metadata. The plugin will exit 0 and the Run([]string) method will not be
-	// invoked.
 	plugin.Start(new(LargeObjectsPlugin))
-	// Plugin code should be written in the Run([]string) method,
-	// ensuring the plugin environment is bootstrapped.
 }
