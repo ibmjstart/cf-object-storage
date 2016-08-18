@@ -52,9 +52,22 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	} else {
 		checkErr(err)
 	}
-	if args[1] == "command" {
-		fmt.Println("Invoking the large objects plugin command.")
-	}
+
+	// Find and display username
+	username, err := cliConnection.Username()
+	checkErr(err)
+	fmt.Println("Username: ", username)
+
+	// Find and display org
+	org, err := cliConnection.GetCurrentOrg()
+	checkErr(err)
+	fmt.Println("Current Org: " + org.OrganizationFields.Name)
+
+	// Find and display space
+	space, err := cliConnection.GetCurrentSpace()
+	checkErr(err)
+	fmt.Println("Current Space: " + space.SpaceFields.Name)
+
 }
 
 // GetMetadata() returns a PluginMetadata struct with information
