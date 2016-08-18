@@ -1,7 +1,10 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/cloudfoundry/cli/plugin"
 )
@@ -14,11 +17,40 @@ const pluginName string = "LargeObjectsPlugin"
 // LargeObjectsPlugin is the struct implementing the interface defined by the core CLI.
 type LargeObjectsPlugin struct{}
 
+// checkErr panics if given an error and otherwise does nothing
+func checkErr(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
 // Run handles each invocation of the CLI plugin.
 func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []string) {
+	// Catch any panic statements from here onward
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Fatal Error: ", r)
+			os.Exit(1)
+		}
+	}()
+
 	// Ensure that we called the command basic-plugin-command
-	if args[0] == "lo" {
-		fmt.Println("Running the large objects plugin")
+	if args[0] != pluginCommand {
+		panic(errors.New("Invocation error!\n" + pluginName + " called with args: " + strings.Join(args, " ")))
+	}
+	fmt.Println("Running large objects plugin")
+	if len(args) < 2 {
+		panic(errors.New("Incorrect Usage: " + c.GetMetadata().Commands[0].UsageDetails.Usage))
+	}
+
+	// Handle Command Line arguments
+	targetService := args[1]
+
+	// Ensure that user is logged in
+	if logged_in, err := cliConnection.IsLoggedIn(); !logged_in {
+		panic(errors.New("You are not logged in. Run `cf login` and then rerun this command."))
+	} else {
+		checkErr(err)
 	}
 	if args[1] == "command" {
 		fmt.Println("Invoking the large objects plugin command.")
