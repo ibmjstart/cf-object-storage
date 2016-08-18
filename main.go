@@ -68,6 +68,23 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	checkErr(err)
 	fmt.Println("Current Space: " + space.SpaceFields.Name)
 
+	// Find and display services. Ensure target service is within current space
+	services, err := cliConnection.GetServices()
+	checkErr(err)
+	fmt.Println("Services:")
+	found := false
+	for _, service := range services {
+		fmt.Println("\t" + service.Name)
+		found = service.Name == targetService
+	}
+	if !found {
+		panic(errors.New("Service " + targetService + " not found in current space!"))
+	}
+
+	// Get service keys for target service
+	stdout, err := cliConnection.CliCommandWithoutTerminalOutput("service-keys", targetService)
+	checkErr(err)
+	fmt.Println(strings.Join(stdout, ""))
 }
 
 // GetMetadata() returns a PluginMetadata struct with information
