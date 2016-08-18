@@ -6,26 +6,17 @@ import (
 	"github.com/cloudfoundry/cli/plugin"
 )
 
-// BasicPlugin is the struct implementing the interface defined by the core CLI. It can
-// be found at  "github.com/cloudfoundry/cli/plugin/plugin.go"
-type BasicPlugin struct{}
+// LargeObjectsPlugin is the struct implementing the interface defined by the core CLI.
+type LargeObjectsPlugin struct{}
 
-// Run must be implemented by any plugin because it is part of the
-// plugin interface defined by the core CLI.
-//
-// Run(....) is the entry point when the core CLI is invoking a command defined
-// by a plugin. The first parameter, plugin.CliConnection, is a struct that can
-// be used to invoke cli commands. The second paramter, args, is a slice of
-// strings. args[0] will be the name of the command, and will be followed by
-// any additional arguments a cli user typed in.
-//
-// Any error handling should be handled with the plugin itself (this means printing
-// user facing errors). The CLI will exit 0 if the plugin exits 0 and will exit
-// 1 should the plugin exits nonzero.
-func (c *BasicPlugin) Run(cliConnection plugin.CliConnection, args []string) {
+// Run handles each invocation of the CLI plugin.
+func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []string) {
 	// Ensure that we called the command basic-plugin-command
-	if args[0] == "basic-plugin-command" {
-		fmt.Println("Running the basic-plugin-command")
+	if args[0] == "lo" {
+		fmt.Println("Running the large objects plugin")
+	}
+	if args[1] == "command" {
+		fmt.Println("Invoking the large objects plugin command.")
 	}
 }
 
@@ -41,12 +32,12 @@ func (c *BasicPlugin) Run(cliConnection plugin.CliConnection, args []string) {
 // defines the command `cf basic-plugin-command` once installed into the CLI. The
 // second field, HelpText, is used by the core CLI to display help information
 // to the user in the core commands `cf help`, `cf`, or `cf -h`.
-func (c *BasicPlugin) GetMetadata() plugin.PluginMetadata {
+func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 	return plugin.PluginMetadata{
-		Name: "MyBasicPlugin",
+		Name: "LargeObjectsPlugin",
 		Version: plugin.VersionType{
-			Major: 1,
-			Minor: 0,
+			Major: 0,
+			Minor: 1,
 			Build: 0,
 		},
 		MinCliVersion: plugin.VersionType{
@@ -56,13 +47,13 @@ func (c *BasicPlugin) GetMetadata() plugin.PluginMetadata {
 		},
 		Commands: []plugin.Command{
 			{
-				Name:     "basic-plugin-command",
-				HelpText: "Basic plugin command's help text",
+				Name:     "lo command",
+				HelpText: "LargeObjects plugin command's help text",
 
 				// UsageDetails is optional
 				// It is used to show help of usage of each command
 				UsageDetails: plugin.Usage{
-					Usage: "basic-plugin-command\n   cf basic-plugin-command",
+					Usage: "command\n   cf lo command",
 				},
 			},
 		},
@@ -82,7 +73,7 @@ func main() {
 	// Note: The plugin's main() method is invoked at install time to collect
 	// metadata. The plugin will exit 0 and the Run([]string) method will not be
 	// invoked.
-	plugin.Start(new(BasicPlugin))
+	plugin.Start(new(LargeObjectsPlugin))
 	// Plugin code should be written in the Run([]string) method,
 	// ensuring the plugin environment is bootstrapped.
 }
