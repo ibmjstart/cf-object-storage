@@ -134,6 +134,26 @@ func (c *LargeObjectsPlugin) getXAuthToken(cliConnection plugin.CliConnection, a
 	} else {
 		panic(errors.New("Could not find credentials for target service."))
 	}
+
+	// Fetch the JSON credentials
+	stdout, err = cliConnection.CliCommandWithoutTerminalOutput("service-key", targetService, serviceCredentialsName)
+	checkErr(err)
+	v = verbex.New().
+		AnythingBut("{").
+		BeginCapture().
+		Then("{").
+		AnythingBut("}").
+		Then("}").
+		EndCapture().
+		Captures(strings.Join(stdout, ""))
+	var serviceCredentialsJSON string
+	if len(v) > 0 && len(v[0]) > 1 {
+		serviceCredentialsJSON = v[0][1]
+		fmt.Println("Service Creds JSON: " + serviceCredentialsJSON)
+	} else {
+		panic(errors.New("Could not fetch JSON credentials for target service."))
+	}
+
 }
 
 // makeDLO executes the logic to create a Dynamic Large Object in an object storage instance.
