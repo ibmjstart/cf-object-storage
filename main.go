@@ -53,6 +53,7 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 		checkErr(err)
 	}
 
+	fmt.Println("Discovering User Information...")
 	// Find and display username
 	username, err := cliConnection.Username()
 	checkErr(err)
@@ -68,6 +69,7 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	checkErr(err)
 	fmt.Println("Current Space: " + space.SpaceFields.Name)
 
+	fmt.Println("Searching for target service...")
 	// Find and display services. Ensure target service is within current space
 	services, err := cliConnection.GetServices()
 	checkErr(err)
@@ -81,6 +83,7 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 		panic(errors.New("Service " + targetService + " not found in current space!"))
 	}
 
+	fmt.Println("Getting target service credentials...")
 	// Get service keys for target service
 	stdout, err := cliConnection.CliCommandWithoutTerminalOutput("service-keys", targetService)
 	checkErr(err)
