@@ -75,7 +75,7 @@ func (c *LargeObjectsPlugin) getXAuthToken(cliConnection plugin.CliConnection, a
 	targetService := args[1]
 
 	// Ensure that user is logged in
-	if logged_in, err := cliConnection.IsLoggedIn(); !logged_in {
+	if loggedIn, err := cliConnection.IsLoggedIn(); !loggedIn {
 		panic(errors.New("You are not logged in. Run `cf login` and then rerun this command."))
 	} else {
 		checkErr(err)
@@ -157,15 +157,15 @@ func (c *LargeObjectsPlugin) getXAuthToken(cliConnection plugin.CliConnection, a
 
 	// Parse the JSON credentials
 	var credentials struct {
-		Auth_url   string
-		DomainId   string
+		Auth_URL   string
+		DomainID   string
 		DomainName string
 		Password   string
 		Project    string
-		ProjectId  string
+		ProjectID  string
 		Region     string
 		Role       string
-		UserId     string
+		UserID     string
 		Username   string
 	}
 	err = json.Unmarshal([]byte(serviceCredentialsJSON), &credentials)
@@ -183,15 +183,15 @@ func (c *LargeObjectsPlugin) getXAuthToken(cliConnection plugin.CliConnection, a
 			"\u0026", "&", -1)
 	}
 
-	credentials.Auth_url = unescape(credentials.Auth_url)
-	credentials.DomainId = unescape(credentials.DomainId)
+	credentials.Auth_URL = unescape(credentials.Auth_URL)
+	credentials.DomainID = unescape(credentials.DomainID)
 	credentials.DomainName = unescape(credentials.DomainName)
 	credentials.Password = unescape(credentials.Password)
 	credentials.Project = unescape(credentials.Project)
-	credentials.ProjectId = unescape(credentials.ProjectId)
+	credentials.ProjectID = unescape(credentials.ProjectID)
 	credentials.Region = unescape(credentials.Region)
 	credentials.Role = unescape(credentials.Role)
-	credentials.UserId = unescape(credentials.UserId)
+	credentials.UserID = unescape(credentials.UserID)
 	credentials.Username = unescape(credentials.Username)
 	fmt.Println(credentials)
 }
@@ -206,7 +206,7 @@ func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []
 	fmt.Println("making slo")
 }
 
-// GetMetadata() returns a PluginMetadata struct with information
+// GetMetadata returns a PluginMetadata struct with information
 // about the current version of this plugin and how to use it. This
 // information is used to build the CF CLI helptext for this plugin's
 // commands.
