@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+
 	"github.com/cloudfoundry/cli/plugin"
 )
 
@@ -99,11 +100,18 @@ func (c *LargeObjectsPlugin) getXAuthToken(cliConnection plugin.CliConnection, a
 	// Find and display services. Ensure target service is within current space
 	services, err := cliConnection.GetServices()
 	checkErr(err)
+
+	if len(services) < 1 {
+		panic(errors.New("No services found in current space. (Check your internet connection)"))
+	}
+
 	fmt.Println("Services:")
 	found := false
 	for _, service := range services {
 		fmt.Println("\t" + service.Name)
-		found = service.Name == targetService
+		if service.Name == targetService {
+			found = true
+		}
 	}
 	if !found {
 		panic(errors.New("Service " + targetService + " not found in current space!"))
