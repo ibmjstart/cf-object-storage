@@ -24,8 +24,11 @@ const makeSLOCommand string = "make-slo"
 // uninstalling it.
 const pluginName string = "ObjectStorageLargeObjects"
 
-// LargeObjectsPlugin is the struct implementing the interface defined by the core CLI.
-type LargeObjectsPlugin struct{}
+// LargeObjectsPlugin is the struct implementing the plugin interface.
+// It has no public members.
+type LargeObjectsPlugin struct {
+	subcommands map[string]func(plugin.CliConnection, []string)
+}
 
 // checkErr panics if given an error and otherwise does nothing
 func checkErr(e error) {
@@ -44,14 +47,27 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 		}
 	}()
 
-	// Ensure that we called the command basic-plugin-command
-	if args[0] != getXAuthCommand && args[0] != makeDLOCommand && args[0] != makeSLOCommand {
-		panic(errors.New("Invocation error!\n" + pluginName + " called with args: " + strings.Join(args, " ")))
+	// Associate each subcommand with a handler function
+	c.subcommands = map[string]func(plugin.CliConnection, []string){
+		getXAuthCommand: c.getXAuthToken,
+		makeDLOCommand:  c.makeDLO,
+		makeSLOCommand:  c.makeSLO,
 	}
-	fmt.Println("Running large objects plugin")
+
+	// Dispatch the subcommand that the user wanted, if it exists
+	if subcommandFunc, keyExists := c.subcommands[args[0]]; !keyExists {
+		panic(errors.New("Invocation error!\n" + pluginName + " called with args: " + strings.Join(args, " ")))
+	} else {
+		subcommandFunc(cliConnection, args)
+	}
+}
+
+// getXAuthToken executes the logic to fetch the X-Auth token for an object storage instance.
+func (c *LargeObjectsPlugin) getXAuthToken(cliConnection plugin.CliConnection, args []string) {
 	if len(args) < 2 {
 		panic(errors.New("Incorrect Usage: " + c.GetMetadata().Commands[0].UsageDetails.Usage))
 	}
+	fmt.Println("Fetching X-Auth Token")
 
 	// Handle Command Line arguments
 	targetService := args[1]
@@ -98,6 +114,16 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	stdout, err := cliConnection.CliCommandWithoutTerminalOutput("service-keys", targetService)
 	checkErr(err)
 	fmt.Println(strings.Join(stdout, ""))
+}
+
+// makeDLO executes the logic to create a Dynamic Large Object in an object storage instance.
+func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []string) {
+	fmt.Println("making dlo")
+}
+
+// makeSLO executes the logic to create a Static Large Object in an object storage instance.
+func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []string) {
+	fmt.Println("making slo")
 }
 
 // GetMetadata() returns a PluginMetadata struct with information
