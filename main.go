@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -154,6 +155,22 @@ func (c *LargeObjectsPlugin) getXAuthToken(cliConnection plugin.CliConnection, a
 		panic(errors.New("Could not fetch JSON credentials for target service."))
 	}
 
+	// Parse the JSON credentials
+	var credentials struct {
+		Auth_url   string
+		DomainId   string
+		DomainName string
+		Password   string
+		Project    string
+		ProjectId  string
+		Region     string
+		Role       string
+		UserId     string
+		Username   string
+	}
+	err = json.Unmarshal([]byte(serviceCredentialsJSON), &credentials)
+	checkErr(err)
+	fmt.Println(credentials)
 }
 
 // makeDLO executes the logic to create a Dynamic Large Object in an object storage instance.
