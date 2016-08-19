@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-
+	verbex "github.com/VerbalExpressions/GoVerbalExpressions"
 	"github.com/cloudfoundry/cli/plugin"
 )
 
@@ -121,7 +121,19 @@ func (c *LargeObjectsPlugin) getXAuthToken(cliConnection plugin.CliConnection, a
 	// Get service keys for target service
 	stdout, err := cliConnection.CliCommandWithoutTerminalOutput("service-keys", targetService)
 	checkErr(err)
-	fmt.Println(strings.Join(stdout, ""))
+	v := verbex.New().
+		Find("\nname\n").
+		BeginCapture().
+		AnythingBut("\n").
+		EndCapture().
+		Captures(strings.Join(stdout, ""))
+	var serviceCredentialsName string
+	if len(v) > 0 && len(v[0]) > 1 {
+		serviceCredentialsName = v[0][1]
+		fmt.Println("Service Creds Name: " + serviceCredentialsName)
+	} else {
+		panic(errors.New("Could not find credentials for target service."))
+	}
 }
 
 // makeDLO executes the logic to create a Dynamic Large Object in an object storage instance.
