@@ -9,10 +9,20 @@ import (
 	"github.com/cloudfoundry/cli/plugin"
 )
 
-// pluginCommand defines the name of the command that this plugin creates.
-// "oslo" is Object Storage Large Object
-const pluginCommand string = "oslo"
-const pluginName string = "LargeObjectsPlugin"
+// getXAuthCommand defines the name of the command that fetches X-Auth Tokens.
+const getXAuthCommand string = "get-x-auth"
+
+// makeDLOCommand defines the name of the command that creates DLOs in
+// object storage.
+const makeDLOCommand string = "make-dlo"
+
+// makeDLOCommand defines the name of the command that creates SLOs in
+// object storage.
+const makeSLOCommand string = "make-slo"
+
+// pluginName defines the name of this plugin for use installing and
+// uninstalling it.
+const pluginName string = "ObjectStorageLargeObjects"
 
 // LargeObjectsPlugin is the struct implementing the interface defined by the core CLI.
 type LargeObjectsPlugin struct{}
@@ -35,7 +45,7 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	}()
 
 	// Ensure that we called the command basic-plugin-command
-	if args[0] != pluginCommand {
+	if args[0] != getXAuthCommand && args[0] != makeDLOCommand && args[0] != makeSLOCommand {
 		panic(errors.New("Invocation error!\n" + pluginName + " called with args: " + strings.Join(args, " ")))
 	}
 	fmt.Println("Running large objects plugin")
@@ -109,10 +119,24 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 		},
 		Commands: []plugin.Command{
 			{
-				Name:     pluginCommand,
+				Name:     getXAuthCommand,
 				HelpText: "LargeObjects plugin command's help text",
 				UsageDetails: plugin.Usage{
-					Usage: "command\n   cf " + pluginCommand + " [args]",
+					Usage: "command\n   cf " + getXAuthCommand + " [args]",
+				},
+			},
+			{
+				Name:     makeDLOCommand,
+				HelpText: "LargeObjects plugin command's help text",
+				UsageDetails: plugin.Usage{
+					Usage: "command\n   cf " + makeDLOCommand + " [args]",
+				},
+			},
+			{
+				Name:     makeSLOCommand,
+				HelpText: "LargeObjects plugin command's help text",
+				UsageDetails: plugin.Usage{
+					Usage: "command\n   cf " + makeSLOCommand + " [args]",
 				},
 			},
 		},
