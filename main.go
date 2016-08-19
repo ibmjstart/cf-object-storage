@@ -170,6 +170,29 @@ func (c *LargeObjectsPlugin) getXAuthToken(cliConnection plugin.CliConnection, a
 	}
 	err = json.Unmarshal([]byte(serviceCredentialsJSON), &credentials)
 	checkErr(err)
+
+	// Handle escaped unicode characters in JSON
+	// see: https://github.com/cloudfoundry/cli/issues/794
+	unescape := func(escaped string) string {
+		return strings.Replace(
+			strings.Replace(
+				strings.Replace(
+					escaped,
+					"\u003c", "<", -1),
+				"\u003e", ">", -1),
+			"\u0026", "&", -1)
+	}
+
+	credentials.Auth_url = unescape(credentials.Auth_url)
+	credentials.DomainId = unescape(credentials.DomainId)
+	credentials.DomainName = unescape(credentials.DomainName)
+	credentials.Password = unescape(credentials.Password)
+	credentials.Project = unescape(credentials.Project)
+	credentials.ProjectId = unescape(credentials.ProjectId)
+	credentials.Region = unescape(credentials.Region)
+	credentials.Role = unescape(credentials.Role)
+	credentials.UserId = unescape(credentials.UserId)
+	credentials.Username = unescape(credentials.Username)
 	fmt.Println(credentials)
 }
 
