@@ -14,9 +14,8 @@ import (
 	"github.com/ncw/swift"
 )
 
-var (
-	curStep string
-)
+// curStep tracks the process' progress
+var curStep string
 
 // getXAuthCommand defines the name of the command that fetches X-Auth Tokens.
 const getXAuthCommand string = "get-x-auth"
@@ -71,20 +70,45 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	}
 }
 
-func getServiceKeys(cliConnection plugin.CliConnection, targetService string) string {
-	// Get service keys for target service
+// isServiceFound returns true if the target service is present in the current space.
+func isServiceFound(cliConnection plugin.CliConnection, targetService string) bool {
+	// Get the services in the current space
+	services, err := cliConnection.GetServices()
+	checkErr(err)
+
+	if len(services) < 1 {
+		panic(errors.New("No services found in current space. (Check your internet connection)"))
+	}
+
+	// Check for target service in the list of present services
+	found := false
+	for _, service := range services {
+		if service.Name == targetService {
+			found = true
+		}
+	}
+
+	return found
+}
+
+// getCredentialsName returns the name of the target service's credentials.
+func getCredentialsName(cliConnection plugin.CliConnection, targetService string) string {
+	// Get the service keys for the target service
 	stdout, err := cliConnection.CliCommandWithoutTerminalOutput("service-keys", targetService)
 	checkErr(err)
+
+	// Construct regex to extract credentials name
 	v := verbex.New().
 		Find("\nname\n").
 		BeginCapture().
 		AnythingBut("\n").
 		EndCapture().
 		Captures(strings.Join(stdout, ""))
+
+	// Get name of target service's credentials
 	var serviceCredentialsName string
 	if len(v) > 0 && len(v[0]) > 1 {
 		serviceCredentialsName = v[0][1]
-		// fmt.Println("Service Creds Name: " + serviceCredentialsName)
 	} else {
 		panic(errors.New("Could not find credentials for target service."))
 	}
@@ -92,6 +116,34 @@ func getServiceKeys(cliConnection plugin.CliConnection, targetService string) st
 	return serviceCredentialsName
 }
 
+// getJSONCredentials returns the target service's credentials
+func getJSONCredentials(cliConnection plugin.CliConnection, targetService, serviceCredentialsName string) string {
+	// Get the service key for the target service's credentials
+	stdout, err := cliConnection.CliCommandWithoutTerminalOutput("service-key", targetService, serviceCredentialsName)
+	checkErr(err)
+
+	// Construct regex to extract JSON
+	v := verbex.New().
+		AnythingBut("{").
+		BeginCapture().
+		Then("{").
+		AnythingBut("}").
+		Then("}").
+		EndCapture().
+		Captures(strings.Join(stdout, ""))
+
+	// Get target service's credentials
+	var serviceCredentialsJSON string
+	if len(v) > 0 && len(v[0]) > 1 {
+		serviceCredentialsJSON = v[0][1]
+	} else {
+		panic(errors.New("Could not fetch JSON credentials for target service."))
+	}
+
+	return serviceCredentialsJSON
+}
+
+// authenticate creates a connection to the target service
 func authenticate(username, apiKey, authURL, domain, tenant string) swift.Connection {
 	connection := swift.Connection{
 		UserName:    username,
@@ -102,9 +154,8 @@ func authenticate(username, apiKey, authURL, domain, tenant string) swift.Connec
 		AuthVersion: 3,
 	}
 	err := connection.Authenticate()
-	// fmt.Println(connection)
 	checkErr(err)
-	// fmt.Println("Authenticated!")
+
 	return connection
 }
 
@@ -114,27 +165,23 @@ func (c *LargeObjectsPlugin) getXAuthToken(cliConnection plugin.CliConnection, a
 		panic(errors.New("Incorrect Usage: " + c.GetMetadata().Commands[0].UsageDetails.Usage))
 	}
 
-	// Find and display username
+	// Find and style username
 	username, err := cliConnection.Username()
 	checkErr(err)
 	username = ansi.Color(username, "cyan+b")
-	// fmt.Println("Username: ", username)
 
-	// Find and display org
+	// Find and style org
 	org, err := cliConnection.GetCurrentOrg()
 	checkErr(err)
 	orgStr := ansi.Color(org.OrganizationFields.Name, "cyan+b")
-	// fmt.Println("Current Org: " + org.OrganizationFields.Name)
 
-	// Find and display space
+	// Find and style space
 	space, err := cliConnection.GetCurrentSpace()
 	checkErr(err)
 	spaceStr := ansi.Color(space.SpaceFields.Name, "cyan+b")
-	// fmt.Println("Current Space: " + space.SpaceFields.Name)
-
-	fmt.Printf("Fetching X-Auth Token in org %s / space %s as %s...\n", orgStr, spaceStr, username)
 
 	curStep = "Starting                          "
+	fmt.Printf("Fetching X-Auth token in org %s / space %s as %s...\n", orgStr, spaceStr, username)
 
 	// begin console writer
 	quit := make(chan int)
@@ -150,52 +197,23 @@ func (c *LargeObjectsPlugin) getXAuthToken(cliConnection plugin.CliConnection, a
 		checkErr(err)
 	}
 
-	curStep = "Searching for target service     "
 	// Find and display services. Ensure target service is within current space
-	services, err := cliConnection.GetServices()
-	checkErr(err)
-
-	if len(services) < 1 {
-		panic(errors.New("No services found in current space. (Check your internet connection)"))
-	}
-
-	// fmt.Println("Services:")
-	found := false
-	for _, service := range services {
-		// fmt.Println("\t" + service.Name)
-		if service.Name == targetService {
-			found = true
-		}
-	}
+	curStep = "Searching for target service      "
+	found := isServiceFound(cliConnection, targetService)
 	if !found {
 		panic(errors.New("Service " + targetService + " not found in current space!"))
 	}
 
-	curStep = "Getting target service credentials"
-	serviceCredentialsName := getServiceKeys(cliConnection, targetService)
+	// Get service keys for target service
+	curStep = "Getting target service keys       "
+	serviceCredentialsName := getCredentialsName(cliConnection, targetService)
 
 	// Fetch the JSON credentials
-	stdout, err := cliConnection.CliCommandWithoutTerminalOutput("service-key", targetService, serviceCredentialsName)
-	checkErr(err)
-	v := verbex.New().
-		AnythingBut("{").
-		BeginCapture().
-		Then("{").
-		AnythingBut("}").
-		Then("}").
-		EndCapture().
-		Captures(strings.Join(stdout, ""))
-	var serviceCredentialsJSON string
-	if len(v) > 0 && len(v[0]) > 1 {
-		serviceCredentialsJSON = v[0][1]
-		// fmt.Println("Service Creds JSON: " + serviceCredentialsJSON)
-	} else {
-		panic(errors.New("Could not fetch JSON credentials for target service."))
-	}
-
-	curStep = "Parsing credentials               "
+	curStep = "Getting target service credentials"
+	serviceCredentialsJSON := getJSONCredentials(cliConnection, targetService, serviceCredentialsName)
 
 	// Parse the JSON credentials
+	curStep = "Parsing credentials               "
 	var credentials struct {
 		Auth_URL   string
 		DomainID   string
@@ -233,11 +251,12 @@ func (c *LargeObjectsPlugin) getXAuthToken(cliConnection plugin.CliConnection, a
 	credentials.Role = unescape(credentials.Role)
 	credentials.UserID = unescape(credentials.UserID)
 	credentials.Username = unescape(credentials.Username)
-	// fmt.Println(credentials)
 
+	// Authenticate using service credentials
 	curStep = "Authenticating                    "
 	connection := authenticate(credentials.Username, credentials.Password, credentials.Auth_URL+"/v3", credentials.DomainName, "")
 
+	// Print completion info
 	quit <- 0
 	service := ansi.Color(targetService, "cyan+b")
 	xAuth := ansi.Color("X-Auth:", "white+bh")
@@ -252,10 +271,6 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 // makeSLO executes the logic to create a Static Large Object in an object storage instance.
 func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []string) {
 	fmt.Println("making slo")
-}
-
-func printCompletionInfo() {
-
 }
 
 func consoleWriter(quit chan int) {
