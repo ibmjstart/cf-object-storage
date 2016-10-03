@@ -7,14 +7,13 @@ import (
 
 	verbex "github.com/VerbalExpressions/GoVerbalExpressions"
 	"github.com/cloudfoundry/cli/plugin"
-	"github.com/fatih/color"
 	"github.ibm.com/ckwaldon/cf-large-objects/console_writer"
 	"github.ibm.com/ckwaldon/swiftly-go/slo"
 )
 
-var cyan (func(string, ...interface{}) string) = color.New(color.FgCyan).SprintfFunc()
-var green (func(string, ...interface{}) string) = color.New(color.FgGreen).SprintfFunc()
-var red (func(string, ...interface{}) string) = color.New(color.FgRed).SprintfFunc()
+//var cyan (func(string, ...interface{}) string) = color.New(color.FgCyan, color.Bold).SprintfFunc()
+//var green (func(string, ...interface{}) string) = color.New(color.FgGreen, color.Bold).SprintfFunc()
+//var red (func(string, ...interface{}) string) = color.New(color.FgRed, color.Bold).SprintfFunc()
 
 type credentials struct {
 	Auth_URL   string
@@ -146,7 +145,7 @@ func DisplayUserInfo(cliConnection plugin.CliConnection) {
 	space, _ := cliConnection.GetCurrentSpace()
 	// checkErr(err)
 
-	fmt.Printf("Fetching X-Auth token in org %s / space %s as %s...\n", cyan(org.Name), cyan(space.Name), cyan(username))
+	fmt.Printf("Fetching X-Auth info from org %s / space %s as %s...\n", console_writer.Cyan(org.Name), console_writer.Cyan(space.Name), console_writer.Cyan(username))
 }
 
 // GetAuthInfo executes the logic to fetch the auth URL and X-Auth token for an object storage instance.

@@ -79,7 +79,8 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 
 	writer.Quit()
 
-	fmt.Printf("%s\n%s %s\n%s %s\n", args[1], "Auth URL", authUrl, "x-Auth  ", xAuth)
+	fmt.Printf("\r%s                                     \n\n", console_writer.Green("OK"))
+	fmt.Printf("%s\n%s %s\n%s %s\n", console_writer.Cyan(args[1]), console_writer.White("Auth URL:"), authUrl, console_writer.White("x-Auth:  "), xAuth)
 }
 
 // makeDLO executes the logic to create a Dynamic Large Object in an object storage instance.

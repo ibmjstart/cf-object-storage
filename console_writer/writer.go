@@ -8,6 +8,11 @@ import (
 
 const speed time.Duration = 200
 
+var Cyan (func(string, ...interface{}) string) = color.New(color.FgCyan, color.Bold).SprintfFunc()
+var White (func(string, ...interface{}) string) = color.New(color.FgWhite, color.Bold).SprintfFunc()
+var Green (func(string, ...interface{}) string) = color.New(color.FgGreen, color.Bold).SprintfFunc()
+var Red (func(string, ...interface{}) string) = color.New(color.FgRed, color.Bold).SprintfFunc()
+
 type ConsoleWriter struct {
 	quit         chan int
 	currentStage string
@@ -16,7 +21,7 @@ type ConsoleWriter struct {
 func NewConsoleWriter() *ConsoleWriter {
 	return &ConsoleWriter{
 		quit:         make(chan int),
-		currentStage: "Getting started",
+		currentStage: "Getting started                   ",
 	}
 }
 
@@ -35,8 +40,6 @@ func (c *ConsoleWriter) Write() {
 	for {
 		select {
 		case <-c.quit:
-			green := color.New(color.FgGreen).SprintFunc()
-			fmt.Printf("\r%s                                     \n\n", green("OK"))
 			return
 		default:
 			fmt.Printf("\r%s%s", loading[count], c.currentStage)
