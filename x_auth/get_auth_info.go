@@ -11,10 +11,7 @@ import (
 	"github.ibm.com/ckwaldon/swiftly-go/slo"
 )
 
-//var cyan (func(string, ...interface{}) string) = color.New(color.FgCyan, color.Bold).SprintfFunc()
-//var green (func(string, ...interface{}) string) = color.New(color.FgGreen, color.Bold).SprintfFunc()
-//var red (func(string, ...interface{}) string) = color.New(color.FgRed, color.Bold).SprintfFunc()
-
+// credentials holds the info returned with a new cliConnection.
 type credentials struct {
 	Auth_URL   string
 	DomainID   string
@@ -101,6 +98,7 @@ func getJSONCredentials(cliConnection plugin.CliConnection, targetService, servi
 	return serviceCredentialsJSON
 }
 
+// extractFromJSON unmarshalls the JSON returned by a new cliConnection.
 func extractFromJSON(serviceCredentialsJSON string) credentials {
 	var creds credentials
 	_ = json.Unmarshal([]byte(serviceCredentialsJSON), &creds)
@@ -132,6 +130,7 @@ func extractFromJSON(serviceCredentialsJSON string) credentials {
 	return creds
 }
 
+// DisplayUserInfo shows the username, org and space corresponding to the requested service.
 func DisplayUserInfo(cliConnection plugin.CliConnection) {
 	// Find username
 	username, _ := cliConnection.Username()
