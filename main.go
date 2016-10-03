@@ -1,21 +1,18 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
 
-	verbex "github.com/VerbalExpressions/GoVerbalExpressions"
 	"github.com/cloudfoundry/cli/plugin"
-	"github.com/mgutz/ansi"
-	"github.com/ncw/swift"
 	"github.ibm.com/ckwaldon/cf-large-objects/console_writer"
+	"github.ibm.com/ckwaldon/cf-large-objects/x_auth"
 )
 
 // getXAuthCommand defines the name of the command that fetches X-Auth Tokens.
-const getXAuthCommand string = "get-x-auth"
+const getAuthInfoCommand string = "get-auth-info"
 
 // makeDLOCommand defines the name of the command that creates DLOs in
 // object storage.
@@ -54,9 +51,9 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 
 	// Associate each subcommand with a handler function
 	c.subcommands = map[string]func(plugin.CliConnection, []string){
-		getXAuthCommand: c.getXAuthToken,
-		makeDLOCommand:  c.makeDLO,
-		makeSLOCommand:  c.makeSLO,
+		getAuthInfoCommand: c.getAuthInfo,
+		makeDLOCommand:     c.makeDLO,
+		makeSLOCommand:     c.makeSLO,
 	}
 
 	// Dispatch the subcommand that the user wanted, if it exists
@@ -67,196 +64,22 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	}
 }
 
-// isServiceFound returns true if the target service is present in the current space.
-func isServiceFound(cliConnection plugin.CliConnection, targetService string) bool {
-	// Get the services in the current space
-	services, err := cliConnection.GetServices()
-	checkErr(err)
-
-	if len(services) < 1 {
-		panic(errors.New("No services found in current space. (Check your internet connection)"))
-	}
-
-	// Check for target service in the list of present services
-	found := false
-	for _, service := range services {
-		if service.Name == targetService {
-			found = true
-		}
-	}
-
-	return found
-}
-
-// getCredentialsName returns the name of the target service's credentials.
-func getCredentialsName(cliConnection plugin.CliConnection, targetService string) string {
-	// Get the service keys for the target service
-	stdout, err := cliConnection.CliCommandWithoutTerminalOutput("service-keys", targetService)
-	checkErr(err)
-
-	// Construct regex to extract credentials name
-	v := verbex.New().
-		Find("\nname\n").
-		BeginCapture().
-		AnythingBut("\n").
-		EndCapture().
-		Captures(strings.Join(stdout, ""))
-
-	// Get name of target service's credentials
-	var serviceCredentialsName string
-	if len(v) > 0 && len(v[0]) > 1 {
-		serviceCredentialsName = v[0][1]
-	} else {
-		panic(errors.New("Could not find credentials for target service."))
-	}
-
-	return serviceCredentialsName
-}
-
-// getJSONCredentials returns the target service's credentials
-func getJSONCredentials(cliConnection plugin.CliConnection, targetService, serviceCredentialsName string) string {
-	// Get the service key for the target service's credentials
-	stdout, err := cliConnection.CliCommandWithoutTerminalOutput("service-key", targetService, serviceCredentialsName)
-	checkErr(err)
-
-	// Construct regex to extract JSON
-	v := verbex.New().
-		AnythingBut("{").
-		BeginCapture().
-		Then("{").
-		AnythingBut("}").
-		Then("}").
-		EndCapture().
-		Captures(strings.Join(stdout, ""))
-
-	// Get target service's credentials
-	var serviceCredentialsJSON string
-	if len(v) > 0 && len(v[0]) > 1 {
-		serviceCredentialsJSON = v[0][1]
-	} else {
-		panic(errors.New("Could not fetch JSON credentials for target service."))
-	}
-
-	return serviceCredentialsJSON
-}
-
-// authenticate creates a connection to the target service
-func authenticate(username, apiKey, authURL, domain, tenant string) swift.Connection {
-	connection := swift.Connection{
-		UserName:    username,
-		ApiKey:      apiKey,
-		AuthUrl:     authURL,
-		Domain:      domain,
-		Tenant:      tenant,
-		AuthVersion: 3,
-	}
-	err := connection.Authenticate()
-	checkErr(err)
-
-	return connection
-}
-
 // getXAuthToken executes the logic to fetch the X-Auth token for an object storage instance.
-func (c *LargeObjectsPlugin) getXAuthToken(cliConnection plugin.CliConnection, args []string) {
+func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, args []string) {
 	if len(args) < 2 {
 		panic(errors.New("Incorrect Usage: " + c.GetMetadata().Commands[0].UsageDetails.Usage))
 	}
 
-	// Find and style username
-	username, err := cliConnection.Username()
-	checkErr(err)
-	username = ansi.Color(username, "cyan+b")
+	x_auth.DisplayUserInfo(cliConnection)
 
-	// Find and style org
-	org, err := cliConnection.GetCurrentOrg()
-	checkErr(err)
-	orgStr := ansi.Color(org.OrganizationFields.Name, "cyan+b")
-
-	// Find and style space
-	space, err := cliConnection.GetCurrentSpace()
-	checkErr(err)
-	spaceStr := ansi.Color(space.SpaceFields.Name, "cyan+b")
-
-	fmt.Printf("Fetching X-Auth token in org %s / space %s as %s...\n", orgStr, spaceStr, username)
-
-	// begin console writer
 	writer := console_writer.NewConsoleWriter()
 	go writer.Write()
 
-	// Handle Command Line arguments
-	targetService := args[1]
+	authUrl, xAuth := x_auth.GetAuthInfo(cliConnection, writer, args[1])
 
-	// Ensure that user is logged in
-	if loggedIn, err := cliConnection.IsLoggedIn(); !loggedIn {
-		panic(errors.New("You are not logged in. Run `cf login` and then rerun this command."))
-	} else {
-		checkErr(err)
-	}
-
-	// Find and display services. Ensure target service is within current space
-	writer.SetCurrentStage("Searching for target service      ")
-	found := isServiceFound(cliConnection, targetService)
-	if !found {
-		panic(errors.New("Service " + targetService + " not found in current space!"))
-	}
-
-	// Get service keys for target service
-	writer.SetCurrentStage("Getting target service keys       ")
-	serviceCredentialsName := getCredentialsName(cliConnection, targetService)
-
-	// Fetch the JSON credentials
-	writer.SetCurrentStage("Getting target service credentials")
-	serviceCredentialsJSON := getJSONCredentials(cliConnection, targetService, serviceCredentialsName)
-
-	// Parse the JSON credentials
-	writer.SetCurrentStage("Parsing credentials               ")
-	var credentials struct {
-		Auth_URL   string
-		DomainID   string
-		DomainName string
-		Password   string
-		Project    string
-		ProjectID  string
-		Region     string
-		Role       string
-		UserID     string
-		Username   string
-	}
-	err = json.Unmarshal([]byte(serviceCredentialsJSON), &credentials)
-	checkErr(err)
-
-	// Handle escaped unicode characters in JSON
-	// see: https://github.com/cloudfoundry/cli/issues/794
-	unescape := func(escaped string) string {
-		return strings.Replace(
-			strings.Replace(
-				strings.Replace(
-					escaped,
-					"\u003c", "<", -1),
-				"\u003e", ">", -1),
-			"\u0026", "&", -1)
-	}
-
-	credentials.Auth_URL = unescape(credentials.Auth_URL)
-	credentials.DomainID = unescape(credentials.DomainID)
-	credentials.DomainName = unescape(credentials.DomainName)
-	credentials.Password = unescape(credentials.Password)
-	credentials.Project = unescape(credentials.Project)
-	credentials.ProjectID = unescape(credentials.ProjectID)
-	credentials.Region = unescape(credentials.Region)
-	credentials.Role = unescape(credentials.Role)
-	credentials.UserID = unescape(credentials.UserID)
-	credentials.Username = unescape(credentials.Username)
-
-	// Authenticate using service credentials
-	writer.SetCurrentStage("Authenticating                    ")
-	connection := authenticate(credentials.Username, credentials.Password, credentials.Auth_URL+"/v3", credentials.DomainName, "")
-
-	// Print completion info
 	writer.Quit()
-	service := ansi.Color(targetService, "cyan+b")
-	xAuth := ansi.Color("X-Auth:", "white+bh")
-	fmt.Printf("%s\t%s %s\n", service, xAuth, connection.AuthToken)
+
+	fmt.Printf("%s\n%s %s\n%s %s\n", args[1], "Auth URL", authUrl, "x-Auth  ", xAuth)
 }
 
 // makeDLO executes the logic to create a Dynamic Large Object in an object storage instance.
@@ -288,10 +111,10 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 		},
 		Commands: []plugin.Command{
 			{
-				Name:     getXAuthCommand,
+				Name:     getAuthInfoCommand,
 				HelpText: "LargeObjects plugin command's help text",
 				UsageDetails: plugin.Usage{
-					Usage: "command\n   cf " + getXAuthCommand + " [args]",
+					Usage: "command\n   cf " + getAuthInfoCommand + " [args]",
 				},
 			},
 			{

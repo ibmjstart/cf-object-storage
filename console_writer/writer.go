@@ -8,27 +8,27 @@ import (
 
 const speed time.Duration = 200
 
-type consoleWriter struct {
+type ConsoleWriter struct {
 	quit         chan int
 	currentStage string
 }
 
-func NewConsoleWriter() *consoleWriter {
-	return &consoleWriter{
+func NewConsoleWriter() *ConsoleWriter {
+	return &ConsoleWriter{
 		quit:         make(chan int),
 		currentStage: "Getting started",
 	}
 }
 
-func (c *consoleWriter) Quit() {
+func (c *ConsoleWriter) Quit() {
 	c.quit <- 0
 }
 
-func (c *consoleWriter) SetCurrentStage(currentStage string) {
+func (c *ConsoleWriter) SetCurrentStage(currentStage string) {
 	c.currentStage = currentStage
 }
 
-func (c *consoleWriter) Write() {
+func (c *ConsoleWriter) Write() {
 	loading := [6]string{" *    ", "  *   ", "   *  ", "    * ", "   *  ", "  *   "}
 	count := 0
 
@@ -36,7 +36,7 @@ func (c *consoleWriter) Write() {
 		select {
 		case <-c.quit:
 			green := color.New(color.FgGreen).SprintFunc()
-			fmt.Printf("\r%s                                     \n", green("OK"))
+			fmt.Printf("\r%s                                     \n\n", green("OK"))
 			return
 		default:
 			fmt.Printf("\r%s%s", loading[count], c.currentStage)
