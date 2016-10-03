@@ -6,16 +6,13 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	verbex "github.com/VerbalExpressions/GoVerbalExpressions"
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/mgutz/ansi"
 	"github.com/ncw/swift"
+	"github.ibm.com/ckwaldon/cf-large-objects/console_writer"
 )
-
-// curStep tracks the process' progress
-var curStep string
 
 // getXAuthCommand defines the name of the command that fetches X-Auth Tokens.
 const getXAuthCommand string = "get-x-auth"
@@ -180,12 +177,11 @@ func (c *LargeObjectsPlugin) getXAuthToken(cliConnection plugin.CliConnection, a
 	checkErr(err)
 	spaceStr := ansi.Color(space.SpaceFields.Name, "cyan+b")
 
-	curStep = "Starting                          "
 	fmt.Printf("Fetching X-Auth token in org %s / space %s as %s...\n", orgStr, spaceStr, username)
 
 	// begin console writer
-	quit := make(chan int)
-	go consoleWriter(quit)
+	writer := console_writer.NewConsoleWriter()
+	go writer.Write()
 
 	// Handle Command Line arguments
 	targetService := args[1]
@@ -198,22 +194,22 @@ func (c *LargeObjectsPlugin) getXAuthToken(cliConnection plugin.CliConnection, a
 	}
 
 	// Find and display services. Ensure target service is within current space
-	curStep = "Searching for target service      "
+	writer.SetCurrentStage("Searching for target service      ")
 	found := isServiceFound(cliConnection, targetService)
 	if !found {
 		panic(errors.New("Service " + targetService + " not found in current space!"))
 	}
 
 	// Get service keys for target service
-	curStep = "Getting target service keys       "
+	writer.SetCurrentStage("Getting target service keys       ")
 	serviceCredentialsName := getCredentialsName(cliConnection, targetService)
 
 	// Fetch the JSON credentials
-	curStep = "Getting target service credentials"
+	writer.SetCurrentStage("Getting target service credentials")
 	serviceCredentialsJSON := getJSONCredentials(cliConnection, targetService, serviceCredentialsName)
 
 	// Parse the JSON credentials
-	curStep = "Parsing credentials               "
+	writer.SetCurrentStage("Parsing credentials               ")
 	var credentials struct {
 		Auth_URL   string
 		DomainID   string
@@ -253,11 +249,11 @@ func (c *LargeObjectsPlugin) getXAuthToken(cliConnection plugin.CliConnection, a
 	credentials.Username = unescape(credentials.Username)
 
 	// Authenticate using service credentials
-	curStep = "Authenticating                    "
+	writer.SetCurrentStage("Authenticating                    ")
 	connection := authenticate(credentials.Username, credentials.Password, credentials.Auth_URL+"/v3", credentials.DomainName, "")
 
 	// Print completion info
-	quit <- 0
+	writer.Quit()
 	service := ansi.Color(targetService, "cyan+b")
 	xAuth := ansi.Color("X-Auth:", "white+bh")
 	fmt.Printf("%s\t%s %s\n", service, xAuth, connection.AuthToken)
@@ -271,33 +267,6 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 // makeSLO executes the logic to create a Static Large Object in an object storage instance.
 func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []string) {
 	fmt.Println("making slo")
-}
-
-func consoleWriter(quit chan int) {
-	count := 0
-	for {
-		currentStep := curStep
-		loading := [4]string{"*   ", " *  ", "  * ", "   *"}
-		select {
-		case <-quit:
-			ok := ansi.Color("OK", "green+b")
-			fmt.Printf("\r%s                                     ", ok)
-			fmt.Println("\n")
-			return
-		default:
-			switch count = (count + 1) % 6; count {
-			case 0:
-				fmt.Printf("\r %s %s", loading[0], currentStep)
-			case 1, 5:
-				fmt.Printf("\r %s %s", loading[1], currentStep)
-			case 2, 4:
-				fmt.Printf("\r %s %s", loading[2], currentStep)
-			case 3:
-				fmt.Printf("\r %s %s", loading[3], currentStep)
-			}
-			time.Sleep(200 * time.Millisecond)
-		}
-	}
 }
 
 // GetMetadata returns a PluginMetadata struct with information
