@@ -11,7 +11,7 @@ const speed time.Duration = 200
 
 // color output wrappers
 var Cyan (func(string, ...interface{}) string) = color.New(color.FgCyan, color.Bold).SprintfFunc()
-var White (func(string, ...interface{}) string) = color.New(color.FgWhite, color.Bold).SprintfFunc()
+var White (func(string, ...interface{}) string) = color.New(color.FgHiWhite, color.Bold).SprintfFunc()
 var Green (func(string, ...interface{}) string) = color.New(color.FgGreen, color.Bold).SprintfFunc()
 var Red (func(string, ...interface{}) string) = color.New(color.FgRed, color.Bold).SprintfFunc()
 
