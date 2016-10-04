@@ -116,10 +116,12 @@ func getJSONCredentials(cliConnection plugin.CliConnection, targetService, servi
 }
 
 // extractFromJSON unmarshalls the JSON returned by a new cliConnection.
-func extractFromJSON(serviceCredentialsJSON string) credentials {
+func extractFromJSON(serviceCredentialsJSON string) (*credentials, error) {
 	var creds credentials
-	_ = json.Unmarshal([]byte(serviceCredentialsJSON), &creds)
-	// checkErr(err)
+	err := json.Unmarshal([]byte(serviceCredentialsJSON), &creds)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to unmarshall JSON credentials: %s", err)
+	}
 
 	// Handle escaped unicode characters in JSON
 	// see: https://github.com/cloudfoundry/cli/issues/794
@@ -144,7 +146,7 @@ func extractFromJSON(serviceCredentialsJSON string) credentials {
 	creds.UserID = unescape(creds.UserID)
 	creds.Username = unescape(creds.Username)
 
-	return creds
+	return &creds, nil
 }
 
 // ParseArgs reads the flags provided.
@@ -213,7 +215,10 @@ func GetAuthInfo(cliConnection plugin.CliConnection, writer *console_writer.Cons
 
 	// Parse the JSON credentials
 	writer.SetCurrentStage("Parsing credentials")
-	credentials := extractFromJSON(serviceCredentialsJSON)
+	credentials, err := extractFromJSON(serviceCredentialsJSON)
+	if err != nil {
+		return "", "", err
+	}
 
 	// Authenticate using service credentials
 	writer.SetCurrentStage("Authenticating")
