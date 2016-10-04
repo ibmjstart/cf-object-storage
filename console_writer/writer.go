@@ -2,8 +2,9 @@ package console_writer
 
 import (
 	"fmt"
-	"github.com/fatih/color"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 // speed is the time (in milliseconds) between console writes

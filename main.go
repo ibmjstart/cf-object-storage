@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os/exec"
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.ibm.com/ckwaldon/cf-large-objects/console_writer"
@@ -29,7 +30,7 @@ type LargeObjectsPlugin struct {
 	subcommands map[string](func(plugin.CliConnection, []string) error)
 }
 
-// checkErr panics if given an error and otherwise does nothing
+// displayError prints any caught errors to stdout
 func displayError(err error) {
 	if err != nil {
 		fmt.Printf("\r\033[2K\n%s\n%s\n", console_writer.Red("FAILED"), err)
@@ -57,19 +58,26 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 
 // getXAuthToken executes the logic to fetch the X-Auth token for an object storage instance.
 func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, args []string) error {
+	// Check that the minimum number of arguments are present
 	if len(args) < 2 {
-		return fmt.Errorf("Incorrect Usage: %s", c.GetMetadata().Commands[0].UsageDetails.Usage)
+		help, err := showHelp(getAuthInfoCommand)
+		if err != nil {
+			return err
+		}
+
+		return fmt.Errorf("Missing service name\n%s", help)
 	}
 
+	// Parse flags
 	flags, err := x_auth.ParseArgs(args)
 	if err != nil {
 		return err
 	}
 
 	quiet := flags.Url_flag || flags.X_auth_flag
-
 	writer := console_writer.NewConsoleWriter()
 
+	// Start console writer if not in quiet mode
 	if !quiet {
 		err := x_auth.DisplayUserInfo(cliConnection)
 		if err != nil {
@@ -79,19 +87,21 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 		go writer.Write()
 	}
 
+	// Get authorization info
 	authUrl, xAuth, err := x_auth.GetAuthInfo(cliConnection, writer, args[1])
 	if err != nil {
 		return err
 	}
 
+	// Print requested attributes
 	if flags.Url_flag {
 		fmt.Println(authUrl)
 	}
-
 	if flags.X_auth_flag {
 		fmt.Println(xAuth)
 	}
 
+	// Kill console writer if not in quiet mode
 	if !quiet {
 		writer.Quit()
 
@@ -111,6 +121,17 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []string) error {
 	fmt.Println("making slo")
 	return nil
+}
+
+// showHelp returns the metadata for the given command
+func showHelp(command string) (string, error) {
+	cmd := exec.Command("cf", "help", command)
+	help, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("Failed to get help: %s", err)
+	}
+
+	return string(help), nil
 }
 
 // GetMetadata returns a PluginMetadata struct with information
@@ -133,23 +154,27 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 		Commands: []plugin.Command{
 			{
 				Name:     getAuthInfoCommand,
-				HelpText: "LargeObjects plugin command's help text",
+				HelpText: "Display an Object Storage service's authentication URL and x-auth token",
 				UsageDetails: plugin.Usage{
-					Usage: "command\n   cf " + getAuthInfoCommand + " [args]",
+					Usage: "cf " + getAuthInfoCommand + " SERVICE_NAME [-x] [-url]",
+					Options: map[string]string{
+						"x":   "Only display x-auth token",
+						"url": "Only display auth url",
+					},
 				},
 			},
 			{
 				Name:     makeDLOCommand,
 				HelpText: "LargeObjects plugin command's help text",
 				UsageDetails: plugin.Usage{
-					Usage: "command\n   cf " + makeDLOCommand + " [args]",
+					Usage: "cf " + makeDLOCommand + " [args]",
 				},
 			},
 			{
 				Name:     makeSLOCommand,
 				HelpText: "LargeObjects plugin command's help text",
 				UsageDetails: plugin.Usage{
-					Usage: "command\n   cf " + makeSLOCommand + " [args]",
+					Usage: "cf " + makeSLOCommand + " [args]",
 				},
 			},
 		},
