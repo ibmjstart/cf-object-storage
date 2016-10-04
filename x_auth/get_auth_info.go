@@ -150,20 +150,23 @@ func extractFromJSON(serviceCredentialsJSON string) (*credentials, error) {
 }
 
 // ParseArgs reads the flags provided.
-func ParseArgs(args []string) flagVal {
+func ParseArgs(args []string) (*flagVal, error) {
 	flagSet := flag.NewFlagSet("flagSet", flag.ContinueOnError)
 
 	url := flagSet.Bool("url", false, "output only the url")
 	x_auth := flagSet.Bool("x", false, "output only the x-auth token")
 
-	_ = flagSet.Parse(args[2:])
+	err := flagSet.Parse(args[2:])
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse arguments: %s")
+	}
 
 	flagVals := flagVal{
 		Url_flag:    bool(*url),
 		X_auth_flag: bool(*x_auth),
 	}
 
-	return flagVals
+	return &flagVals, nil
 }
 
 // DisplayUserInfo shows the username, org and space corresponding to the requested service.

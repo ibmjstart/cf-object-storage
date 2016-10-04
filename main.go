@@ -61,7 +61,11 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 		return fmt.Errorf("Incorrect Usage: %s", c.GetMetadata().Commands[0].UsageDetails.Usage)
 	}
 
-	flags := x_auth.ParseArgs(args)
+	flags, err := x_auth.ParseArgs(args)
+	if err != nil {
+		return err
+	}
+
 	quiet := flags.Url_flag || flags.X_auth_flag
 
 	writer := console_writer.NewConsoleWriter()
