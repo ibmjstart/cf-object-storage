@@ -1,3 +1,0 @@
-[submodule ".vim/bundle/happy-hacking"]
-	path = .vim/bundle/happy-hacking
-	url = git@github.com:YorickPeterse/happy_hacking.vim
