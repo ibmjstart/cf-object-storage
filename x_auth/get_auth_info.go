@@ -9,7 +9,7 @@ import (
 	verbex "github.com/VerbalExpressions/GoVerbalExpressions"
 	"github.com/cloudfoundry/cli/plugin"
 	"github.ibm.com/ckwaldon/cf-large-objects/console_writer"
-	"github.ibm.com/ckwaldon/swiftly-go/slo"
+	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
 
 // flagVal holds the flag values
@@ -201,7 +201,7 @@ func GetAuthInfo(cliConnection plugin.CliConnection, writer *console_writer.Cons
 
 	// Authenticate using service credentials
 	writer.SetCurrentStage("Authenticating                    ")
-	connection, _ := slo.Authenticate(credentials.Username, credentials.Password, credentials.Auth_URL+"/v3", credentials.DomainName, "")
+	connection, _ := auth.Authenticate(credentials.Username, credentials.Password, credentials.Auth_URL+"/v3", credentials.DomainName, "")
 	// checkErr(err)
 
 	return connection.AuthUrl(), connection.AuthToken()
