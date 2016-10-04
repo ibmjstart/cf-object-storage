@@ -170,20 +170,28 @@ func ParseArgs(args []string) (*flagVal, error) {
 }
 
 // DisplayUserInfo shows the username, org and space corresponding to the requested service.
-func DisplayUserInfo(cliConnection plugin.CliConnection) {
+func DisplayUserInfo(cliConnection plugin.CliConnection) error {
 	// Find username
-	username, _ := cliConnection.Username()
-	// checkErr(err)
+	username, err := cliConnection.Username()
+	if err != nil {
+		return fmt.Errorf("Failed to get username: %s", err)
+	}
 
 	// Find org
-	org, _ := cliConnection.GetCurrentOrg()
-	// checkErr(err)
+	org, err := cliConnection.GetCurrentOrg()
+	if err != nil {
+		return fmt.Errorf("Failed to get organization: %s", err)
+	}
 
 	// Find space
-	space, _ := cliConnection.GetCurrentSpace()
-	// checkErr(err)
+	space, err := cliConnection.GetCurrentSpace()
+	if err != nil {
+		return fmt.Errorf("Failed to get space: %s", err)
+	}
 
 	fmt.Printf("Fetching X-Auth info from org %s / space %s as %s...\n", console_writer.Cyan(org.Name), console_writer.Cyan(space.Name), console_writer.Cyan(username))
+
+	return nil
 }
 
 // GetAuthInfo executes the logic to fetch the auth URL and X-Auth token for an object storage instance.

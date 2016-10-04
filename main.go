@@ -71,7 +71,10 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 	writer := console_writer.NewConsoleWriter()
 
 	if !quiet {
-		x_auth.DisplayUserInfo(cliConnection)
+		err := x_auth.DisplayUserInfo(cliConnection)
+		if err != nil {
+			return err
+		}
 
 		go writer.Write()
 	}
