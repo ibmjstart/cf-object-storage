@@ -25,7 +25,7 @@ type ConsoleWriter struct {
 func NewConsoleWriter() *ConsoleWriter {
 	return &ConsoleWriter{
 		quit:         make(chan int),
-		currentStage: "Getting started                   ",
+		currentStage: "Getting started",
 	}
 }
 
@@ -49,7 +49,7 @@ func (c *ConsoleWriter) Write() {
 		case <-c.quit:
 			return
 		default:
-			fmt.Printf("\r%s%s", loading[count], c.currentStage)
+			fmt.Printf("\r\033[2K%s%s", loading[count], c.currentStage)
 			count = (count + 1) % len(loading)
 		}
 		time.Sleep(speed * time.Millisecond)

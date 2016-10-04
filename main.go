@@ -88,8 +88,7 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 	if !quiet {
 		writer.Quit()
 
-		fmt.Printf("\r%s                                     \n\n", console_writer.Green("OK"))
-		fmt.Printf("%s\n%s %s\n%s %s\n", console_writer.Cyan(args[1]), console_writer.White("Auth URL:"), authUrl, console_writer.White("x-Auth:  "), xAuth)
+		fmt.Printf("\r\033[2K%s\n\n%s\n%s %s\n%s %s\n", console_writer.Green("OK"), console_writer.Cyan(args[1]), console_writer.White("Auth URL:"), authUrl, console_writer.White("x-Auth:  "), xAuth)
 	}
 
 	return nil

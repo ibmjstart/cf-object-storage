@@ -187,14 +187,14 @@ func GetAuthInfo(cliConnection plugin.CliConnection, writer *console_writer.Cons
 	}
 
 	// Find and display services. Ensure target service is within current space
-	writer.SetCurrentStage("Searching for target service      ")
+	writer.SetCurrentStage("Searching for target service")
 	err := findService(cliConnection, targetService)
 	if err != nil {
 		return "", "", err
 	}
 
 	// Get service keys for target service
-	writer.SetCurrentStage("Getting target service keys       ")
+	writer.SetCurrentStage("Getting target service keys")
 	serviceCredentialsName := getCredentialsName(cliConnection, targetService)
 
 	// Fetch the JSON credentials
@@ -202,11 +202,11 @@ func GetAuthInfo(cliConnection plugin.CliConnection, writer *console_writer.Cons
 	serviceCredentialsJSON := getJSONCredentials(cliConnection, targetService, serviceCredentialsName)
 
 	// Parse the JSON credentials
-	writer.SetCurrentStage("Parsing credentials               ")
+	writer.SetCurrentStage("Parsing credentials")
 	credentials := extractFromJSON(serviceCredentialsJSON)
 
 	// Authenticate using service credentials
-	writer.SetCurrentStage("Authenticating                    ")
+	writer.SetCurrentStage("Authenticating")
 	connection, _ := auth.Authenticate(credentials.Username, credentials.Password, credentials.Auth_URL+"/v3", credentials.DomainName, "")
 	// checkErr(err)
 
