@@ -70,6 +70,9 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 		panic(errors.New("Incorrect Usage: " + c.GetMetadata().Commands[0].UsageDetails.Usage))
 	}
 
+	flags := x_auth.ParseArgs(args)
+	fmt.Print(flags)
+
 	x_auth.DisplayUserInfo(cliConnection)
 
 	writer := console_writer.NewConsoleWriter()

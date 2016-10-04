@@ -2,6 +2,7 @@ package x_auth
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,12 @@ import (
 	"github.ibm.com/ckwaldon/cf-large-objects/console_writer"
 	"github.ibm.com/ckwaldon/swiftly-go/slo"
 )
+
+// flagVal holds the flag values
+type flagVal struct {
+	Url_flag    bool
+	X_auth_flag bool
+}
 
 // credentials holds the info returned with a new cliConnection.
 type credentials struct {
@@ -128,6 +135,23 @@ func extractFromJSON(serviceCredentialsJSON string) credentials {
 	creds.Username = unescape(creds.Username)
 
 	return creds
+}
+
+// ParseArgs reads the flags provided.
+func ParseArgs(args []string) flagVal {
+	flagSet := flag.NewFlagSet("flagSet", flag.ContinueOnError)
+
+	url := flagSet.Bool("url", false, "output only the url")
+	x_auth := flagSet.Bool("x", false, "output only the x-auth token")
+
+	_ = flagSet.Parse(args[2:])
+
+	flagVals := flagVal{
+		Url_flag:    bool(*url),
+		X_auth_flag: bool(*x_auth),
+	}
+
+	return flagVals
 }
 
 // DisplayUserInfo shows the username, org and space corresponding to the requested service.
