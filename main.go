@@ -1,10 +1,7 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"os"
-	"strings"
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.ibm.com/ckwaldon/cf-large-objects/console_writer"
@@ -29,28 +26,21 @@ const pluginName string = "ObjectStorageLargeObjects"
 // LargeObjectsPlugin is the struct implementing the plugin interface.
 // It has no public members.
 type LargeObjectsPlugin struct {
-	subcommands map[string]func(plugin.CliConnection, []string)
+	subcommands map[string](func(plugin.CliConnection, []string) error)
 }
 
 // checkErr panics if given an error and otherwise does nothing
-func checkErr(e error) {
-	if e != nil {
-		panic(e)
+func displayError(err error) {
+	if err != nil {
+		fmt.Println(console_writer.Red("FAILED"))
+		fmt.Println(err)
 	}
 }
 
 // Run handles each invocation of the CLI plugin.
 func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []string) {
-	// Catch any panic statements from here onward
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("Fatal Error: ", r)
-			os.Exit(1)
-		}
-	}()
-
 	// Associate each subcommand with a handler function
-	c.subcommands = map[string]func(plugin.CliConnection, []string){
+	c.subcommands = map[string](func(plugin.CliConnection, []string) error){
 		getAuthInfoCommand: c.getAuthInfo,
 		makeDLOCommand:     c.makeDLO,
 		makeSLOCommand:     c.makeSLO,
@@ -58,16 +48,18 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 
 	// Dispatch the subcommand that the user wanted, if it exists
 	if subcommandFunc, keyExists := c.subcommands[args[0]]; !keyExists {
-		panic(errors.New("Invocation error!\n" + pluginName + " called with args: " + strings.Join(args, " ")))
+		err := fmt.Errorf("Invocation error! Command %s is not a member of this plugin.", args[0])
+		displayError(err)
 	} else {
-		subcommandFunc(cliConnection, args)
+		err := subcommandFunc(cliConnection, args)
+		displayError(err)
 	}
 }
 
 // getXAuthToken executes the logic to fetch the X-Auth token for an object storage instance.
-func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, args []string) {
+func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, args []string) error {
 	if len(args) < 2 {
-		panic(errors.New("Incorrect Usage: " + c.GetMetadata().Commands[0].UsageDetails.Usage))
+		return fmt.Errorf("Incorrect Usage: %s", c.GetMetadata().Commands[0].UsageDetails.Usage)
 	}
 
 	flags := x_auth.ParseArgs(args)
@@ -97,16 +89,20 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 		fmt.Printf("\r%s                                     \n\n", console_writer.Green("OK"))
 		fmt.Printf("%s\n%s %s\n%s %s\n", console_writer.Cyan(args[1]), console_writer.White("Auth URL:"), authUrl, console_writer.White("x-Auth:  "), xAuth)
 	}
+
+	return nil
 }
 
 // makeDLO executes the logic to create a Dynamic Large Object in an object storage instance.
-func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []string) {
+func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []string) error {
 	fmt.Println("making dlo")
+	return nil
 }
 
 // makeSLO executes the logic to create a Static Large Object in an object storage instance.
-func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []string) {
+func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []string) error {
 	fmt.Println("making slo")
+	return nil
 }
 
 // GetMetadata returns a PluginMetadata struct with information
