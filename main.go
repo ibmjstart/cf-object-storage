@@ -48,9 +48,12 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	// Dispatch the subcommand that the user wanted, if it exists
 	if subcommandFunc, keyExists := c.subcommands[args[0]]; !keyExists {
 		err := fmt.Errorf("Invocation error! Command %s is not a member of this plugin.", args[0])
-		displayError(err)
 	} else {
 		err := subcommandFunc(cliConnection, args)
+	}
+
+	// Display any error to the user
+	if err != nil {
 		displayError(err)
 	}
 }

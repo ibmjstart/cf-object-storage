@@ -233,8 +233,10 @@ func GetAuthInfo(cliConnection plugin.CliConnection, writer *console_writer.Cons
 
 	// Authenticate using service credentials
 	writer.SetCurrentStage("Authenticating")
-	connection, _ := auth.Authenticate(credentials.Username, credentials.Password, credentials.Auth_URL+"/v3", credentials.DomainName, "")
-	// checkErr(err)
+	connection, err := auth.Authenticate(credentials.Username, credentials.Password, credentials.Auth_URL+"/v3", credentials.DomainName, "")
+	if err != nil {
+		return "", "", err
+	}
 
 	return connection.AuthUrl(), connection.AuthToken(), nil
 }
