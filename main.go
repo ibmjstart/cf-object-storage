@@ -32,8 +32,7 @@ type LargeObjectsPlugin struct {
 // checkErr panics if given an error and otherwise does nothing
 func displayError(err error) {
 	if err != nil {
-		fmt.Println(console_writer.Red("FAILED"))
-		fmt.Println(err)
+		fmt.Printf("\r\033[2K\n%s\n%s\n", console_writer.Red("FAILED"), err)
 	}
 }
 
@@ -73,7 +72,10 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 		go writer.Write()
 	}
 
-	authUrl, xAuth := x_auth.GetAuthInfo(cliConnection, writer, args[1])
+	authUrl, xAuth, err := x_auth.GetAuthInfo(cliConnection, writer, args[1])
+	if err != nil {
+		return err
+	}
 
 	if flags.Url_flag {
 		fmt.Println(authUrl)

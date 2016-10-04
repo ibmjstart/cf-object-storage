@@ -32,14 +32,16 @@ type credentials struct {
 	Username   string
 }
 
-// isServiceFound returns true if the target service is present in the current space.
-func isServiceFound(cliConnection plugin.CliConnection, targetService string) bool {
+// findService returns true if the target service is present in the current space.
+func findService(cliConnection plugin.CliConnection, targetService string) error {
 	// Get the services in the current space
-	services, _ := cliConnection.GetServices()
-	// checkErr(err)
+	services, err := cliConnection.GetServices()
+	if err != nil {
+		return fmt.Errorf("Failed to get services in requested org: %s", err)
+	}
 
 	if len(services) < 1 {
-		// panic(errors.New("No services found in current space. (Check your internet connection)"))
+		return fmt.Errorf("No services found in current space (check your internet connection)")
 	}
 
 	// Check for target service in the list of present services
@@ -50,7 +52,11 @@ func isServiceFound(cliConnection plugin.CliConnection, targetService string) bo
 		}
 	}
 
-	return found
+	if !found {
+		return fmt.Errorf("Service '%s' not found in current space", targetService)
+	}
+
+	return nil
 }
 
 // getCredentialsName returns the name of the target service's credentials.
@@ -172,19 +178,19 @@ func DisplayUserInfo(cliConnection plugin.CliConnection) {
 }
 
 // GetAuthInfo executes the logic to fetch the auth URL and X-Auth token for an object storage instance.
-func GetAuthInfo(cliConnection plugin.CliConnection, writer *console_writer.ConsoleWriter, targetService string) (string, string) {
+func GetAuthInfo(cliConnection plugin.CliConnection, writer *console_writer.ConsoleWriter, targetService string) (string, string, error) {
 	// Ensure that user is logged in
-	if loggedIn, _ := cliConnection.IsLoggedIn(); !loggedIn {
-		// panic(errors.New("You are not logged in. Run `cf login` and then rerun this command."))
-	} else {
-		// checkErr(err)
+	if loggedIn, err := cliConnection.IsLoggedIn(); !loggedIn {
+		return "", "", fmt.Errorf("You are not logged in, please run `cf login` and rerun this command")
+	} else if err != nil {
+		return "", "", fmt.Errorf("Failed to log in to Cloud Foundry: %s", err)
 	}
 
 	// Find and display services. Ensure target service is within current space
 	writer.SetCurrentStage("Searching for target service      ")
-	found := isServiceFound(cliConnection, targetService)
-	if !found {
-		// panic(errors.New("Service " + targetService + " not found in current space!"))
+	err := findService(cliConnection, targetService)
+	if err != nil {
+		return "", "", err
 	}
 
 	// Get service keys for target service
@@ -204,5 +210,5 @@ func GetAuthInfo(cliConnection plugin.CliConnection, writer *console_writer.Cons
 	connection, _ := auth.Authenticate(credentials.Username, credentials.Password, credentials.Auth_URL+"/v3", credentials.DomainName, "")
 	// checkErr(err)
 
-	return connection.AuthUrl(), connection.AuthToken()
+	return connection.AuthUrl(), connection.AuthToken(), nil
 }
