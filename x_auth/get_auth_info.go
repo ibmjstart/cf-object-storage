@@ -60,10 +60,12 @@ func findService(cliConnection plugin.CliConnection, targetService string) error
 }
 
 // getCredentialsName returns the name of the target service's credentials.
-func getCredentialsName(cliConnection plugin.CliConnection, targetService string) string {
+func getCredentialsName(cliConnection plugin.CliConnection, targetService string) (string, error) {
 	// Get the service keys for the target service
-	stdout, _ := cliConnection.CliCommandWithoutTerminalOutput("service-keys", targetService)
-	// checkErr(err)
+	stdout, err := cliConnection.CliCommandWithoutTerminalOutput("service-keys", targetService)
+	if err != nil {
+		return "", fmt.Errorf("Failed to get credentials for service %s: %s", targetService, err)
+	}
 
 	// Construct regex to extract credentials name
 	v := verbex.New().
@@ -78,10 +80,10 @@ func getCredentialsName(cliConnection plugin.CliConnection, targetService string
 	if len(v) > 0 && len(v[0]) > 1 {
 		serviceCredentialsName = v[0][1]
 	} else {
-		// panic(errors.New("Could not find credentials for target service."))
+		return "", fmt.Errorf("Could not find credentials for target service")
 	}
 
-	return serviceCredentialsName
+	return serviceCredentialsName, nil
 }
 
 // getJSONCredentials returns the target service's credentials
@@ -195,7 +197,10 @@ func GetAuthInfo(cliConnection plugin.CliConnection, writer *console_writer.Cons
 
 	// Get service keys for target service
 	writer.SetCurrentStage("Getting target service keys")
-	serviceCredentialsName := getCredentialsName(cliConnection, targetService)
+	serviceCredentialsName, err := getCredentialsName(cliConnection, targetService)
+	if err != nil {
+		return "", "", err
+	}
 
 	// Fetch the JSON credentials
 	writer.SetCurrentStage("Getting target service credentials")
