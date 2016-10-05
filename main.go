@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.ibm.com/ckwaldon/cf-large-objects/console_writer"
@@ -29,13 +30,6 @@ type LargeObjectsPlugin struct {
 	subcommands map[string](func(plugin.CliConnection, []string) error)
 }
 
-// displayError prints any caught errors to stdout
-func displayError(err error) {
-	if err != nil {
-		fmt.Printf("\r\033[2K\n%s\n%s\n", console_writer.Red("FAILED"), err)
-	}
-}
-
 // Run handles each invocation of the CLI plugin.
 func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []string) {
 	// Associate each subcommand with a handler function
@@ -46,12 +40,17 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	}
 
 	// Dispatch the subcommand that the user wanted, if it exists
+	var err error
 	if subcommandFunc, keyExists := c.subcommands[args[0]]; !keyExists {
-		err := fmt.Errorf("Invocation error! Command %s is not a member of this plugin.", args[0])
-		displayError(err)
+		err = fmt.Errorf("Invocation error! Command %s is not a member of this plugin.", args[0])
 	} else {
-		err := subcommandFunc(cliConnection, args)
-		displayError(err)
+		err = subcommandFunc(cliConnection, args)
+	}
+
+	// Check for an error
+	if err != nil {
+		fmt.Printf("\r\033[2K\n%s\n%s\n", console_writer.Red("FAILED"), err)
+		os.Exit(1)
 	}
 }
 
