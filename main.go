@@ -6,6 +6,7 @@ import (
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.ibm.com/ckwaldon/cf-large-objects/console_writer"
+	"github.ibm.com/ckwaldon/cf-large-objects/dlo"
 	"github.ibm.com/ckwaldon/cf-large-objects/x_auth"
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
@@ -138,6 +139,24 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
 	}
 
+	writer := console_writer.NewConsoleWriter()
+	task := "Creating DLO in"
+	err := displayUserInfo(cliConnection, task)
+	if err != nil {
+		return fmt.Errorf("Failed to display user info: %s", err)
+	}
+	//	go writer.Write()
+	destination, err := x_auth.GetAuthInfo(cliConnection, writer, args[1])
+	if err != nil {
+		return fmt.Errorf("Failed to authenticate: %s", err)
+	}
+	err = dlo.MakeDlo(cliConnection, writer, destination, args[2:])
+	if err != nil {
+		return fmt.Errorf("Failed to create DLO: %s", err)
+	}
+	//	writer.Quit()
+	fmt.Println()
+
 	return nil
 }
 
@@ -180,7 +199,11 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				Name:     makeDLOCommand,
 				HelpText: "Create a Dynamic Large Object in Object Storage",
 				UsageDetails: plugin.Usage{
-					Usage: "cf " + makeDLOCommand + " service_name dest_container dlo_name [dlo_prefix]",
+					Usage: "cf " + makeDLOCommand + " service_name dlo_container dlo_name [-c object_container] [-p dlo_prefix]",
+					Options: map[string]string{
+						"c": "Destination container for DLO segments (defaults to dlo_container)",
+						"p": "Prefix to be used for DLO segments (default to dlo_name)",
+					},
 				},
 			},
 			{
