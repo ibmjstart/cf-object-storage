@@ -149,14 +149,14 @@ func extractFromJSON(serviceCredentialsJSON string) (*credentials, error) {
 	return &creds, nil
 }
 
-// ParseArgs reads the flags provided.
-func ParseArgs(args []string) (*flagVal, error) {
+// ParseFlags reads the flags provided.
+func ParseFlags(flags []string) (*flagVal, error) {
 	flagSet := flag.NewFlagSet("flagSet", flag.ContinueOnError)
 
 	url := flagSet.Bool("url", false, "Display auth url in quiet mode")
 	x_auth := flagSet.Bool("x", false, "Display x-auth token in quiet mode")
 
-	err := flagSet.Parse(args[2:])
+	err := flagSet.Parse(flags)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse arguments: %s")
 	}

@@ -58,7 +58,7 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 	}
 
 	// Parse flags
-	flags, err := x_auth.ParseArgs(args)
+	flags, err := x_auth.ParseFlags(args[2:])
 	if err != nil {
 		return err
 	}
