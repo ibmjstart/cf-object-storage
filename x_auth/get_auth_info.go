@@ -170,48 +170,49 @@ func ParseFlags(flags []string) (*flagVal, error) {
 }
 
 // GetAuthInfo executes the logic to fetch the auth URL and X-Auth token for an object storage instance.
-func GetAuthInfo(cliConnection plugin.CliConnection, writer *console_writer.ConsoleWriter, targetService string) (string, string, error) {
+func GetAuthInfo(cliConnection plugin.CliConnection, writer *console_writer.ConsoleWriter, targetService string) (auth.Destination, error) {
 	// Ensure that user is logged in
 	if loggedIn, err := cliConnection.IsLoggedIn(); !loggedIn {
-		return "", "", fmt.Errorf("You are not logged in, please run `cf login` and rerun this command")
+		return nil, fmt.Errorf("You are not logged in, please run `cf login` and rerun this command")
 	} else if err != nil {
-		return "", "", fmt.Errorf("Failed to log in to Cloud Foundry: %s", err)
+		return nil, fmt.Errorf("Failed to log in to Cloud Foundry: %s", err)
 	}
 
 	// Find and display services. Ensure target service is within current space
 	writer.SetCurrentStage("Searching for target service")
 	err := findService(cliConnection, targetService)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
 	// Get service keys for target service
 	writer.SetCurrentStage("Locating target service's credentials")
 	serviceCredentialsName, err := getCredentialsName(cliConnection, targetService)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
 	// Fetch the JSON credentials
 	writer.SetCurrentStage("Fetching credentials")
 	serviceCredentialsJSON, err := getJSONCredentials(cliConnection, targetService, serviceCredentialsName)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
 	// Parse the JSON credentials
 	writer.SetCurrentStage("Parsing credentials")
 	credentials, err := extractFromJSON(serviceCredentialsJSON)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
 	// Authenticate using service credentials
 	writer.SetCurrentStage("Authenticating")
-	connection, err := auth.Authenticate(credentials.Username, credentials.Password, credentials.Auth_URL+"/v3", credentials.DomainName, "")
+	destination, err := auth.Authenticate(credentials.Username, credentials.Password, credentials.Auth_URL+"/v3", credentials.DomainName, "")
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
-	return connection.AuthUrl(), connection.AuthToken(), nil
+	//return connection.AuthUrl(), connection.AuthToken(), nil
+	return destination, nil
 }

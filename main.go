@@ -7,6 +7,7 @@ import (
 	"github.com/cloudfoundry/cli/plugin"
 	"github.ibm.com/ckwaldon/cf-large-objects/console_writer"
 	"github.ibm.com/ckwaldon/cf-large-objects/x_auth"
+	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
 
 // getXAuthCommand defines the name of the command that fetches X-Auth Tokens.
@@ -104,10 +105,13 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 	}
 
 	// Get authorization info
-	authUrl, xAuth, err := x_auth.GetAuthInfo(cliConnection, writer, args[1])
+	destination, err := x_auth.GetAuthInfo(cliConnection, writer, args[1])
 	if err != nil {
 		return err
 	}
+
+	authUrl := destination.(*auth.SwiftDestination).SwiftConnection.StorageUrl
+	xAuth := destination.(*auth.SwiftDestination).SwiftConnection.AuthToken
 
 	// Print requested attributes
 	if flags.Url_flag {
