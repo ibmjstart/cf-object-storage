@@ -169,31 +169,6 @@ func ParseFlags(flags []string) (*flagVal, error) {
 	return &flagVals, nil
 }
 
-// DisplayUserInfo shows the username, org and space corresponding to the requested service.
-func DisplayUserInfo(cliConnection plugin.CliConnection) error {
-	// Find username
-	username, err := cliConnection.Username()
-	if err != nil {
-		return fmt.Errorf("Failed to get username: %s", err)
-	}
-
-	// Find org
-	org, err := cliConnection.GetCurrentOrg()
-	if err != nil {
-		return fmt.Errorf("Failed to get organization: %s", err)
-	}
-
-	// Find space
-	space, err := cliConnection.GetCurrentSpace()
-	if err != nil {
-		return fmt.Errorf("Failed to get space: %s", err)
-	}
-
-	fmt.Printf("Fetching auth info from org %s / space %s as %s...\n", console_writer.Cyan(org.Name), console_writer.Cyan(space.Name), console_writer.Cyan(username))
-
-	return nil
-}
-
 // GetAuthInfo executes the logic to fetch the auth URL and X-Auth token for an object storage instance.
 func GetAuthInfo(cliConnection plugin.CliConnection, writer *console_writer.ConsoleWriter, targetService string) (string, string, error) {
 	// Ensure that user is logged in

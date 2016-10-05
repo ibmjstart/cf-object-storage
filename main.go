@@ -50,6 +50,31 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	}
 }
 
+// displayUserInfo shows the username, org and space corresponding to the requested service.
+func displayUserInfo(cliConnection plugin.CliConnection, task string) error {
+	// Find username
+	username, err := cliConnection.Username()
+	if err != nil {
+		return fmt.Errorf("Failed to get username: %s", err)
+	}
+
+	// Find org
+	org, err := cliConnection.GetCurrentOrg()
+	if err != nil {
+		return fmt.Errorf("Failed to get organization: %s", err)
+	}
+
+	// Find space
+	space, err := cliConnection.GetCurrentSpace()
+	if err != nil {
+		return fmt.Errorf("Failed to get space: %s", err)
+	}
+
+	fmt.Printf("%s org %s / space %s as %s...\n", task, console_writer.Cyan(org.Name), console_writer.Cyan(space.Name), console_writer.Cyan(username))
+
+	return nil
+}
+
 // getXAuthToken executes the logic to fetch the X-Auth token for an object storage instance.
 func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
@@ -68,7 +93,9 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 
 	// Start console writer if not in quiet mode
 	if !quiet {
-		err := x_auth.DisplayUserInfo(cliConnection)
+		task := "Fetching auth info from"
+
+		err := displayUserInfo(cliConnection, task)
 		if err != nil {
 			return err
 		}
