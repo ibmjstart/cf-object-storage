@@ -129,7 +129,11 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 
 // makeDLO executes the logic to create a Dynamic Large Object in an object storage instance.
 func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []string) error {
-	fmt.Println("making dlo")
+	// Check that the minimum number of arguments are present
+	if len(args) < 4 {
+		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+	}
+
 	return nil
 }
 
@@ -161,7 +165,7 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				Name:     getAuthInfoCommand,
 				HelpText: "Display an Object Storage service's authentication url and x-auth token",
 				UsageDetails: plugin.Usage{
-					Usage: "cf " + getAuthInfoCommand + " SERVICE_NAME [-url] [-x]",
+					Usage: "cf " + getAuthInfoCommand + " service_name [-url] [-x]",
 					Options: map[string]string{
 						"url": "Display auth url in quiet mode",
 						"x":   "Display x-auth token in quiet mode",
@@ -170,9 +174,9 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 			},
 			{
 				Name:     makeDLOCommand,
-				HelpText: "LargeObjects plugin command's help text",
+				HelpText: "Create a Dynamic Large Object in Object Storage",
 				UsageDetails: plugin.Usage{
-					Usage: "cf " + makeDLOCommand + " [args]",
+					Usage: "cf " + makeDLOCommand + " service_name dest_container dlo_name [dlo_prefix]",
 				},
 			},
 			{
