@@ -153,8 +153,8 @@ func extractFromJSON(serviceCredentialsJSON string) (*credentials, error) {
 func ParseArgs(args []string) (*flagVal, error) {
 	flagSet := flag.NewFlagSet("flagSet", flag.ContinueOnError)
 
-	url := flagSet.Bool("url", false, "output only the url")
-	x_auth := flagSet.Bool("x", false, "output only the x-auth token")
+	url := flagSet.Bool("url", false, "Display auth url in quiet mode")
+	x_auth := flagSet.Bool("x", false, "Display x-auth token in quiet mode")
 
 	err := flagSet.Parse(args[2:])
 	if err != nil {
@@ -189,7 +189,7 @@ func DisplayUserInfo(cliConnection plugin.CliConnection) error {
 		return fmt.Errorf("Failed to get space: %s", err)
 	}
 
-	fmt.Printf("Fetching X-Auth info from org %s / space %s as %s...\n", console_writer.Cyan(org.Name), console_writer.Cyan(space.Name), console_writer.Cyan(username))
+	fmt.Printf("Fetching auth info from org %s / space %s as %s...\n", console_writer.Cyan(org.Name), console_writer.Cyan(space.Name), console_writer.Cyan(username))
 
 	return nil
 }

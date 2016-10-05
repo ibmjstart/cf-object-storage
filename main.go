@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os/exec"
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.ibm.com/ckwaldon/cf-large-objects/console_writer"
@@ -60,12 +59,7 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
 	if len(args) < 2 {
-		help, err := showHelp(getAuthInfoCommand)
-		if err != nil {
-			return err
-		}
-
-		return fmt.Errorf("Missing service name\n%s", help)
+		return fmt.Errorf("Missing service name\nUsage: %s", c.GetMetadata().Commands[0].UsageDetails.Usage)
 	}
 
 	// Parse flags
@@ -105,7 +99,7 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 	if !quiet {
 		writer.Quit()
 
-		fmt.Printf("\r\033[2K%s\n\n%s\n%s %s\n%s %s\n", console_writer.Green("OK"), console_writer.Cyan(args[1]), console_writer.White("Auth URL:"), authUrl, console_writer.White("x-Auth:  "), xAuth)
+		fmt.Printf("\r\033[2K%s\n\n%s\n%s %s\n%s %s\n", console_writer.Green("OK"), console_writer.Cyan(args[1]), console_writer.White("auth url:"), authUrl, console_writer.White("x-auth:  "), xAuth)
 	}
 
 	return nil
@@ -121,17 +115,6 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []string) error {
 	fmt.Println("making slo")
 	return nil
-}
-
-// showHelp returns the metadata for the given command
-func showHelp(command string) (string, error) {
-	cmd := exec.Command("cf", "help", command)
-	help, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("Failed to get help: %s", err)
-	}
-
-	return string(help), nil
 }
 
 // GetMetadata returns a PluginMetadata struct with information
@@ -154,12 +137,12 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 		Commands: []plugin.Command{
 			{
 				Name:     getAuthInfoCommand,
-				HelpText: "Display an Object Storage service's authentication URL and x-auth token",
+				HelpText: "Display an Object Storage service's authentication url and x-auth token",
 				UsageDetails: plugin.Usage{
-					Usage: "cf " + getAuthInfoCommand + " SERVICE_NAME [-x] [-url]",
+					Usage: "cf " + getAuthInfoCommand + " SERVICE_NAME [-url] [-x]",
 					Options: map[string]string{
-						"x":   "Only display x-auth token",
-						"url": "Only display auth url",
+						"url": "Display auth url in quiet mode",
+						"x":   "Display x-auth token in quiet mode",
 					},
 				},
 			},
