@@ -145,7 +145,7 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 	if err != nil {
 		return fmt.Errorf("Failed to display user info: %s", err)
 	}
-	//	go writer.Write()
+	go writer.Write()
 	destination, err := x_auth.GetAuthInfo(cliConnection, writer, args[1])
 	if err != nil {
 		return fmt.Errorf("Failed to authenticate: %s", err)
@@ -154,7 +154,7 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 	if err != nil {
 		return fmt.Errorf("Failed to create DLO: %s", err)
 	}
-	//	writer.Quit()
+	writer.Quit()
 	fmt.Println()
 
 	return nil

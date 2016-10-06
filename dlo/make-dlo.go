@@ -21,9 +21,11 @@ func parseArgs(args []string) (*flagVal, error) {
 	container := flagSet.String("c", args[0], "Destination container for DLO segments (defaults to manifest container)")
 	prefix := flagSet.String("p", args[1], "Prefix to be used for DLO segments (defaults to DLO name)")
 
-	err := flagSet.Parse(args)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to parse flags: %s", err)
+	if len(args) > 2 {
+		err := flagSet.Parse(args[2:])
+		if err != nil {
+			return nil, fmt.Errorf("Failed to parse flags: %s", err)
+		}
 	}
 
 	flagVals := flagVal{
@@ -40,8 +42,6 @@ func MakeDlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest 
 	if err != nil {
 		return fmt.Errorf("Failed to parse arguments: %s", err)
 	}
-	fmt.Printf("args: %s", args)
-	fmt.Printf("dloContainer: %s dloName: %s objContainer: %s dloPrefix: %s", args[0], args[1], flags.Container_flag, flags.Prefix_flag)
 	uploader := sg.NewDloManifestUploader(dest, args[0], args[1], flags.Container_flag, flags.Prefix_flag)
 	writer.SetCurrentStage("Uploading DLO manifest")
 	err = uploader.Upload()
