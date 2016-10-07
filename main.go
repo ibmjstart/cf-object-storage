@@ -18,6 +18,10 @@ const pluginName string = "ObjectStorageLargeObjects"
 // getXAuthCommand defines the name of the command that fetches X-Auth Tokens.
 const getAuthInfoCommand string = "get-auth-info"
 
+// putObjectCommand defines the name of the command that uploads objects to
+// object storage.
+const putObjectCommand string = "put-object"
+
 // makeDLOCommand defines the name of the command that creates DLOs in
 // object storage.
 const makeDLOCommand string = "make-dlo"
@@ -37,6 +41,7 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	// Associate each subcommand with a handler function
 	c.subcommands = map[string](func(plugin.CliConnection, []string) error){
 		getAuthInfoCommand: c.getAuthInfo,
+		putObjectCommand:   c.putObject,
 		makeDLOCommand:     c.makeDLO,
 		makeSLOCommand:     c.makeSLO,
 	}
@@ -132,6 +137,12 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 	return nil
 }
 
+// putObjec executes the logic to upload an object to an object storage instance.
+func (c *LargeObjectsPlugin) putObject(cliConnection plugin.CliConnection, args []string) error {
+	fmt.Println("putting object in OS")
+	return nil
+}
+
 // makeDLO executes the logic to create a Dynamic Large Object in an object storage instance.
 func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
@@ -201,6 +212,16 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 					Options: map[string]string{
 						"url": "Display auth url in quiet mode",
 						"x":   "Display x-auth token in quiet mode",
+					},
+				},
+			},
+			{
+				Name:     putObjectCommand,
+				HelpText: "Upload a file as an object to object storage",
+				UsageDetails: plugin.Usage{
+					Usage: "cf " + putObjectCommand + " service_name container_name path_to_source [-n object_name]",
+					Options: map[string]string{
+						"n": "Rename object before uploading",
 					},
 				},
 			},
