@@ -7,6 +7,7 @@ import (
 	"github.com/cloudfoundry/cli/plugin"
 	"github.ibm.com/ckwaldon/cf-large-objects/console_writer"
 	"github.ibm.com/ckwaldon/cf-large-objects/dlo"
+	"github.ibm.com/ckwaldon/cf-large-objects/object"
 	"github.ibm.com/ckwaldon/cf-large-objects/x_auth"
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
@@ -137,9 +138,40 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 	return nil
 }
 
-// putObjec executes the logic to upload an object to an object storage instance.
+// putObject executes the logic to upload an object to an object storage instance.
 func (c *LargeObjectsPlugin) putObject(cliConnection plugin.CliConnection, args []string) error {
-	fmt.Println("putting object in OS")
+	// Check that the minimum number of arguments are present
+	if len(args) < 4 {
+		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+	}
+
+	// Display startup info
+	task := "Uploading object in"
+	err := displayUserInfo(cliConnection, task)
+	if err != nil {
+		return fmt.Errorf("Failed to display user info: %s", err)
+	}
+
+	// Start console writer
+	writer := console_writer.NewConsoleWriter()
+	go writer.Write()
+
+	// Authenticate with Object Storage
+	destination, err := x_auth.GetAuthInfo(cliConnection, writer, args[1])
+	if err != nil {
+		return fmt.Errorf("Failed to authenticate: %s", err)
+	}
+
+	// Upload object
+	name, err := object.PutObject(cliConnection, writer, destination, args[2:])
+	if err != nil {
+		return fmt.Errorf("Failed to upload object: %s", err)
+	}
+
+	// Kill console writer and display completion info
+	writer.Quit()
+	fmt.Printf("\r\033[2K%s\n\nUploaded %s to container %s\n", console_writer.Green("OK"), console_writer.Cyan(name), console_writer.Cyan(args[2]))
+
 	return nil
 }
 
@@ -147,7 +179,7 @@ func (c *LargeObjectsPlugin) putObject(cliConnection plugin.CliConnection, args 
 func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
 	if len(args) < 4 {
-		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[2].UsageDetails.Usage)
 	}
 
 	// Display startup info

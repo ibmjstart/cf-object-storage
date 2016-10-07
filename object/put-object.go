@@ -3,6 +3,7 @@ package object
 import (
 	"flag"
 	"fmt"
+	"os"
 	fp "path/filepath"
 
 	"github.com/cloudfoundry/cli/plugin"
@@ -39,15 +40,21 @@ func parseArgs(args []string) (*flagVal, error) {
 }
 
 // PutObject uploads a file to Object Storage
-func PutObject(cliConnection plugin.Connection, writer *cw.ConsoleWriter, dest auth.Destination, args []string) (string, error) {
+func PutObject(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest auth.Destination, args []string) (string, error) {
 	writer.SetCurrentStage("Uploading object")
 	flags, err := parseArgs(args)
 	if err != nil {
 		return "", fmt.Errorf("Failed to parse arguments: %s", err)
 	}
 
+	// Verify that the source file exists
+	file, err := os.Open(args[1])
+	if err != nil {
+		return "", fmt.Errorf("Failed to open source file: %s", err)
+	}
+
 	// Create uploader to upload object
-	uploader := sg.NewObjectUploader(dest, args[1], args[0], flags.Rename_flag)
+	uploader := sg.NewObjectUploader(dest, file, args[0], flags.Rename_flag)
 	err = uploader.Upload()
 	if err != nil {
 		return "", fmt.Errorf("Failed to upload object: %s", err)
