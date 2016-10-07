@@ -49,6 +49,7 @@ func PutObject(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, des
 
 	// Verify that the source file exists
 	file, err := os.Open(args[1])
+	defer file.Close()
 	if err != nil {
 		return "", fmt.Errorf("Failed to open source file: %s", err)
 	}
