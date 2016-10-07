@@ -4,12 +4,19 @@ import (
 	"flag"
 	"fmt"
 	fp "path/filepath"
+
+	"github.com/cloudfoundry/cli/plugin"
+	cw "github.ibm.com/ckwaldon/cf-large-objects/console_writer"
+	sg "github.ibm.com/ckwaldon/swiftlygo"
+	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
 
+// flagVal holds the flag values
 type flagVal struct {
 	Rename_flag string
 }
 
+// parseArgs parses the arguments provided to put-object
 func parseArgs(args []string) (*flagVal, error) {
 	flagSet := flag.NewFlagSet("flagSet", flag.ContinueOnError)
 
@@ -31,6 +38,20 @@ func parseArgs(args []string) (*flagVal, error) {
 	return &flagVals, nil
 }
 
-func main() {
-	fmt.Println("put-object")
+// PutObject uploads a file to Object Storage
+func PutObject(cliConnection plugin.Connection, writer *cw.ConsoleWriter, dest auth.Destination, args []string) (string, error) {
+	writer.SetCurrentStage("Uploading object")
+	flags, err := parseArgs(args)
+	if err != nil {
+		return "", fmt.Errorf("Failed to parse arguments: %s", err)
+	}
+
+	// Create uploader to upload object
+	uploader := sg.NewObjectUploader(dest, args[1], args[0], flags.Rename_flag)
+	err = uploader.Upload()
+	if err != nil {
+		return "", fmt.Errorf("Failed to upload object: %s", err)
+	}
+
+	return flags.Rename_flag, nil
 }
