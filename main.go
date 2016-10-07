@@ -11,6 +11,10 @@ import (
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
 
+// pluginName defines the name of this plugin for use installing and
+// uninstalling it.
+const pluginName string = "ObjectStorageLargeObjects"
+
 // getXAuthCommand defines the name of the command that fetches X-Auth Tokens.
 const getAuthInfoCommand string = "get-auth-info"
 
@@ -21,10 +25,6 @@ const makeDLOCommand string = "make-dlo"
 // makeDLOCommand defines the name of the command that creates SLOs in
 // object storage.
 const makeSLOCommand string = "make-slo"
-
-// pluginName defines the name of this plugin for use installing and
-// uninstalling it.
-const pluginName string = "ObjectStorageLargeObjects"
 
 // LargeObjectsPlugin is the struct implementing the plugin interface.
 // It has no public members.
@@ -139,21 +139,30 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
 	}
 
-	writer := console_writer.NewConsoleWriter()
+	// Display startup info
 	task := "Creating DLO in"
 	err := displayUserInfo(cliConnection, task)
 	if err != nil {
 		return fmt.Errorf("Failed to display user info: %s", err)
 	}
+
+	// Start console writer
+	writer := console_writer.NewConsoleWriter()
 	go writer.Write()
+
+	// Authenticate with Object Storage
 	destination, err := x_auth.GetAuthInfo(cliConnection, writer, args[1])
 	if err != nil {
 		return fmt.Errorf("Failed to authenticate: %s", err)
 	}
+
+	// Create DLO
 	prefix, container, err := dlo.MakeDlo(cliConnection, writer, destination, args[2:])
 	if err != nil {
 		return fmt.Errorf("Failed to create DLO: %s", err)
 	}
+
+	// Kill console writer and display completion info
 	writer.Quit()
 	fmt.Printf("\r\033[2K%s\n\nCreated manifest for %s, upload segments to container %s prefixed with %s\n", console_writer.Green("OK"), console_writer.Cyan(args[3]), console_writer.Cyan(container), console_writer.Cyan(prefix))
 
