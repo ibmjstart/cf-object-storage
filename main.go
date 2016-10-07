@@ -270,9 +270,15 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 			},
 			{
 				Name:     makeSLOCommand,
-				HelpText: "LargeObjects plugin command's help text",
+				HelpText: "Create a Static Large Object in Object Storage",
 				UsageDetails: plugin.Usage{
-					Usage: "cf " + makeSLOCommand + " [args]",
+					Usage: "cf " + makeSLOCommand + " service_name slo_container slo_name [-m] [-o output_file] [-s chunk_size] [-t num_threads]",
+					Options: map[string]string{
+						"m": "Only upload missing chunks",
+						"o": "Destination for log data",
+						"s": "Chunk size, in bytes (defaults to create 1000 chunks)",
+						"t": "Maximum number of uploader threads (defaults to the available number of CPUs)",
+					},
 				},
 			},
 		},
