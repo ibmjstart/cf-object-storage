@@ -150,12 +150,12 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 	if err != nil {
 		return fmt.Errorf("Failed to authenticate: %s", err)
 	}
-	err = dlo.MakeDlo(cliConnection, writer, destination, args[2:])
+	prefix, container, err := dlo.MakeDlo(cliConnection, writer, destination, args[2:])
 	if err != nil {
 		return fmt.Errorf("Failed to create DLO: %s", err)
 	}
 	writer.Quit()
-	fmt.Println()
+	fmt.Printf("\r\033[2K%s\n\nCreated manifest for %s, upload segments to container %s prefixed with %s\n", console_writer.Green("OK"), console_writer.Cyan(args[3]), console_writer.Cyan(container), console_writer.Cyan(prefix))
 
 	return nil
 }

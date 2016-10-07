@@ -36,17 +36,17 @@ func parseArgs(args []string) (*flagVal, error) {
 	return &flagVals, nil
 }
 
-func MakeDlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest auth.Destination, args []string) error {
+func MakeDlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest auth.Destination, args []string) (string, string, error) {
 	writer.SetCurrentStage("Preparing DLO manifest")
 	flags, err := parseArgs(args)
 	if err != nil {
-		return fmt.Errorf("Failed to parse arguments: %s", err)
+		return "", "", fmt.Errorf("Failed to parse arguments: %s", err)
 	}
 	uploader := sg.NewDloManifestUploader(dest, args[0], args[1], flags.Container_flag, flags.Prefix_flag)
 	writer.SetCurrentStage("Uploading DLO manifest")
 	err = uploader.Upload()
 	if err != nil {
-		return fmt.Errorf("Failed to upload DLO manifest: %s", err)
+		return "", "", fmt.Errorf("Failed to upload DLO manifest: %s", err)
 	}
-	return nil
+	return flags.Prefix_flag, flags.Container_flag, nil
 }
