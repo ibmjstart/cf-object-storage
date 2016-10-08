@@ -8,6 +8,7 @@ import (
 	"github.ibm.com/ckwaldon/cf-large-objects/console_writer"
 	"github.ibm.com/ckwaldon/cf-large-objects/dlo"
 	"github.ibm.com/ckwaldon/cf-large-objects/object"
+	"github.ibm.com/ckwaldon/cf-large-objects/slo"
 	"github.ibm.com/ckwaldon/cf-large-objects/x_auth"
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
@@ -214,7 +215,36 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 
 // makeSLO executes the logic to create a Static Large Object in an object storage instance.
 func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []string) error {
-	fmt.Println("making slo")
+	// Check that the minimum number of arguments are present
+	if len(args) < 5 {
+		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[3].UsageDetails.Usage)
+	}
+
+	// Display startup info
+	task := "Creating SLO in"
+	err := displayUserInfo(cliConnection, task)
+	if err != nil {
+		return fmt.Errorf("Failed to display user info: %s", err)
+	}
+
+	// Start console writer
+	writer := console_writer.NewConsoleWriter()
+	// go writer.Write()
+
+	// Authenticate with Object Storage
+	destination, err := x_auth.GetAuthInfo(cliConnection, writer, args[1])
+	if err != nil {
+		return fmt.Errorf("Failed to authenticate: %s", err)
+	}
+
+	// Create SLO
+	_, err = slo.MakeSlo(cliConnection, writer, destination, args[2:])
+	if err != nil {
+		return fmt.Errorf("Failed to create SLO: %s", err)
+	}
+
+	// Kill console writer and display completion info
+
 	return nil
 }
 
@@ -272,7 +302,7 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				Name:     makeSLOCommand,
 				HelpText: "Create a Static Large Object in Object Storage",
 				UsageDetails: plugin.Usage{
-					Usage: "cf " + makeSLOCommand + " service_name slo_container slo_name [-m] [-o output_file] [-s chunk_size] [-t num_threads]",
+					Usage: "cf " + makeSLOCommand + " service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-t num_threads]",
 					Options: map[string]string{
 						"m": "Only upload missing chunks",
 						"o": "Destination for log data",

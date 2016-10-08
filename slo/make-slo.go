@@ -4,11 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"runtime"
-	"strconv"
 
 	"github.com/cloudfoundry/cli/plugin"
 	cw "github.ibm.com/ckwaldon/cf-large-objects/console_writer"
-	sg "github.ibm.com/ckwaldon/swiftlygo"
+	// sg "github.ibm.com/ckwaldon/swiftlygo"
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
 
@@ -31,8 +30,8 @@ func parseArgs(args []string) (*flagVal, error) {
 	threads := flagSet.Int("t", runtime.NumCPU(), "Maximum number of uploader threads (defaults to the available number of CPUs")
 
 	// Parse optional flags if they have been provided
-	if len(args) > 3 {
-		err := flagSet.Parse(args[2:])
+	if len(args) > 4 {
+		err := flagSet.Parse(args[3:])
 		if err != nil {
 			return nil, fmt.Errorf("Failed to parse flags: %s", err)
 		}
@@ -41,13 +40,26 @@ func parseArgs(args []string) (*flagVal, error) {
 	flagVals := flagVal{
 		Only_missing_flag: bool(*missing),
 		Output_file_flag:  string(*output),
-		Chunk_size_flag:   strconv.Itoa(*chunkSize),
-		Num_threads_flag:  strconv.Itoa(*threads),
+		Chunk_size_flag:   int(*chunkSize),
+		Num_threads_flag:  int(*threads),
 	}
 
 	return &flagVals, nil
 }
 
-func main() {
-	fmt.Println("slo")
+// MakeSlo uploads the given file as an SLO to Object Storage
+func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest auth.Destination, args []string) (string, error) {
+	writer.SetCurrentStage("Preparing SLO")
+	flags, err := parseArgs(args)
+	if err != nil {
+		return "", fmt.Errorf("Failed to parse arguments: %s", err)
+	}
+
+	missing := "False"
+	if flags.Only_missing_flag {
+		missing = "True"
+	}
+	fmt.Printf("Missing: %s\nOutput: %s\nChunk size: %d\nNum threads: %d\n", missing, flags.Output_file_flag, flags.Chunk_size_flag, flags.Num_threads_flag)
+
+	return "", err
 }
