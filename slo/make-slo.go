@@ -3,12 +3,14 @@ package slo
 import (
 	"flag"
 	"fmt"
+	"math"
+	"os"
 	"runtime"
 
 	"github.com/cloudfoundry/cli/plugin"
 	cw "github.ibm.com/ckwaldon/cf-large-objects/console_writer"
-	// sg "github.ibm.com/ckwaldon/swiftlygo"
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
+	// sg "github.ibm.com/ckwaldon/swiftlygo/slo"
 )
 
 // flagVal holds the flag values
@@ -54,6 +56,23 @@ func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest 
 	if err != nil {
 		return "", fmt.Errorf("Failed to parse arguments: %s", err)
 	}
+
+	file, err := os.Open(args[2])
+	defer file.Close()
+	if err != nil {
+		return "", fmt.Errorf("Failed to open source file: %s", err)
+	}
+
+	fileStats, err := file.Stat()
+	if err != nil {
+		return "", fmt.Errorf("Failed to obtain file stats: %s", err)
+	}
+
+	if flags.Chunk_size_flag <= 0 {
+		flags.Chunk_size_flag = int(math.Ceil(float64(fileStats.Size()) / 1000.0))
+	}
+
+	writer.SetCurrentStage("Uploading SLO")
 
 	missing := "False"
 	if flags.Only_missing_flag {
