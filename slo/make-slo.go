@@ -3,6 +3,7 @@ package slo
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"math"
 	"os"
 	"runtime"
@@ -10,7 +11,7 @@ import (
 	"github.com/cloudfoundry/cli/plugin"
 	cw "github.ibm.com/ckwaldon/cf-large-objects/console_writer"
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
-	// sg "github.ibm.com/ckwaldon/swiftlygo/slo"
+	sg "github.ibm.com/ckwaldon/swiftlygo/slo"
 )
 
 // flagVal holds the flag values
@@ -74,11 +75,26 @@ func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest 
 
 	writer.SetCurrentStage("Uploading SLO")
 
-	missing := "False"
-	if flags.Only_missing_flag {
-		missing = "True"
+	var uploader *sg.Uploader
+	if flags.Output_file_flag == "" {
+		uploader, err = sg.NewUploader(dest, uint(flags.Chunk_size_flag), args[0], args[1], file, uint(flags.Num_threads_flag), flags.Only_missing_flag, ioutil.Discard)
+		if err != nil {
+			return "", fmt.Errorf("Failed to create SLO uploader: %s", err)
+		}
 	}
-	fmt.Printf("Missing: %s\nOutput: %s\nChunk size: %d\nNum threads: %d\n", missing, flags.Output_file_flag, flags.Chunk_size_flag, flags.Num_threads_flag)
+
+	err = uploader.Upload()
+	if err != nil {
+		return "", fmt.Errorf("Failed to upload SLO: %s", err)
+	}
+
+	/*
+		missing := "False"
+		if flags.Only_missing_flag {
+			missing = "True"
+		}
+		fmt.Printf("Missing: %s\nOutput: %s\nChunk size: %d\nNum threads: %d\n", missing, flags.Output_file_flag, flags.Chunk_size_flag, flags.Num_threads_flag)
+	*/
 
 	return "", err
 }
