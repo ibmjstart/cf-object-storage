@@ -229,7 +229,7 @@ func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []
 
 	// Start console writer
 	writer := console_writer.NewConsoleWriter()
-	// go writer.Write()
+	go writer.Write()
 
 	// Authenticate with Object Storage
 	destination, err := x_auth.GetAuthInfo(cliConnection, writer, args[1])
@@ -244,6 +244,7 @@ func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []
 	}
 
 	// Kill console writer and display completion info
+	writer.Quit()
 
 	return nil
 }

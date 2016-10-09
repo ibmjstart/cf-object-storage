@@ -78,23 +78,24 @@ func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest 
 	var uploader *sg.Uploader
 	if flags.Output_file_flag == "" {
 		uploader, err = sg.NewUploader(dest, uint(flags.Chunk_size_flag), args[0], args[1], file, uint(flags.Num_threads_flag), flags.Only_missing_flag, ioutil.Discard)
+	} else {
+		outFile, err := os.Open(flags.Output_file_flag)
+		defer file.Close()
 		if err != nil {
-			return "", fmt.Errorf("Failed to create SLO uploader: %s", err)
+			return "", fmt.Errorf("Failed to open output file: %s", err)
 		}
+
+		uploader, err = sg.NewUploader(dest, uint(flags.Chunk_size_flag), args[0], args[1], file, uint(flags.Num_threads_flag), flags.Only_missing_flag, outFile)
+	}
+
+	if err != nil {
+		return "", fmt.Errorf("Failed to create SLO uploader: %s", err)
 	}
 
 	err = uploader.Upload()
 	if err != nil {
 		return "", fmt.Errorf("Failed to upload SLO: %s", err)
 	}
-
-	/*
-		missing := "False"
-		if flags.Only_missing_flag {
-			missing = "True"
-		}
-		fmt.Printf("Missing: %s\nOutput: %s\nChunk size: %d\nNum threads: %d\n", missing, flags.Output_file_flag, flags.Chunk_size_flag, flags.Num_threads_flag)
-	*/
 
 	return "", err
 }
