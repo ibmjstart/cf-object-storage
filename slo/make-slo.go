@@ -58,18 +58,20 @@ func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest 
 		return "", fmt.Errorf("Failed to parse arguments: %s", err)
 	}
 
+	// Verify source file exists
 	file, err := os.Open(args[2])
 	defer file.Close()
 	if err != nil {
 		return "", fmt.Errorf("Failed to open source file: %s", err)
 	}
 
-	fileStats, err := file.Stat()
-	if err != nil {
-		return "", fmt.Errorf("Failed to obtain file stats: %s", err)
-	}
-
+	// Set default chunk size to create 1000 chunks if no size proveded
 	if flags.Chunk_size_flag <= 0 {
+		fileStats, err := file.Stat()
+		if err != nil {
+			return "", fmt.Errorf("Failed to obtain file stats: %s", err)
+		}
+
 		flags.Chunk_size_flag = int(math.Ceil(float64(fileStats.Size()) / 1000.0))
 	}
 
@@ -77,14 +79,17 @@ func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest 
 
 	var uploader *sg.Uploader
 	if flags.Output_file_flag == "" {
+		// Create SLO uploader without output file
 		uploader, err = sg.NewUploader(dest, uint(flags.Chunk_size_flag), args[0], args[1], file, uint(flags.Num_threads_flag), flags.Only_missing_flag, ioutil.Discard)
 	} else {
+		// Verify output file exists
 		outFile, err := os.Open(flags.Output_file_flag)
 		defer file.Close()
 		if err != nil {
 			return "", fmt.Errorf("Failed to open output file: %s", err)
 		}
 
+		// Create SLO uploader with output file
 		uploader, err = sg.NewUploader(dest, uint(flags.Chunk_size_flag), args[0], args[1], file, uint(flags.Num_threads_flag), flags.Only_missing_flag, outFile)
 	}
 
@@ -92,6 +97,7 @@ func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest 
 		return "", fmt.Errorf("Failed to create SLO uploader: %s", err)
 	}
 
+	// Upload SLO
 	err = uploader.Upload()
 	if err != nil {
 		return "", fmt.Errorf("Failed to upload SLO: %s", err)
