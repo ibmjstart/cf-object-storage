@@ -61,18 +61,6 @@ func (c *ConsoleWriter) ShowStatus() {
 // Write begins printing output
 func (c *ConsoleWriter) Write() {
 	loading := [6]string{" *    ", "  *   ", "   *  ", "    * ", "   *  ", "  *   "}
-	progress := [11]string{
-		">         ",
-		"=>        ",
-		"==>       ",
-		"===>      ",
-		"====>     ",
-		"=====>    ",
-		"======>   ",
-		"=======>  ",
-		"========> ",
-		"=========>",
-		"=========="}
 	count := 0
 	first := true
 
@@ -87,15 +75,8 @@ func (c *ConsoleWriter) Write() {
 			out := fmt.Sprintf("\r%s%s%s", clearLine, loading[count], c.currentStage)
 
 			if c.showStatus {
-				percent := c.status.PercentComplete()
-				stats := fmt.Sprintf("\nSpeed: %.2f MB/s |%s| %.0f%%", c.status.RateMBPS(), progress[int(percent/10.0)], percent)
-
-				if first {
-					out += stats
-					first = false
-				} else {
-					out = "\r" + clearLine + upLine + out + stats
-				}
+				out = getStats(c.status, out, first)
+				first = false
 			}
 
 			fmt.Print(out)
@@ -103,4 +84,20 @@ func (c *ConsoleWriter) Write() {
 		}
 		time.Sleep(speed * time.Millisecond)
 	}
+}
+
+func getStats(status *sg.Status, out string, first bool) string {
+	progress := [11]string{">         ", "=>        ", "==>       ", "===>      ", "====>     ",
+		"=====>    ", "======>   ", "=======>  ", "========> ", "=========>", "=========="}
+
+	percent := status.PercentComplete()
+	stats := fmt.Sprintf("\nSpeed %s |%s| %.0f%%", Cyan(fmt.Sprintf("%.2f MB/s", status.RateMBPS())), progress[int(percent/10.0)], percent)
+
+	if first {
+		stats = out + stats
+	} else {
+		stats = "\r" + clearLine + upLine + out + stats
+	}
+
+	return stats
 }
