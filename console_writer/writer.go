@@ -58,6 +58,18 @@ func (c *ConsoleWriter) ShowStatus() {
 // Write begins printing output
 func (c *ConsoleWriter) Write() {
 	loading := [6]string{" *    ", "  *   ", "   *  ", "    * ", "   *  ", "  *   "}
+	progress := [11]string{
+		">         ",
+		"=>        ",
+		"==>       ",
+		"===>      ",
+		"====>     ",
+		"=====>    ",
+		"======>   ",
+		"=======>  ",
+		"========> ",
+		"=========>",
+		"=========="}
 	count := 0
 	first := true
 
@@ -72,11 +84,13 @@ func (c *ConsoleWriter) Write() {
 			out := fmt.Sprintf("\r\033[2K%s%s", loading[count], c.currentStage)
 
 			if c.showStatus {
+				percent := c.status.PercentComplete()
+				idx := int(percent / 10.0)
 				if first {
-					out += fmt.Sprintf("\nSpeed: %f MB/s, %f%% complete", c.status.RateMBPS(), c.status.PercentComplete())
+					out += fmt.Sprintf("\nSpeed: %.2f MB/s |%s| %.0f%%", c.status.RateMBPS(), progress[idx], percent)
 					first = false
 				} else {
-					out = "\r\033[2K\033[1A" + out + fmt.Sprintf("\nSpeed: %.2f MB/s, %.2f%% complete", c.status.RateMBPS(), c.status.PercentComplete())
+					out = "\r\033[2K\033[1A" + out + fmt.Sprintf("\nSpeed: %.2f MB/s |%s| %.0f%%", c.status.RateMBPS(), progress[idx], percent)
 				}
 			}
 
