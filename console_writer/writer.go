@@ -22,6 +22,7 @@ type ConsoleWriter struct {
 	quit         chan int
 	currentStage string
 	status       *sg.Status
+	showStatus   bool
 }
 
 // NewConsoleWriter creates a new ConsoleWriter
@@ -30,6 +31,7 @@ func NewConsoleWriter() *ConsoleWriter {
 		quit:         make(chan int),
 		currentStage: "Getting started",
 		status:       nil,
+		showStatus:   false,
 	}
 }
 
@@ -38,27 +40,44 @@ func (c *ConsoleWriter) Quit() {
 	c.quit <- 0
 }
 
+// SetCurrentStage sets the current state
+func (c *ConsoleWriter) SetCurrentStage(currentStage string) {
+	c.currentStage = currentStage
+}
+
 // SetStatus gives the writer the uploader's status, if available
 func (c *ConsoleWriter) SetStatus(status *sg.Status) {
 	c.status = status
 }
 
-// SetCurrentStage sets the current state
-func (c *ConsoleWriter) SetCurrentStage(currentStage string) {
-	c.currentStage = currentStage
+// ShowStatus tells the writer that an upload status is available
+func (c *ConsoleWriter) ShowStatus() {
+	c.showStatus = true
 }
 
 // Write begins printing output
 func (c *ConsoleWriter) Write() {
 	loading := [6]string{" *    ", "  *   ", "   *  ", "    * ", "   *  ", "  *   "}
 	count := 0
+	first := true
 
 	for {
 		select {
 		case <-c.quit:
 			return
 		default:
-			fmt.Printf("\r\033[2K%s%s", loading[count], c.currentStage)
+			out := fmt.Sprintf("\r\033[2K%s%s", loading[count], c.currentStage)
+
+			if c.showStatus {
+				if first {
+					out += fmt.Sprintf("\nSpeed: %f MB/s, %f%% complete", c.status.RateMBPS(), c.status.PercentComplete())
+					first = false
+				} else {
+					out = "\033[1A" + out + fmt.Sprintf("\nSpeed: %.2f MB/s, %.2f%% complete", c.status.RateMBPS(), c.status.PercentComplete())
+				}
+			}
+
+			fmt.Print(out)
 			count = (count + 1) % len(loading)
 		}
 		time.Sleep(speed * time.Millisecond)
