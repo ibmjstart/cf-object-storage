@@ -245,7 +245,7 @@ func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []
 
 	// Kill console writer and display completion info
 	writer.Quit()
-	fmt.Printf("\r\033[2K%s\n\nSuccessfully created SLO %s in container %s\n", console_writer.Green("OK"), console_writer.Cyan(args[3]), console_writer.Cyan(args[2]))
+	fmt.Printf("\r\033[2K%s\n\033[2K\nSuccessfully created SLO %s in container %s\n", console_writer.Green("OK"), console_writer.Cyan(args[3]), console_writer.Cyan(args[2]))
 
 	return nil
 }

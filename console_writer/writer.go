@@ -64,6 +64,9 @@ func (c *ConsoleWriter) Write() {
 	for {
 		select {
 		case <-c.quit:
+			if c.showStatus {
+				fmt.Print("\r\033[1A")
+			}
 			return
 		default:
 			out := fmt.Sprintf("\r\033[2K%s%s", loading[count], c.currentStage)
@@ -73,7 +76,7 @@ func (c *ConsoleWriter) Write() {
 					out += fmt.Sprintf("\nSpeed: %f MB/s, %f%% complete", c.status.RateMBPS(), c.status.PercentComplete())
 					first = false
 				} else {
-					out = "\033[1A" + out + fmt.Sprintf("\nSpeed: %.2f MB/s, %.2f%% complete", c.status.RateMBPS(), c.status.PercentComplete())
+					out = "\r\033[2K\033[1A" + out + fmt.Sprintf("\nSpeed: %.2f MB/s, %.2f%% complete", c.status.RateMBPS(), c.status.PercentComplete())
 				}
 			}
 
