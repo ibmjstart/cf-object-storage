@@ -97,6 +97,9 @@ func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest 
 		return "", fmt.Errorf("Failed to create SLO uploader: %s", err)
 	}
 
+	// Provide the console writer with upload status
+	writer.SetStatus(uploader.Status)
+
 	// Upload SLO
 	err = uploader.Upload()
 	if err != nil {

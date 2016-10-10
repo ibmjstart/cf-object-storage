@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	sg "github.ibm.com/ckwaldon/swiftlygo/slo"
 )
 
 // speed is the time (in milliseconds) between console writes
@@ -20,6 +21,7 @@ var Red (func(string, ...interface{}) string) = color.New(color.FgRed, color.Bol
 type ConsoleWriter struct {
 	quit         chan int
 	currentStage string
+	status       *sg.Status
 }
 
 // NewConsoleWriter creates a new ConsoleWriter
@@ -27,12 +29,18 @@ func NewConsoleWriter() *ConsoleWriter {
 	return &ConsoleWriter{
 		quit:         make(chan int),
 		currentStage: "Getting started",
+		status:       nil,
 	}
 }
 
 // Quit sends a kill signal to this ConsoleWriter
 func (c *ConsoleWriter) Quit() {
 	c.quit <- 0
+}
+
+// SetStatus gives the writer the uploader's status, if available
+func (c *ConsoleWriter) SetStatus(status *sg.Status) {
+	c.status = status
 }
 
 // SetCurrentStage sets the current state
