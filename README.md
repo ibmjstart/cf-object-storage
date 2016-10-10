@@ -1,6 +1,6 @@
-cf-large-objects: a Cloud Foundry CLI plugin
+cf-large-objects
 =====================
-A plugin for interacting with objects in Object Storage.
+A Cloud Foundry CLI plugin for interacting with Object Storage.
 
 ## Command List
 
