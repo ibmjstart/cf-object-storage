@@ -8,6 +8,9 @@ import (
 	sg "github.ibm.com/ckwaldon/swiftlygo/slo"
 )
 
+const clearLine string = "\033[2K"
+const upLine string = "\033[1A"
+
 // speed is the time (in milliseconds) between console writes
 const speed time.Duration = 200
 
@@ -77,20 +80,21 @@ func (c *ConsoleWriter) Write() {
 		select {
 		case <-c.quit:
 			if c.showStatus {
-				fmt.Print("\r\033[1A")
+				fmt.Print("\r%s", upLine)
 			}
 			return
 		default:
-			out := fmt.Sprintf("\r\033[2K%s%s", loading[count], c.currentStage)
+			out := fmt.Sprintf("\r%s%s%s", clearLine, loading[count], c.currentStage)
 
 			if c.showStatus {
 				percent := c.status.PercentComplete()
-				idx := int(percent / 10.0)
+				stats := fmt.Sprintf("\nSpeed: %.2f MB/s |%s| %.0f%%", c.status.RateMBPS(), progress[int(percent/10.0)], percent)
+
 				if first {
-					out += fmt.Sprintf("\nSpeed: %.2f MB/s |%s| %.0f%%", c.status.RateMBPS(), progress[idx], percent)
+					out += stats
 					first = false
 				} else {
-					out = "\r\033[2K\033[1A" + out + fmt.Sprintf("\nSpeed: %.2f MB/s |%s| %.0f%%", c.status.RateMBPS(), progress[idx], percent)
+					out = "\r" + clearLine + upLine + out + stats
 				}
 			}
 
