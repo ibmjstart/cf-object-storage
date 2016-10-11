@@ -25,7 +25,6 @@ type ConsoleWriter struct {
 	quit         chan int
 	currentStage string
 	status       *sg.Status
-	showStatus   bool
 }
 
 // NewConsoleWriter creates a new ConsoleWriter
@@ -34,7 +33,6 @@ func NewConsoleWriter() *ConsoleWriter {
 		quit:         make(chan int),
 		currentStage: "Getting started",
 		status:       nil,
-		showStatus:   false,
 	}
 }
 
@@ -53,11 +51,6 @@ func (c *ConsoleWriter) SetStatus(status *sg.Status) {
 	c.status = status
 }
 
-// ShowStatus tells the writer that an upload status is available
-func (c *ConsoleWriter) ShowStatus() {
-	c.showStatus = true
-}
-
 // Write begins printing output
 func (c *ConsoleWriter) Write() {
 	loading := [6]string{" *    ", "  *   ", "   *  ", "    * ", "   *  ", "  *   "}
@@ -67,14 +60,14 @@ func (c *ConsoleWriter) Write() {
 	for {
 		select {
 		case <-c.quit:
-			if c.showStatus {
+			if c.status != nil {
 				fmt.Print("\r%s", upLine)
 			}
 			return
 		default:
 			out := fmt.Sprintf("\r%s%s%s", clearLine, loading[count], c.currentStage)
 
-			if c.showStatus {
+			if c.status != nil {
 				out = getStats(c.status, out, first)
 				first = false
 			}

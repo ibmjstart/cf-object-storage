@@ -99,7 +99,6 @@ func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest 
 
 	// Provide the console writer with upload status
 	writer.SetStatus(uploader.Status)
-	writer.ShowStatus()
 
 	// Upload SLO
 	err = uploader.Upload()
