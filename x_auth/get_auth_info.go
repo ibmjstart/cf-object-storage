@@ -73,7 +73,7 @@ func getCredentialsName(cliConnection plugin.CliConnection, targetService string
 		BeginCapture().
 		AnythingBut("\n").
 		EndCapture().
-		Captures(strings.Join(stdout, ""))
+		Captures(strings.Join(stdout, "\n"))
 
 	// Get name of target service's credentials
 	var serviceCredentialsName string
