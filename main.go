@@ -272,7 +272,7 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				Name:     getAuthInfoCommand,
 				HelpText: "Display an Object Storage service's authentication url and x-auth token",
 				UsageDetails: plugin.Usage{
-					Usage: "cf " + getAuthInfoCommand + " service_name [-url] [-x]",
+					Usage: "cf " + getAuthInfoCommand + " service_name [--url] [-x]",
 					Options: map[string]string{
 						"url": "Display auth url in quiet mode",
 						"x":   "Display x-auth token in quiet mode",
@@ -281,7 +281,7 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 			},
 			{
 				Name:     putObjectCommand,
-				HelpText: "Upload a file as an object to object storage",
+				HelpText: "Upload a file as an object to Object Storage",
 				UsageDetails: plugin.Usage{
 					Usage: "cf " + putObjectCommand + " service_name container_name path_to_source [-n object_name]",
 					Options: map[string]string{
@@ -304,12 +304,12 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				Name:     makeSLOCommand,
 				HelpText: "Create a Static Large Object in Object Storage",
 				UsageDetails: plugin.Usage{
-					Usage: "cf " + makeSLOCommand + " service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-t num_threads]",
+					Usage: "cf " + makeSLOCommand + " service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-j num_threads]",
 					Options: map[string]string{
 						"m": "Only upload missing chunks",
-						"o": "Destination for log data",
+						"o": "Destination for log data, if desired",
 						"s": "Chunk size, in bytes (defaults to create 1000 chunks)",
-						"t": "Maximum number of uploader threads (defaults to the available number of CPUs)",
+						"j": "Maximum number of uploader threads (defaults to the available number of CPUs)",
 					},
 				},
 			},
