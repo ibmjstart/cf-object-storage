@@ -2,6 +2,7 @@ package console_writer
 
 import (
 	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/fatih/color"
@@ -11,6 +12,7 @@ import (
 // speed is the time (in milliseconds) between console writes
 const speed time.Duration = 200
 
+// ANSI escape codes for printing to terminal
 var ClearLine string = "\033[2K"
 var upLine string = "\033[1A"
 
@@ -29,6 +31,10 @@ type ConsoleWriter struct {
 
 // NewConsoleWriter creates a new ConsoleWriter
 func NewConsoleWriter() *ConsoleWriter {
+	if runtime.GOOS == "windows" {
+		color.NoColor = true
+	}
+
 	return &ConsoleWriter{
 		quit:         make(chan int),
 		currentStage: "Getting started",
