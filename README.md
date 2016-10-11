@@ -1,8 +1,48 @@
-cf-large-objects
-=====================
-A Cloud Foundry CLI plugin for interacting with Object Storage.
+# cf-large-objects
 
-## Command List
+[![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+
+> A CloudFoundry Plugin for creating Static and Dynamic Large Objects in OpenStack Object Storage
+
+## Table of Contents
+
+- [Background](#background)
+- [Install](#install)
+- [Usage](#usage)
+- [Contribute](#contribute)
+- [License](#license)
+
+## Background
+
+Static Large Objects (SLOs) and Dynamic Large Objects (DLOs) are incredibly useful aggregate file types available
+in OpenStack Object Storage. However, manipulating them can be quite difficult. This Cloud Foundry CLI plugin is
+designed to make using SLOs and DLOs much more accessible. 
+
+This plugin makes heavy use of the [swiftlygo](https://github.com/ibmjstart/swiftlygo) library. Much more information on SLOs and DLOs can be found by reading
+that library's README.
+
+## Install
+
+Since this plugin is not currently in an offical Cloud Foundry plugin repo, it will need to be downloaded and installed
+manually. 
+
+To downlaod the package, run
+```
+go get github.com/ibmjstart/cf-large-objects
+```
+
+The provided `reinstall.sh` script can then be ran to install the plugin.
+
+**Note:** `reinstall.sh` first attempts to uninstall the plugin, so you may get a failure message from the uninstall
+command. This will certainly happen the first time you install. However, as long as the following install succeeds all
+should work fine.
+
+## Usage
+
+This plugin provides the user with four new commands, described below. Each pertains to one of the main features of the
+swiftlygo library. More information can be found by using `cf help` followed by any of the four commands.
+
+### Command List
 
 Command		|Usage															|Description
 ---		|---															|---
@@ -10,3 +50,13 @@ Command		|Usage															|Description
 `put-object`    | `cf put-object service_name container_name path_to_source [-n object_name]`						|Upload a file to Object Storage
 `make-dlo`	| `cf make-dlo service_name dlo_container dlo_name [-c object_container] [-p dlo_prefix]`				|Create a DLO manifest in Object Storage
 `make-slo`	| `cf make-slo service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-t num_threads]`	|Upload a file to Object Storage as an SLO
+
+## Contribute
+
+PRs accepted.
+
+Small note: If editing the README, please conform to the [standard-readme](https://github.com/RichardLitt/standard-readme) specification.
+
+## License
+Apache 2.0
+ © IBM jStart
