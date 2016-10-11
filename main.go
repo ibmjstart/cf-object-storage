@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/cloudfoundry/cli/plugin"
-	"github.ibm.com/ckwaldon/cf-large-objects/console_writer"
+	cw "github.ibm.com/ckwaldon/cf-large-objects/console_writer"
 	"github.ibm.com/ckwaldon/cf-large-objects/dlo"
 	"github.ibm.com/ckwaldon/cf-large-objects/object"
 	"github.ibm.com/ckwaldon/cf-large-objects/slo"
@@ -54,7 +54,7 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 
 	// Check for an error
 	if err != nil {
-		fmt.Printf("\r\033[2K\n%s\n%s\n", console_writer.Red("FAILED"), err)
+		fmt.Printf("\r%s\n%s\n%s\n", cw.ClearLine, cw.Red("FAILED"), err)
 		os.Exit(1)
 	}
 }
@@ -79,7 +79,7 @@ func displayUserInfo(cliConnection plugin.CliConnection, task string) error {
 		return fmt.Errorf("Failed to get space: %s", err)
 	}
 
-	fmt.Printf("%s org %s / space %s as %s...\n", task, console_writer.Cyan(org.Name), console_writer.Cyan(space.Name), console_writer.Cyan(username))
+	fmt.Printf("%s org %s / space %s as %s...\n", task, cw.Cyan(org.Name), cw.Cyan(space.Name), cw.Cyan(username))
 
 	return nil
 }
@@ -98,7 +98,7 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 	}
 
 	quiet := flags.Url_flag || flags.X_auth_flag
-	writer := console_writer.NewConsoleWriter()
+	writer := cw.NewConsoleWriter()
 
 	// Start console writer if not in quiet mode
 	if !quiet {
@@ -133,7 +133,7 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 	if !quiet {
 		writer.Quit()
 
-		fmt.Printf("\r\033[2K%s\n\n%s\n%s %s\n%s %s\n", console_writer.Green("OK"), console_writer.Cyan(args[1]), console_writer.White("auth url:"), authUrl, console_writer.White("x-auth:  "), xAuth)
+		fmt.Printf("\r%s%s\n\n%s\n%s%s\n%s%s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(args[1]), cw.White("auth url: "), authUrl, cw.White("x-auth:   "), xAuth)
 	}
 
 	return nil
@@ -154,7 +154,7 @@ func (c *LargeObjectsPlugin) putObject(cliConnection plugin.CliConnection, args 
 	}
 
 	// Start console writer
-	writer := console_writer.NewConsoleWriter()
+	writer := cw.NewConsoleWriter()
 	go writer.Write()
 
 	// Authenticate with Object Storage
@@ -171,7 +171,7 @@ func (c *LargeObjectsPlugin) putObject(cliConnection plugin.CliConnection, args 
 
 	// Kill console writer and display completion info
 	writer.Quit()
-	fmt.Printf("\r\033[2K%s\n\nUploaded %s to container %s\n", console_writer.Green("OK"), console_writer.Cyan(name), console_writer.Cyan(args[2]))
+	fmt.Printf("\r%s%s\n\nUploaded %s to container %s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(name), cw.Cyan(args[2]))
 
 	return nil
 }
@@ -191,7 +191,7 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 	}
 
 	// Start console writer
-	writer := console_writer.NewConsoleWriter()
+	writer := cw.NewConsoleWriter()
 	go writer.Write()
 
 	// Authenticate with Object Storage
@@ -208,7 +208,7 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 
 	// Kill console writer and display completion info
 	writer.Quit()
-	fmt.Printf("\r\033[2K%s\n\nCreated manifest for %s, upload segments to container %s prefixed with %s\n", console_writer.Green("OK"), console_writer.Cyan(args[3]), console_writer.Cyan(container), console_writer.Cyan(prefix))
+	fmt.Printf("\r%s%s\n\nCreated manifest for %s, upload segments to container %s prefixed with %s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(args[3]), cw.Cyan(container), cw.Cyan(prefix))
 
 	return nil
 }
@@ -228,7 +228,7 @@ func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []
 	}
 
 	// Start console writer
-	writer := console_writer.NewConsoleWriter()
+	writer := cw.NewConsoleWriter()
 	go writer.Write()
 
 	// Authenticate with Object Storage
@@ -245,7 +245,7 @@ func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []
 
 	// Kill console writer and display completion info
 	writer.Quit()
-	fmt.Printf("\r\033[2K%s\n\033[2K\nSuccessfully created SLO %s in container %s\n", console_writer.Green("OK"), console_writer.Cyan(args[3]), console_writer.Cyan(args[2]))
+	fmt.Printf("\r%s%s\n%s\nSuccessfully created SLO %s in container %s\n", cw.ClearLine, cw.Green("OK"), cw.ClearLine, cw.Cyan(args[3]), cw.Cyan(args[2]))
 
 	return nil
 }

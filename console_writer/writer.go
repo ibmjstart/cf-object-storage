@@ -8,11 +8,11 @@ import (
 	sg "github.ibm.com/ckwaldon/swiftlygo/slo"
 )
 
-const clearLine string = "\033[2K"
-const upLine string = "\033[1A"
-
 // speed is the time (in milliseconds) between console writes
 const speed time.Duration = 200
+
+var ClearLine string = "\033[2K"
+var upLine string = "\033[1A"
 
 // color output wrappers
 var Cyan (func(string, ...interface{}) string) = color.New(color.FgCyan, color.Bold).SprintfFunc()
@@ -65,7 +65,7 @@ func (c *ConsoleWriter) Write() {
 			}
 			return
 		default:
-			out := fmt.Sprintf("\r%s%s%s", clearLine, loading[count], c.currentStage)
+			out := fmt.Sprintf("\r%s%s%s", ClearLine, loading[count], c.currentStage)
 
 			if c.status != nil {
 				out = getStats(c.status, out, first)
@@ -94,7 +94,7 @@ func getStats(status *sg.Status, out string, first bool) string {
 	if first {
 		stats = out + stats
 	} else {
-		stats = "\r" + clearLine + upLine + out + stats
+		stats = "\r" + ClearLine + upLine + out + stats
 	}
 
 	return stats
