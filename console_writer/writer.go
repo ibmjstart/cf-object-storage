@@ -91,7 +91,12 @@ func getStats(status *sg.Status, out string, first bool) string {
 		"=====>    ", "======>   ", "=======>  ", "========> ", "=========>", "=========="}
 
 	percent := status.PercentComplete()
-	stats := fmt.Sprintf("\nSpeed %s |%s| %.0f%%", Cyan(fmt.Sprintf("%.2f MB/s", status.RateMBPS())), progress[int(percent/10.0)], percent)
+	percentStr := fmt.Sprintf("%.0f%%", percent)
+	if percent == 100 {
+		percentStr += " Uploading manifest"
+	}
+
+	stats := fmt.Sprintf("\nSpeed %s |%s| %s", Cyan(fmt.Sprintf("%.2f MB/s", status.RateMBPS())), progress[int(percent/10.0)], percentStr)
 
 	if first {
 		stats = out + stats
