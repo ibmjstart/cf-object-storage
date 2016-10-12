@@ -2,7 +2,7 @@ package console_writer
 
 import (
 	"fmt"
-	"runtime"
+	// "runtime"
 	"time"
 
 	"github.com/fatih/color"
@@ -25,20 +25,22 @@ var Red (func(string, ...interface{}) string) = color.New(color.FgRed, color.Bol
 // ConsoleWriter asynchronously prints the current state to the console
 type ConsoleWriter struct {
 	quit         chan int
-	currentStage string
+	currentStage chan string
 	status       *sg.Status
 }
 
 // NewConsoleWriter creates a new ConsoleWriter
 func NewConsoleWriter() *ConsoleWriter {
-	// Disable color on unsupported systems
-	if runtime.GOOS == "windows" {
-		color.NoColor = true
-	}
+	// Disable color and escape sequences on unsupported systems
+	// if runtime.GOOS == "windows" {
+	color.NoColor = true
+	ClearLine = ""
+	upLine = ""
+	// }
 
 	return &ConsoleWriter{
 		quit:         make(chan int),
-		currentStage: "Getting started",
+		currentStage: make(chan string),
 		status:       nil,
 	}
 }
@@ -50,7 +52,7 @@ func (c *ConsoleWriter) Quit() {
 
 // SetCurrentStage sets the current state
 func (c *ConsoleWriter) SetCurrentStage(currentStage string) {
-	c.currentStage = currentStage
+	c.currentStage <- currentStage
 }
 
 // SetStatus gives the writer the uploader's status, if available
@@ -59,6 +61,7 @@ func (c *ConsoleWriter) SetStatus(status *sg.Status) {
 }
 
 // Write begins printing output
+/*
 func (c *ConsoleWriter) Write() {
 	loading := [6]string{" *    ", "  *   ", "   *  ", "    * ", "   *  ", "  *   "}
 	count := 0
@@ -83,6 +86,19 @@ func (c *ConsoleWriter) Write() {
 			count = (count + 1) % len(loading)
 		}
 		time.Sleep(speed * time.Millisecond)
+	}
+}
+*/
+
+// func writeWithoutANSI(status *sg.Status) {
+func (c *ConsoleWriter) Write() {
+	for {
+		select {
+		case <-c.quit:
+			return
+		case stage := <-c.currentStage:
+			fmt.Println(stage)
+		}
 	}
 }
 
