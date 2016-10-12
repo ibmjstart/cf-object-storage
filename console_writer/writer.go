@@ -9,20 +9,28 @@ import (
 	sg "github.ibm.com/ckwaldon/swiftlygo/slo"
 )
 
-// speed is the time (in milliseconds) between console writes
+// speed is the time (in milliseconds) between console writes.
 const speed time.Duration = 200
 
-// ANSI escape codes for printing to terminal
+// ClearLine is the ANSI escape code for clearing a terminal line.
 var ClearLine string = "\033[2K"
+
+// upLine is the ANSI escape code for moving the cursor up a line in the terminal.
 var upLine string = "\033[1A"
 
-// color output wrappers
+// Cyan formats a string to display in cyan.
 var Cyan (func(string, ...interface{}) string) = color.New(color.FgCyan, color.Bold).SprintfFunc()
+
+// White formats a string to display in high intensity white.
 var White (func(string, ...interface{}) string) = color.New(color.FgHiWhite, color.Bold).SprintfFunc()
+
+// Green formats a string to display in green.
 var Green (func(string, ...interface{}) string) = color.New(color.FgGreen, color.Bold).SprintfFunc()
+
+// Red formats a string to display in red.
 var Red (func(string, ...interface{}) string) = color.New(color.FgRed, color.Bold).SprintfFunc()
 
-// ConsoleWriter asynchronously prints the current state to the console
+// ConsoleWriter asynchronously prints the current state to the console.
 type ConsoleWriter struct {
 	quit         chan int
 	currentStage chan string
@@ -30,7 +38,7 @@ type ConsoleWriter struct {
 	Write        func()
 }
 
-// NewConsoleWriter creates a new ConsoleWriter
+// NewConsoleWriter creates a new ConsoleWriter.
 func NewConsoleWriter() *ConsoleWriter {
 	newWriter := &ConsoleWriter{
 		quit:         make(chan int),
@@ -51,22 +59,22 @@ func NewConsoleWriter() *ConsoleWriter {
 	return newWriter
 }
 
-// Quit sends a kill signal to this ConsoleWriter
+// Quit sends a kill signal to this ConsoleWriter.
 func (c *ConsoleWriter) Quit() {
 	c.quit <- 0
 }
 
-// SetCurrentStage sets the current state
+// SetCurrentStage sets the current state.
 func (c *ConsoleWriter) SetCurrentStage(currentStage string) {
 	c.currentStage <- currentStage
 }
 
-// SetStatus gives the writer the uploader's status, if available
+// SetStatus gives the writer the uploader's status, if available.
 func (c *ConsoleWriter) SetStatus(status *sg.Status) {
 	c.status = status
 }
 
-// writeWithANSI prints output with ANSI support
+// writeWithANSI prints output with ANSI support.
 func (c *ConsoleWriter) writeWithANSI() {
 	loading := [6]string{" *    ", "  *   ", "   *  ", "    * ", "   *  ", "  *   "}
 	count := 0
@@ -101,7 +109,7 @@ func (c *ConsoleWriter) writeWithANSI() {
 	}
 }
 
-// writeWithoutANSI prints output without ANSI support
+// writeWithoutANSI prints output without ANSI support.
 func (c *ConsoleWriter) writeWithoutANSI() {
 	for {
 		select {
@@ -113,7 +121,7 @@ func (c *ConsoleWriter) writeWithoutANSI() {
 	}
 }
 
-// getStats prints a progress bar for the SLO upload
+// getStats prints a progress bar for the SLO upload.
 func getStats(status *sg.Status, out string, first bool) string {
 	progress := [11]string{">         ", "=>        ", "==>       ", "===>      ", "====>     ",
 		"=====>    ", "======>   ", "=======>  ", "========> ", "=========>", "=========="}

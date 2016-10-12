@@ -12,12 +12,12 @@ import (
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
 
-// flagVal holds the flag values
+// flagVal holds the flag values.
 type flagVal struct {
 	Rename_flag string
 }
 
-// parseArgs parses the arguments provided to put-object
+// parseArgs parses the arguments provided to put-object.
 func parseArgs(args []string) (*flagVal, error) {
 	flagSet := flag.NewFlagSet("flagSet", flag.ContinueOnError)
 
@@ -39,7 +39,7 @@ func parseArgs(args []string) (*flagVal, error) {
 	return &flagVals, nil
 }
 
-// PutObject uploads a file to Object Storage
+// PutObject uploads a file to Object Storage.
 func PutObject(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest auth.Destination, args []string) (string, error) {
 	writer.SetCurrentStage("Uploading object")
 	flags, err := parseArgs(args)

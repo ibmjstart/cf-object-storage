@@ -49,13 +49,14 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 		makeSLOCommand:     c.makeSLO,
 	}
 
+	// Create writer to provide output
 	c.writer = cw.NewConsoleWriter()
 
 	// Dispatch the subcommand that the user wanted, if it exists
 	subcommandFunc := c.subcommands[args[0]]
 	err := subcommandFunc(cliConnection, args)
 
-	// Check for an error
+	// Report any fatal errors returned by the subcommand
 	if err != nil {
 		fmt.Printf("\r%s\n%s\n%s\n", cw.ClearLine, cw.Red("FAILED"), err)
 		os.Exit(1)
@@ -87,7 +88,7 @@ func displayUserInfo(cliConnection plugin.CliConnection, task string) error {
 	return nil
 }
 
-// getXAuthToken executes the logic to fetch the X-Auth token for an object storage instance.
+// getAuthInfo fetches the x-auth token and auth url for an Object Storage instance.
 func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
 	if len(args) < 2 {
@@ -135,13 +136,14 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 	if !quiet {
 		c.writer.Quit()
 
-		fmt.Printf("\r%s%s\n\n%s\n%s%s\n%s%s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(args[1]), cw.White("auth url: "), authUrl, cw.White("x-auth:   "), xAuth)
+		fmt.Printf("\r%s%s\n\n%s\n%s%s\n%s%s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(args[1]),
+			cw.White("auth url: "), authUrl, cw.White("x-auth:   "), xAuth)
 	}
 
 	return nil
 }
 
-// putObject executes the logic to upload an object to an object storage instance.
+// putObject uploads an object to an Object Storage instance.
 func (c *LargeObjectsPlugin) putObject(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
 	if len(args) < 4 {
@@ -177,7 +179,7 @@ func (c *LargeObjectsPlugin) putObject(cliConnection plugin.CliConnection, args 
 	return nil
 }
 
-// makeDLO executes the logic to create a Dynamic Large Object in an object storage instance.
+// makeDLO creates a Dynamic Large Object manifest in an Object Storage instance.
 func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
 	if len(args) < 4 {
@@ -213,7 +215,7 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 	return nil
 }
 
-// makeSLO executes the logic to create a Static Large Object in an object storage instance.
+// makeSLO creates a Static Large Object in an Object Storage instance.
 func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
 	if len(args) < 5 {
@@ -257,8 +259,8 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 	return plugin.PluginMetadata{
 		Name: pluginName,
 		Version: plugin.VersionType{
-			Major: 0,
-			Minor: 1,
+			Major: 1,
+			Minor: 0,
 			Build: 0,
 		},
 		MinCliVersion: plugin.VersionType{

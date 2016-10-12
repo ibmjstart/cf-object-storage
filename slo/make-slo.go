@@ -14,7 +14,7 @@ import (
 	sg "github.ibm.com/ckwaldon/swiftlygo/slo"
 )
 
-// flagVal holds the flag values
+// flagVal holds the flag values.
 type flagVal struct {
 	Only_missing_flag bool
 	Output_file_flag  string
@@ -22,7 +22,7 @@ type flagVal struct {
 	Num_threads_flag  int
 }
 
-// parseArgs parses the arguments provided to make-slo
+// parseArgs parses the arguments provided to make-slo.
 func parseArgs(args []string) (*flagVal, error) {
 	flagSet := flag.NewFlagSet("flagSet", flag.ContinueOnError)
 
@@ -50,7 +50,7 @@ func parseArgs(args []string) (*flagVal, error) {
 	return &flagVals, nil
 }
 
-// MakeSlo uploads the given file as an SLO to Object Storage
+// MakeSlo uploads the given file as an SLO to Object Storage.
 func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest auth.Destination, args []string) error {
 	writer.SetCurrentStage("Preparing SLO")
 	flags, err := parseArgs(args)

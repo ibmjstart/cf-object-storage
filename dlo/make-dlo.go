@@ -10,13 +10,13 @@ import (
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
 
-// flagVal holds the flag values
+// flagVal holds the flag values.
 type flagVal struct {
 	Container_flag string
 	Prefix_flag    string
 }
 
-// parseArgs parses the arguments provided to make-dlo
+// parseArgs parses the arguments provided to make-dlo.
 func parseArgs(args []string) (*flagVal, error) {
 	flagSet := flag.NewFlagSet("flagSet", flag.ContinueOnError)
 
@@ -40,7 +40,7 @@ func parseArgs(args []string) (*flagVal, error) {
 	return &flagVals, nil
 }
 
-// MakeDlo uploads a DLO manifest to Object Storage
+// MakeDlo uploads a DLO manifest to Object Storage.
 func MakeDlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest auth.Destination, args []string) (string, string, error) {
 	writer.SetCurrentStage("Preparing DLO manifest")
 	flags, err := parseArgs(args)

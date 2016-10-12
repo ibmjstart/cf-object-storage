@@ -12,7 +12,7 @@ import (
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
 
-// flagVal holds the flag values
+// flagVal holds the flag values.
 type flagVal struct {
 	Url_flag    bool
 	X_auth_flag bool
@@ -86,7 +86,7 @@ func getCredentialsName(cliConnection plugin.CliConnection, targetService string
 	return serviceCredentialsName, nil
 }
 
-// getJSONCredentials returns the target service's credentials
+// getJSONCredentials returns the target service's credentials.
 func getJSONCredentials(cliConnection plugin.CliConnection, targetService, serviceCredentialsName string) (string, error) {
 	// Get the service key for the target service's credentials
 	stdout, err := cliConnection.CliCommandWithoutTerminalOutput("service-key", targetService, serviceCredentialsName)
