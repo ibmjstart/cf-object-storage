@@ -36,6 +36,7 @@ const makeSLOCommand string = "make-slo"
 // It has no public members.
 type LargeObjectsPlugin struct {
 	subcommands map[string](func(plugin.CliConnection, []string) error)
+	writer      *cw.ConsoleWriter
 }
 
 // Run handles each invocation of the CLI plugin.
@@ -47,6 +48,8 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 		makeDLOCommand:     c.makeDLO,
 		makeSLOCommand:     c.makeSLO,
 	}
+
+	c.writer = cw.NewConsoleWriter()
 
 	// Dispatch the subcommand that the user wanted, if it exists
 	subcommandFunc := c.subcommands[args[0]]
@@ -98,7 +101,6 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 	}
 
 	quiet := flags.Url_flag || flags.X_auth_flag
-	writer := cw.NewConsoleWriter()
 
 	// Start console writer if not in quiet mode
 	if !quiet {
@@ -109,11 +111,11 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 			return err
 		}
 
-		go writer.Write()
+		go c.writer.Write()
 	}
 
 	// Get authorization info
-	destination, err := x_auth.GetAuthInfo(cliConnection, writer, args[1])
+	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, args[1])
 	if err != nil {
 		return err
 	}
@@ -131,7 +133,7 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 
 	// Kill console writer if not in quiet mode
 	if !quiet {
-		writer.Quit()
+		c.writer.Quit()
 
 		fmt.Printf("\r%s%s\n\n%s\n%s%s\n%s%s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(args[1]), cw.White("auth url: "), authUrl, cw.White("x-auth:   "), xAuth)
 	}
@@ -154,23 +156,22 @@ func (c *LargeObjectsPlugin) putObject(cliConnection plugin.CliConnection, args 
 	}
 
 	// Start console writer
-	writer := cw.NewConsoleWriter()
-	go writer.Write()
+	go c.writer.Write()
 
 	// Authenticate with Object Storage
-	destination, err := x_auth.GetAuthInfo(cliConnection, writer, args[1])
+	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, args[1])
 	if err != nil {
 		return fmt.Errorf("Failed to authenticate: %s", err)
 	}
 
 	// Upload object
-	name, err := object.PutObject(cliConnection, writer, destination, args[2:])
+	name, err := object.PutObject(cliConnection, c.writer, destination, args[2:])
 	if err != nil {
 		return fmt.Errorf("Failed to upload object: %s", err)
 	}
 
 	// Kill console writer and display completion info
-	writer.Quit()
+	c.writer.Quit()
 	fmt.Printf("\r%s%s\n\nUploaded %s to container %s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(name), cw.Cyan(args[2]))
 
 	return nil
@@ -191,23 +192,22 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 	}
 
 	// Start console writer
-	writer := cw.NewConsoleWriter()
-	go writer.Write()
+	go c.writer.Write()
 
 	// Authenticate with Object Storage
-	destination, err := x_auth.GetAuthInfo(cliConnection, writer, args[1])
+	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, args[1])
 	if err != nil {
 		return fmt.Errorf("Failed to authenticate: %s", err)
 	}
 
 	// Create DLO
-	prefix, container, err := dlo.MakeDlo(cliConnection, writer, destination, args[2:])
+	prefix, container, err := dlo.MakeDlo(cliConnection, c.writer, destination, args[2:])
 	if err != nil {
 		return fmt.Errorf("Failed to create DLO manifest: %s", err)
 	}
 
 	// Kill console writer and display completion info
-	writer.Quit()
+	c.writer.Quit()
 	fmt.Printf("\r%s%s\n\nCreated manifest for %s, upload segments to container %s prefixed with %s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(args[3]), cw.Cyan(container), cw.Cyan(prefix))
 
 	return nil
@@ -228,23 +228,22 @@ func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []
 	}
 
 	// Start console writer
-	writer := cw.NewConsoleWriter()
-	go writer.Write()
+	go c.writer.Write()
 
 	// Authenticate with Object Storage
-	destination, err := x_auth.GetAuthInfo(cliConnection, writer, args[1])
+	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, args[1])
 	if err != nil {
 		return fmt.Errorf("Failed to authenticate: %s", err)
 	}
 
 	// Create SLO
-	err = slo.MakeSlo(cliConnection, writer, destination, args[2:])
+	err = slo.MakeSlo(cliConnection, c.writer, destination, args[2:])
 	if err != nil {
 		return fmt.Errorf("Failed to create SLO: %s", err)
 	}
 
 	// Kill console writer and display completion info
-	writer.Quit()
+	c.writer.Quit()
 	fmt.Printf("\r%s%s\n%s\nSuccessfully created SLO %s in container %s\n", cw.ClearLine, cw.Green("OK"), cw.ClearLine, cw.Cyan(args[3]), cw.Cyan(args[2]))
 
 	return nil
