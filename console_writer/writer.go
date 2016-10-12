@@ -2,7 +2,7 @@ package console_writer
 
 import (
 	"fmt"
-	// "runtime"
+	"runtime"
 	"time"
 
 	"github.com/fatih/color"
@@ -27,22 +27,28 @@ type ConsoleWriter struct {
 	quit         chan int
 	currentStage chan string
 	status       *sg.Status
+	Write        func()
 }
 
 // NewConsoleWriter creates a new ConsoleWriter
 func NewConsoleWriter() *ConsoleWriter {
-	// Disable color and escape sequences on unsupported systems
-	// if runtime.GOOS == "windows" {
-	color.NoColor = true
-	ClearLine = ""
-	upLine = ""
-	// }
-
-	return &ConsoleWriter{
+	newWriter := &ConsoleWriter{
 		quit:         make(chan int),
 		currentStage: make(chan string),
 		status:       nil,
 	}
+
+	// Disable color and escape sequences on unsupported systems
+	if runtime.GOOS == "windows" {
+		newWriter.Write = newWriter.writeWithoutANSI
+		color.NoColor = true
+		ClearLine = ""
+		upLine = ""
+	} else {
+		newWriter.Write = newWriter.writeWithANSI
+	}
+
+	return newWriter
 }
 
 // Quit sends a kill signal to this ConsoleWriter
@@ -60,12 +66,24 @@ func (c *ConsoleWriter) SetStatus(status *sg.Status) {
 	c.status = status
 }
 
-// Write begins printing output
-/*
-func (c *ConsoleWriter) Write() {
+// writeWithANSI prints output with ANSI support
+func (c *ConsoleWriter) writeWithANSI() {
 	loading := [6]string{" *    ", "  *   ", "   *  ", "    * ", "   *  ", "  *   "}
 	count := 0
 	first := true
+	cur := ""
+
+	writeHelper := func() {
+		out := fmt.Sprintf("\r%s%s%s", ClearLine, loading[count], cur)
+
+		if c.status != nil {
+			out = getStats(c.status, out, first)
+			first = false
+		}
+
+		fmt.Print(out)
+		count = (count + 1) % len(loading)
+	}
 
 	for {
 		select {
@@ -74,24 +92,17 @@ func (c *ConsoleWriter) Write() {
 				fmt.Print("\r%s", upLine)
 			}
 			return
+		case cur = <-c.currentStage:
+			writeHelper()
 		default:
-			out := fmt.Sprintf("\r%s%s%s", ClearLine, loading[count], c.currentStage)
-
-			if c.status != nil {
-				out = getStats(c.status, out, first)
-				first = false
-			}
-
-			fmt.Print(out)
-			count = (count + 1) % len(loading)
+			writeHelper()
 		}
 		time.Sleep(speed * time.Millisecond)
 	}
 }
-*/
 
-// func writeWithoutANSI(status *sg.Status) {
-func (c *ConsoleWriter) Write() {
+// writeWithoutANSI prints output without ANSI support
+func (c *ConsoleWriter) writeWithoutANSI() {
 	for {
 		select {
 		case <-c.quit:
