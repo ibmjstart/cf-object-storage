@@ -264,7 +264,7 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 		},
 		MinCliVersion: plugin.VersionType{
 			Major: 6,
-			Minor: 7,
+			Minor: 21,
 			Build: 0,
 		},
 		Commands: []plugin.Command{
