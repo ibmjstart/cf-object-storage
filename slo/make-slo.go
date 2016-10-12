@@ -51,25 +51,25 @@ func parseArgs(args []string) (*flagVal, error) {
 }
 
 // MakeSlo uploads the given file as an SLO to Object Storage
-func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest auth.Destination, args []string) (string, error) {
+func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest auth.Destination, args []string) error {
 	writer.SetCurrentStage("Preparing SLO")
 	flags, err := parseArgs(args)
 	if err != nil {
-		return "", fmt.Errorf("Failed to parse arguments: %s", err)
+		return fmt.Errorf("Failed to parse arguments: %s", err)
 	}
 
 	// Verify source file exists
 	file, err := os.Open(args[2])
 	defer file.Close()
 	if err != nil {
-		return "", fmt.Errorf("Failed to open source file: %s", err)
+		return fmt.Errorf("Failed to open source file: %s", err)
 	}
 
 	// Set default chunk size to create 1000 chunks if no size proveded
 	if flags.Chunk_size_flag <= 0 {
 		fileStats, err := file.Stat()
 		if err != nil {
-			return "", fmt.Errorf("Failed to obtain file stats: %s", err)
+			return fmt.Errorf("Failed to obtain file stats: %s", err)
 		}
 
 		flags.Chunk_size_flag = int(math.Ceil(float64(fileStats.Size()) / 1000.0))
@@ -86,7 +86,7 @@ func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest 
 		outFile, err := os.OpenFile(flags.Output_file_flag, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		defer file.Close()
 		if err != nil {
-			return "", fmt.Errorf("Failed to open output file: %s", err)
+			return fmt.Errorf("Failed to open output file: %s", err)
 		}
 
 		// Create SLO uploader with output file
@@ -94,7 +94,7 @@ func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest 
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("Failed to create SLO uploader: %s", err)
+		return fmt.Errorf("Failed to create SLO uploader: %s", err)
 	}
 
 	// Provide the console writer with upload status
@@ -103,8 +103,8 @@ func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest 
 	// Upload SLO
 	err = uploader.Upload()
 	if err != nil {
-		return "", fmt.Errorf("Failed to upload SLO: %s", err)
+		return fmt.Errorf("Failed to upload SLO: %s", err)
 	}
 
-	return "", err
+	return nil
 }

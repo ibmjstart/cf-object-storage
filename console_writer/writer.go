@@ -31,6 +31,7 @@ type ConsoleWriter struct {
 
 // NewConsoleWriter creates a new ConsoleWriter
 func NewConsoleWriter() *ConsoleWriter {
+	// Disable color on unsupported systems
 	if runtime.GOOS == "windows" {
 		color.NoColor = true
 	}
@@ -85,6 +86,7 @@ func (c *ConsoleWriter) Write() {
 	}
 }
 
+// getStats prints a progress bar for the SLO upload
 func getStats(status *sg.Status, out string, first bool) string {
 	progress := [11]string{">         ", "=>        ", "==>       ", "===>      ", "====>     ",
 		"=====>    ", "======>   ", "=======>  ", "========> ", "=========>", "=========="}

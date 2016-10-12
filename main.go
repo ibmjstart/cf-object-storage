@@ -203,7 +203,7 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 	// Create DLO
 	prefix, container, err := dlo.MakeDlo(cliConnection, writer, destination, args[2:])
 	if err != nil {
-		return fmt.Errorf("Failed to create DLO: %s", err)
+		return fmt.Errorf("Failed to create DLO manifest: %s", err)
 	}
 
 	// Kill console writer and display completion info
@@ -238,7 +238,7 @@ func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []
 	}
 
 	// Create SLO
-	_, err = slo.MakeSlo(cliConnection, writer, destination, args[2:])
+	err = slo.MakeSlo(cliConnection, writer, destination, args[2:])
 	if err != nil {
 		return fmt.Errorf("Failed to create SLO: %s", err)
 	}
