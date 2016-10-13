@@ -49,7 +49,6 @@ func NewConsoleWriter() *ConsoleWriter {
 	// Disable color and escape sequences on unsupported systems
 	if runtime.GOOS == "windows" {
 		newWriter.Write = newWriter.writeWithoutANSI
-		color.NoColor = true
 		ClearLine = ""
 		upLine = ""
 	} else {
