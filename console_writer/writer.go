@@ -62,6 +62,8 @@ func NewConsoleWriter() *ConsoleWriter {
 // Quit sends a kill signal to this ConsoleWriter.
 func (c *ConsoleWriter) Quit() {
 	c.quit <- 0
+	close(c.quit)
+	close(c.currentStage)
 }
 
 // SetCurrentStage sets the current state.
@@ -72,6 +74,12 @@ func (c *ConsoleWriter) SetCurrentStage(currentStage string) {
 // SetStatus gives the writer the uploader's status, if available.
 func (c *ConsoleWriter) SetStatus(status *sg.Status) {
 	c.status = status
+}
+
+// ClearStatus ensures that the currentStage does not block in quiet mode
+func (c *ConsoleWriter) ClearStatus() {
+	for _ = range c.currentStage {
+	}
 }
 
 // writeWithANSI prints output with ANSI support.

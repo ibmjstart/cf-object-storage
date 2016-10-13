@@ -103,8 +103,8 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 
 	quiet := flags.Url_flag || flags.X_auth_flag
 
-	// Start console writer if not in quiet mode
 	if !quiet {
+		// Start console writer if not in quiet mode
 		task := "Fetching auth info from"
 
 		err := displayUserInfo(cliConnection, task)
@@ -113,6 +113,9 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 		}
 
 		go c.writer.Write()
+	} else {
+		// Clear any output that other processes generate
+		go c.writer.ClearStatus()
 	}
 
 	// Get authorization info
