@@ -54,7 +54,7 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 
 	// Dispatch the subcommand that the user wanted, if it exists
 	subcommandFunc := c.subcommands[args[0]]
-	err := subcommandFunc(cliConnection, args)
+	err := subcommandFunc(cliConnection, args[1:])
 
 	// Report any fatal errors returned by the subcommand
 	if err != nil {
@@ -149,13 +149,20 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 // putObject uploads an object to an Object Storage instance.
 func (c *LargeObjectsPlugin) putObject(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
-	if len(args) < 4 {
+	if len(args) < 3 {
 		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+	}
+
+	// Parse arguments
+	serviceName := args[0]
+	argVals, err := object.ParseArgs(args[1:])
+	if err != nil {
+		return fmt.Errorf("Failed to parse arguments: %s", err)
 	}
 
 	// Display startup info
 	task := "Uploading object in"
-	err := displayUserInfo(cliConnection, task)
+	err = displayUserInfo(cliConnection, task)
 	if err != nil {
 		return fmt.Errorf("Failed to display user info: %s", err)
 	}
@@ -164,20 +171,20 @@ func (c *LargeObjectsPlugin) putObject(cliConnection plugin.CliConnection, args 
 	go c.writer.Write()
 
 	// Authenticate with Object Storage
-	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, args[1])
+	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
 	if err != nil {
 		return fmt.Errorf("Failed to authenticate: %s", err)
 	}
 
 	// Upload object
-	name, err := object.PutObject(cliConnection, c.writer, destination, args[2:])
+	name, err := object.PutObject(cliConnection, c.writer, destination, argVals)
 	if err != nil {
 		return fmt.Errorf("Failed to upload object: %s", err)
 	}
 
 	// Kill console writer and display completion info
 	c.writer.Quit()
-	fmt.Printf("\r%s%s\n\nUploaded %s to container %s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(name), cw.Cyan(args[2]))
+	fmt.Printf("\r%s%s\n\nUploaded %s to container %s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(name), cw.Cyan(argVals.Container))
 
 	return nil
 }
