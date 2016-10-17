@@ -236,13 +236,20 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 // makeSLO creates a Static Large Object in an Object Storage instance.
 func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
-	if len(args) < 5 {
+	if len(args) < 4 {
 		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[3].UsageDetails.Usage)
+	}
+
+	// Parse arguments
+	serviceName := args[0]
+	argVals, err := slo.ParseArgs(args[1:])
+	if err != nil {
+		return fmt.Errorf("Failed to parse arguments: %s", err)
 	}
 
 	// Display startup info
 	task := "Creating SLO in"
-	err := displayUserInfo(cliConnection, task)
+	err = displayUserInfo(cliConnection, task)
 	if err != nil {
 		return fmt.Errorf("Failed to display user info: %s", err)
 	}
@@ -251,20 +258,20 @@ func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []
 	go c.writer.Write()
 
 	// Authenticate with Object Storage
-	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, args[1])
+	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
 	if err != nil {
 		return fmt.Errorf("Failed to authenticate: %s", err)
 	}
 
 	// Create SLO
-	err = slo.MakeSlo(cliConnection, c.writer, destination, args[2:])
+	err = slo.MakeSlo(cliConnection, c.writer, destination, argVals)
 	if err != nil {
 		return fmt.Errorf("Failed to create SLO: %s", err)
 	}
 
 	// Kill console writer and display completion info
 	c.writer.Quit()
-	fmt.Printf("\r%s%s\n%s\nSuccessfully created SLO %s in container %s\n", cw.ClearLine, cw.Green("OK"), cw.ClearLine, cw.Cyan(args[3]), cw.Cyan(args[2]))
+	fmt.Printf("\r%s%s\n%s\nSuccessfully created SLO %s in container %s\n", cw.ClearLine, cw.Green("OK"), cw.ClearLine, cw.Cyan(argVals.SloName), cw.Cyan(argVals.SloContainer))
 
 	return nil
 }
