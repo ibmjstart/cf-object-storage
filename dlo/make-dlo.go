@@ -10,7 +10,7 @@ import (
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
 
-// argVal holds the parsed argument values
+// argVal holds the parsed argument values.
 type argVal struct {
 	dloContainer string
 	DloName      string
@@ -23,7 +23,7 @@ type flagVal struct {
 	Prefix_flag    string
 }
 
-// parseArgs parses the arguments provided to make-dlo.
+// ParseArgs parses the arguments provided to make-dlo.
 func ParseArgs(args []string) (*argVal, error) {
 	dloContainer := args[0]
 	dloName := args[1]

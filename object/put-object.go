@@ -12,7 +12,7 @@ import (
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
 
-// argVal holds the parsed argument values
+// argVal holds the parsed argument values.
 type argVal struct {
 	Container string
 	source    string
@@ -24,7 +24,7 @@ type flagVal struct {
 	rename_flag string
 }
 
-// parseArgs parses the arguments provided to put-object.
+// ParseArgs parses the arguments provided to put-object.
 func ParseArgs(args []string) (*argVal, error) {
 	container := args[0]
 	sourceFile := args[1]
