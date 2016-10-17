@@ -26,7 +26,19 @@ that library's README.
 Since this plugin is not currently in an offical Cloud Foundry plugin repo, it will need to be downloaded and installed
 manually. 
 
-To downlaod the package, run
+#### Install From Binary (Recommended)
+
+- Download the binary for your machine ([Linux](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/linux/cf-large-objects?raw=true), [Mac](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/darwin/cf-large-objects?raw=true), [Windows](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/windows/cf-large-objects.exe?raw=true))
+- Navigate to the downloaded binary
+- Install the plugin with `cf install-plugin cf-large-objects`
+- Verify the plugin has been installed with `cf plugins`
+
+**Note:** If you are reinstalling, run `cf uninstall-plugin ObjectStorageLargeObjects` first to uninstall the outdated
+version. Additionaly, if installing gives you a permission error run `chmod -x cf-large-objects`.
+
+#### Install From Source
+
+Installing this way requires Go. To download the package, run
 ```
 go get github.com/ibmjstart/cf-large-objects
 ```
@@ -42,7 +54,7 @@ should work fine.
 This plugin provides the user with four new commands, described below. Each pertains to one of the main features of the
 swiftlygo library. More information can be found by using `cf help` followed by any of the four commands.
 
-### Command List
+#### Command List
 
 Command		|Usage															|Description
 ---		|---															|---
