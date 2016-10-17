@@ -193,13 +193,20 @@ func (c *LargeObjectsPlugin) putObject(cliConnection plugin.CliConnection, args 
 // makeDLO creates a Dynamic Large Object manifest in an Object Storage instance.
 func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
-	if len(args) < 4 {
+	if len(args) < 3 {
 		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[2].UsageDetails.Usage)
+	}
+
+	// Parse arguments
+	serviceName := args[0]
+	argVals, err := dlo.ParseArgs(args[1:])
+	if err != nil {
+		return fmt.Errorf("Failed to parse arguments: %s", err)
 	}
 
 	// Display startup info
 	task := "Creating DLO in"
-	err := displayUserInfo(cliConnection, task)
+	err = displayUserInfo(cliConnection, task)
 	if err != nil {
 		return fmt.Errorf("Failed to display user info: %s", err)
 	}
@@ -208,20 +215,20 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 	go c.writer.Write()
 
 	// Authenticate with Object Storage
-	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, args[1])
+	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
 	if err != nil {
 		return fmt.Errorf("Failed to authenticate: %s", err)
 	}
 
 	// Create DLO
-	prefix, container, err := dlo.MakeDlo(cliConnection, c.writer, destination, args[2:])
+	err = dlo.MakeDlo(cliConnection, c.writer, destination, argVals)
 	if err != nil {
 		return fmt.Errorf("Failed to create DLO manifest: %s", err)
 	}
 
 	// Kill console writer and display completion info
 	c.writer.Quit()
-	fmt.Printf("\r%s%s\n\nCreated manifest for %s, upload segments to container %s prefixed with %s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(args[3]), cw.Cyan(container), cw.Cyan(prefix))
+	fmt.Printf("\r%s%s\n\nCreated manifest for %s, upload segments to container %s prefixed with %s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(argVals.DloName), cw.Cyan(argVals.FlagVals.Container_flag), cw.Cyan(argVals.FlagVals.Prefix_flag))
 
 	return nil
 }

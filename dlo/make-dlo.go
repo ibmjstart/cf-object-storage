@@ -10,6 +10,13 @@ import (
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
 
+// argVal holds the parsed argument values
+type argVal struct {
+	dloContainer string
+	DloName      string
+	FlagVals     *flagVal
+}
+
 // flagVal holds the flag values.
 type flagVal struct {
 	Container_flag string
@@ -17,12 +24,15 @@ type flagVal struct {
 }
 
 // parseArgs parses the arguments provided to make-dlo.
-func parseArgs(args []string) (*flagVal, error) {
+func ParseArgs(args []string) (*argVal, error) {
+	dloContainer := args[0]
+	dloName := args[1]
+
 	flagSet := flag.NewFlagSet("flagSet", flag.ContinueOnError)
 
 	// Define flags to default to matching required arguments
-	container := flagSet.String("c", args[0], "Destination container for DLO segments (defaults to manifest container)")
-	prefix := flagSet.String("p", args[1], "Prefix to be used for DLO segments (defaults to DLO name)")
+	container := flagSet.String("c", dloContainer, "Destination container for DLO segments (defaults to manifest container)")
+	prefix := flagSet.String("p", dloName, "Prefix to be used for DLO segments (defaults to DLO name)")
 
 	// Parse optional flags if they have been provided
 	if len(args) > 2 {
@@ -37,24 +47,26 @@ func parseArgs(args []string) (*flagVal, error) {
 		Prefix_flag:    string(*prefix),
 	}
 
-	return &flagVals, nil
+	argVals := argVal{
+		dloContainer: dloContainer,
+		DloName:      dloName,
+		FlagVals:     &flagVals,
+	}
+
+	return &argVals, nil
 }
 
 // MakeDlo uploads a DLO manifest to Object Storage.
-func MakeDlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest auth.Destination, args []string) (string, string, error) {
+func MakeDlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest auth.Destination, argVals *argVal) error {
 	writer.SetCurrentStage("Preparing DLO manifest")
-	flags, err := parseArgs(args)
-	if err != nil {
-		return "", "", fmt.Errorf("Failed to parse arguments: %s", err)
-	}
 
 	// Create uploader to build manifest
 	writer.SetCurrentStage("Uploading DLO manifest")
-	uploader := sg.NewDloManifestUploader(dest, args[0], args[1], flags.Container_flag, flags.Prefix_flag)
-	err = uploader.Upload()
+	uploader := sg.NewDloManifestUploader(dest, argVals.dloContainer, argVals.DloName, argVals.FlagVals.Container_flag, argVals.FlagVals.Prefix_flag)
+	err := uploader.Upload()
 	if err != nil {
-		return "", "", fmt.Errorf("Failed to upload DLO manifest: %s", err)
+		return fmt.Errorf("Failed to upload DLO manifest: %s", err)
 	}
 
-	return flags.Prefix_flag, flags.Container_flag, nil
+	return nil
 }
