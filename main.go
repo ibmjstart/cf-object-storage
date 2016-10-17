@@ -91,12 +91,13 @@ func displayUserInfo(cliConnection plugin.CliConnection, task string) error {
 // getAuthInfo fetches the x-auth token and auth url for an Object Storage instance.
 func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
-	if len(args) < 2 {
-		return fmt.Errorf("Missing service name\nUsage: %s", c.GetMetadata().Commands[0].UsageDetails.Usage)
+	if len(args) < 1 {
+		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[0].UsageDetails.Usage)
 	}
 
-	// Parse flags
-	flags, err := x_auth.ParseFlags(args[2:])
+	// Parse arguments
+	serviceName := args[0]
+	flags, err := x_auth.ParseFlags(args[1:])
 	if err != nil {
 		return err
 	}
@@ -119,7 +120,7 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 	}
 
 	// Get authorization info
-	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, args[1])
+	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
 	if err != nil {
 		return err
 	}
@@ -139,7 +140,7 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 	if !quiet {
 		c.writer.Quit()
 
-		fmt.Printf("\r%s%s\n\n%s\n%s%s\n%s%s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(args[1]),
+		fmt.Printf("\r%s%s\n\n%s\n%s%s\n%s%s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(serviceName),
 			cw.White("auth url: "), authUrl, cw.White("x-auth:   "), xAuth)
 	}
 
