@@ -6,6 +6,7 @@ import (
 
 	"github.com/cloudfoundry/cli/plugin"
 	cw "github.ibm.com/ckwaldon/cf-large-objects/console_writer"
+	"github.ibm.com/ckwaldon/cf-large-objects/container"
 	"github.ibm.com/ckwaldon/cf-large-objects/dlo"
 	"github.ibm.com/ckwaldon/cf-large-objects/object"
 	"github.ibm.com/ckwaldon/cf-large-objects/slo"
@@ -19,6 +20,9 @@ const pluginName string = "ObjectStorageLargeObjects"
 
 // getXAuthCommand defines the name of the command that fetches X-Auth Tokens.
 const getAuthInfoCommand string = "get-auth-info"
+
+//containerCommand
+const containerCommand string = "container"
 
 // putObjectCommand defines the name of the command that uploads objects to
 // object storage.
@@ -44,6 +48,7 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	// Associate each subcommand with a handler function
 	c.subcommands = map[string](func(plugin.CliConnection, []string) error){
 		getAuthInfoCommand: c.getAuthInfo,
+		containerCommand:   c.container,
 		putObjectCommand:   c.putObject,
 		makeDLOCommand:     c.makeDLO,
 		makeSLOCommand:     c.makeSLO,
@@ -144,6 +149,59 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 			cw.White("auth url: "), authUrl, cw.White("x-auth:   "), xAuth)
 	}
 
+	return nil
+}
+
+// container does things with containers
+func (c *LargeObjectsPlugin) container(cliConnection plugin.CliConnection, args []string) error {
+	command := args[0]
+	serviceName := args[1]
+
+	//go c.writer.Write()
+	go c.writer.ClearStatus()
+
+	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+	if err != nil {
+		return fmt.Errorf("Failed to authenticate: %s", err)
+	}
+
+	if command == "get" {
+		containerName, headers, err := container.GetContainer(destination, args[2])
+		fmt.Printf("\nContainer name: %s\nHeaders:", containerName)
+		for k, h := range headers {
+			fmt.Printf("\n\tName: %s Value: %s", k, h)
+		}
+		fmt.Printf("\n")
+
+		if err != nil {
+			return fmt.Errorf("Failed to get container %s: %s", args[2], err)
+		}
+	} else if command == "gets" {
+		containers, err := container.GetContainers(destination)
+		fmt.Printf("\nContainers in OS %s: %v\n", serviceName, containers)
+
+		if err != nil {
+			return fmt.Errorf("Failed to get containers: %s", err)
+		}
+	} else if command == "make" {
+		err = container.MakeContainer(destination, args[2], args[3:]...)
+		fmt.Printf("\nCreated container %s in OS %s\n", args[2], serviceName)
+
+		if err != nil {
+			return fmt.Errorf("Failed to make container: %s", err)
+		}
+	} else if command == "delete" {
+		err = container.DeleteContainer(destination, args[2])
+		fmt.Printf("\nDeleted container %s from OS %s\n", args[2], serviceName)
+
+		if err != nil {
+			return fmt.Errorf("Failed to delete container: %s", err)
+		}
+	} else {
+		return fmt.Errorf("Unknown subcommand")
+	}
+
+	//c.writer.Quit()
 	return nil
 }
 
@@ -302,6 +360,16 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 					Options: map[string]string{
 						"url": "Display auth url in quiet mode",
 						"x":   "Display x-auth token in quiet mode",
+					},
+				},
+			},
+			{
+				Name:     containerCommand,
+				HelpText: "Operations on containers",
+				UsageDetails: plugin.Usage{
+					Usage: "cf " + containerCommand + " ARGS [-FLAGS]",
+					Options: map[string]string{
+						"FLAG": "Description",
 					},
 				},
 			},
