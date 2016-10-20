@@ -7,6 +7,7 @@ import (
 	fp "path/filepath"
 
 	"github.com/cloudfoundry/cli/plugin"
+	"github.com/ncw/swift"
 	cw "github.ibm.com/ckwaldon/cf-large-objects/console_writer"
 	sg "github.ibm.com/ckwaldon/swiftlygo"
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
@@ -74,4 +75,22 @@ func PutObject(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, des
 	}
 
 	return argVals.flagVals.rename_flag, nil
+}
+
+func GetObject(dest auth.Destination, container string, object string) (string, swift.Headers, error) {
+	objectRet, headers, err := dest.(*auth.SwiftDestination).SwiftConnection.Object(container, object)
+	if err != nil {
+		return "", headers, fmt.Errorf("Failed to get object %s: %s", object, err)
+	}
+
+	return objectRet.Name, headers, nil
+}
+
+func GetObjects(dest auth.Destination, container string) ([]string, error) {
+	objects, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectNamesAll(container, nil)
+	if err != nil {
+		return objects, fmt.Errorf("Failed to get objects: %s", err)
+	}
+
+	return objects, nil
 }
