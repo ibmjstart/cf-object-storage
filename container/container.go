@@ -40,11 +40,6 @@ func MakeContainer(dest auth.Destination, container string, headers ...string) e
 	}
 
 	swiftHeader := swift.Headers(headerMap)
-	/*
-		if err != nil {
-			return fmt.Errorf("Failed to create Swift header object: %s", err)
-		}
-	*/
 
 	err := dest.(*auth.SwiftDestination).SwiftConnection.ContainerCreate(container, swiftHeader)
 	if err != nil {
