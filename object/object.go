@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/ncw/swift"
@@ -51,6 +52,21 @@ func PutObject(dest auth.Destination, container, objectName, path string) error 
 	err = objectCreator.Close()
 	if err != nil {
 		return fmt.Errorf("Failed to close object writer: %s", err)
+	}
+
+	return nil
+}
+
+func GetObject(dest auth.Destination, container, objectName, destinationPath string) error {
+	object, err := os.OpenFile(destinationPath, os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		return fmt.Errorf("Failed to open/create object file: %s", err)
+	}
+	defer file.Close()
+
+	_, err = dest.(*auth.SwiftDestination).SwiftConnection.ObjectGet(container, objectName, object, true, nil)
+	if err != nil {
+		return fmt.Errorf("Failed to get object %s: %s", objectName, err)
 	}
 
 	return nil
