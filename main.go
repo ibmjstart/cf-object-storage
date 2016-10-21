@@ -166,7 +166,7 @@ func (c *LargeObjectsPlugin) container(cliConnection plugin.CliConnection, args 
 	}
 
 	if command == "get" {
-		containerName, headers, err := container.GetContainer(destination, args[2])
+		containerName, headers, err := container.GetContainerInfo(destination, args[2])
 		fmt.Printf("\nContainer name: %s\nHeaders:", containerName)
 		for k, h := range headers {
 			fmt.Printf("\n\tName: %s Value: %s", k, h)
@@ -176,8 +176,8 @@ func (c *LargeObjectsPlugin) container(cliConnection plugin.CliConnection, args 
 		if err != nil {
 			return fmt.Errorf("Failed to get container %s: %s", args[2], err)
 		}
-	} else if command == "gets" {
-		containers, err := container.GetContainers(destination)
+	} else if command == "show" {
+		containers, err := container.ShowContainers(destination)
 		fmt.Printf("\nContainers in OS %s: %v\n", serviceName, containers)
 
 		if err != nil {
