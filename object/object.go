@@ -56,6 +56,15 @@ func PutObject(dest auth.Destination, container, objectName, path string) error 
 	return nil
 }
 
+func DeleteObject(dest auth.Destination, container, objectName string) error {
+	err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectDelete(container, objectName)
+	if err != nil {
+		return fmt.Errorf("Failed to delete object %s: %s", objectName, err)
+	}
+
+	return nil
+}
+
 func getFileContents(sourcePath string) ([]byte, error) {
 	file, err := os.Open(sourcePath)
 	if err != nil {
