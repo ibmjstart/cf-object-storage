@@ -8,15 +8,6 @@ import (
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
 
-func GetContainerInfo(dest auth.Destination, container string) (string, swift.Headers, error) {
-	containerRet, headers, err := dest.(*auth.SwiftDestination).SwiftConnection.Container(container)
-	if err != nil {
-		return "", headers, fmt.Errorf("Failed to get container info for container %s: %s", container, err)
-	}
-
-	return containerRet.Name, headers, nil
-}
-
 func ShowContainers(dest auth.Destination) ([]string, error) {
 	containers, err := dest.(*auth.SwiftDestination).SwiftConnection.ContainerNamesAll(nil)
 	if err != nil {
@@ -24,6 +15,15 @@ func ShowContainers(dest auth.Destination) ([]string, error) {
 	}
 
 	return containers, nil
+}
+
+func GetContainerInfo(dest auth.Destination, container string) (swift.Container, swift.Headers, error) {
+	containerRet, headers, err := dest.(*auth.SwiftDestination).SwiftConnection.Container(container)
+	if err != nil {
+		return containerRet, headers, fmt.Errorf("Failed to get container info for container %s: %s", container, err)
+	}
+
+	return containerRet, headers, nil
 }
 
 func MakeContainer(dest auth.Destination, container string, headers ...string) error {
