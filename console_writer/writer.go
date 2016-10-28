@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	sg "github.ibm.com/ckwaldon/swiftlygo/slo"
+	sg "github.com/ibmjstart/swiftlygo/slo"
 )
 
 // speed is the time (in milliseconds) between console writes.

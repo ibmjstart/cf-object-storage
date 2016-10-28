@@ -5,12 +5,12 @@ import (
 	"os"
 
 	"github.com/cloudfoundry/cli/plugin"
-	cw "github.ibm.com/ckwaldon/cf-large-objects/console_writer"
-	"github.ibm.com/ckwaldon/cf-large-objects/dlo"
-	"github.ibm.com/ckwaldon/cf-large-objects/object"
-	"github.ibm.com/ckwaldon/cf-large-objects/slo"
-	"github.ibm.com/ckwaldon/cf-large-objects/x_auth"
-	"github.ibm.com/ckwaldon/swiftlygo/auth"
+	cw "github.com/ibmjstart/cf-large-objects/console_writer"
+	"github.com/ibmjstart/cf-large-objects/dlo"
+	"github.com/ibmjstart/cf-large-objects/object"
+	"github.com/ibmjstart/cf-large-objects/slo"
+	"github.com/ibmjstart/cf-large-objects/x_auth"
+	"github.com/ibmjstart/swiftlygo/auth"
 )
 
 // pluginName defines the name of this plugin for use installing and
