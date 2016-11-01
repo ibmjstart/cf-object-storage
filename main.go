@@ -54,6 +54,11 @@ type LargeObjectsPlugin struct {
 func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []string) {
 	// Associate each subcommand with a handler function
 	c.subcommands = map[string](func(plugin.CliConnection, []string) error){
+		showContainersCommand:  c.containers,
+		containerInfoCommand:   c.containers,
+		makeContainerCommand:   c.containers,
+		deleteContainerCommand: c.containers,
+
 		getAuthInfoCommand: c.getAuthInfo,
 		putObjectCommand:   c.putObject,
 		makeDLOCommand:     c.makeDLO,
@@ -65,7 +70,7 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 
 	// Dispatch the subcommand that the user wanted, if it exists
 	subcommandFunc := c.subcommands[args[0]]
-	err := subcommandFunc(cliConnection, args[1:])
+	err := subcommandFunc(cliConnection, args)
 
 	// Report any fatal errors returned by the subcommand
 	if err != nil {
@@ -102,13 +107,13 @@ func displayUserInfo(cliConnection plugin.CliConnection, task string) error {
 // getAuthInfo fetches the x-auth token and auth url for an Object Storage instance.
 func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
-	if len(args) < 1 {
+	if len(args) < 2 {
 		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[0].UsageDetails.Usage)
 	}
 
 	// Parse arguments
-	serviceName := args[0]
-	flags, err := x_auth.ParseFlags(args[1:])
+	serviceName := args[1]
+	flags, err := x_auth.ParseFlags(args[2:])
 	if err != nil {
 		return err
 	}
@@ -159,55 +164,73 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 }
 
 // container does things with containers
-func (c *LargeObjectsPlugin) container(cliConnection plugin.CliConnection, args []string) error {
+func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args []string) error {
+	// Parse arguments
+	var containerArg string
+	var headersArg []string
+
 	command := args[0]
 	serviceName := args[1]
+	if len(args) > 2 {
+		containerArg = args[2]
+	}
+	if len(args) > 3 {
+		headersArg = args[3:]
+	}
 
-	//go c.writer.Write()
-	go c.writer.ClearStatus()
+	// Display startup info
+	task := "Working with containers in"
+	err := displayUserInfo(cliConnection, task)
+	if err != nil {
+		return fmt.Errorf("Failed to display user info: %s", err)
+	}
+
+	// Start console writer
+	go c.writer.Write()
 
 	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
 	if err != nil {
 		return fmt.Errorf("Failed to authenticate: %s", err)
 	}
 
-	if command == "get" {
-		containerName, headers, err := container.GetContainerInfo(destination, args[2])
-		fmt.Printf("\nContainer name: %s\nHeaders:", containerName)
+	switch command {
+	case showContainersCommand:
+		containers, err := container.ShowContainers(destination)
+		if err != nil {
+			return fmt.Errorf("Failed to get containers: %s", err)
+		}
+
+		fmt.Printf("\nContainers in OS %s: %v\n", serviceName, containers)
+	case containerInfoCommand:
+		containerInfo, headers, err := container.GetContainerInfo(destination, containerArg)
+		if err != nil {
+			return fmt.Errorf("Failed to get container %s: %s", containerArg, err)
+		}
+
+		fmt.Printf("\nName: %s\nNumber of objects: %d\nSize: %d\nHeaders:", containerInfo.Name, containerInfo.Count, containerInfo.Bytes)
 		for k, h := range headers {
 			fmt.Printf("\n\tName: %s Value: %s", k, h)
 		}
 		fmt.Printf("\n")
-
-		if err != nil {
-			return fmt.Errorf("Failed to get container %s: %s", args[2], err)
-		}
-	} else if command == "show" {
-		containers, err := container.ShowContainers(destination)
-		fmt.Printf("\nContainers in OS %s: %v\n", serviceName, containers)
-
-		if err != nil {
-			return fmt.Errorf("Failed to get containers: %s", err)
-		}
-	} else if command == "make" {
-		err = container.MakeContainer(destination, args[2], args[3:]...)
-		fmt.Printf("\nCreated container %s in OS %s\n", args[2], serviceName)
-
+	case makeContainerCommand:
+		err = container.MakeContainer(destination, containerArg, headersArg...)
 		if err != nil {
 			return fmt.Errorf("Failed to make container: %s", err)
 		}
-	} else if command == "delete" {
-		err = container.DeleteContainer(destination, args[2])
-		fmt.Printf("\nDeleted container %s from OS %s\n", args[2], serviceName)
 
+		fmt.Printf("\nCreated container %s in OS %s\n", containerArg, serviceName)
+	case deleteContainerCommand:
+		err = container.DeleteContainer(destination, containerArg)
 		if err != nil {
 			return fmt.Errorf("Failed to delete container: %s", err)
 		}
-	} else {
-		return fmt.Errorf("Unknown subcommand")
+
+		fmt.Printf("\nDeleted container %s from OS %s\n", containerArg, serviceName)
 	}
 
-	//c.writer.Quit()
+	// Kill console writer
+	c.writer.Quit()
+
 	return nil
 }
 
@@ -259,13 +282,13 @@ func (c *LargeObjectsPlugin) putObject(cliConnection plugin.CliConnection, args 
 // makeDLO creates a Dynamic Large Object manifest in an Object Storage instance.
 func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
-	if len(args) < 3 {
+	if len(args) < 4 {
 		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[2].UsageDetails.Usage)
 	}
 
 	// Parse arguments
-	serviceName := args[0]
-	argVals, err := dlo.ParseArgs(args[1:])
+	serviceName := args[1]
+	argVals, err := dlo.ParseArgs(args[2:])
 	if err != nil {
 		return fmt.Errorf("Failed to parse arguments: %s", err)
 	}
@@ -302,13 +325,13 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 // makeSLO creates a Static Large Object in an Object Storage instance.
 func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
-	if len(args) < 4 {
+	if len(args) < 5 {
 		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[3].UsageDetails.Usage)
 	}
 
 	// Parse arguments
-	serviceName := args[0]
-	argVals, err := slo.ParseArgs(args[1:])
+	serviceName := args[1]
+	argVals, err := slo.ParseArgs(args[2:])
 	if err != nil {
 		return fmt.Errorf("Failed to parse arguments: %s", err)
 	}
