@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/ncw/swift"
@@ -62,7 +61,7 @@ func GetObject(dest auth.Destination, container, objectName, destinationPath str
 	if err != nil {
 		return fmt.Errorf("Failed to open/create object file: %s", err)
 	}
-	defer file.Close()
+	defer object.Close()
 
 	_, err = dest.(*auth.SwiftDestination).SwiftConnection.ObjectGet(container, objectName, object, true, nil)
 	if err != nil {

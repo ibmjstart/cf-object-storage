@@ -8,7 +8,7 @@ import (
 	cw "github.ibm.com/ckwaldon/cf-large-objects/console_writer"
 	"github.ibm.com/ckwaldon/cf-large-objects/container"
 	"github.ibm.com/ckwaldon/cf-large-objects/dlo"
-	"github.ibm.com/ckwaldon/cf-large-objects/object"
+	//"github.ibm.com/ckwaldon/cf-large-objects/object"
 	"github.ibm.com/ckwaldon/cf-large-objects/slo"
 	"github.ibm.com/ckwaldon/cf-large-objects/x_auth"
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
@@ -18,15 +18,22 @@ import (
 // uninstalling it.
 const pluginName string = "ObjectStorageLargeObjects"
 
+// pluginNamespace defines the namespace that preceeds all commands.
+const pluginNamespace string = "os"
+
 // getXAuthCommand defines the name of the command that fetches X-Auth Tokens.
 const getAuthInfoCommand string = "get-auth-info"
 
-//containerCommand
-const containerCommand string = "container"
+const showContainersCommand string = "containers"
+const containerInfoCommand string = "container-info"
+const makeContainerCommand string = "new-container"
+const deleteContainerCommand string = "rm-container"
 
-// putObjectCommand defines the name of the command that uploads objects to
-// object storage.
+const showObjectsCommand string = "objects"
+const objectInfoCommand string = "object-info"
 const putObjectCommand string = "put-object"
+const getObjectCommand string = "object"
+const deleteObjectCommand string = "rm-object"
 
 // makeDLOCommand defines the name of the command that creates DLOs in
 // object storage.
@@ -48,7 +55,6 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	// Associate each subcommand with a handler function
 	c.subcommands = map[string](func(plugin.CliConnection, []string) error){
 		getAuthInfoCommand: c.getAuthInfo,
-		containerCommand:   c.container,
 		putObjectCommand:   c.putObject,
 		makeDLOCommand:     c.makeDLO,
 		makeSLOCommand:     c.makeSLO,
@@ -207,43 +213,45 @@ func (c *LargeObjectsPlugin) container(cliConnection plugin.CliConnection, args 
 
 // putObject uploads an object to an Object Storage instance.
 func (c *LargeObjectsPlugin) putObject(cliConnection plugin.CliConnection, args []string) error {
-	// Check that the minimum number of arguments are present
-	if len(args) < 3 {
-		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
-	}
+	/*
+		// Check that the minimum number of arguments are present
+		if len(args) < 3 {
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+		}
 
-	// Parse arguments
-	serviceName := args[0]
-	argVals, err := object.ParseArgs(args[1:])
-	if err != nil {
-		return fmt.Errorf("Failed to parse arguments: %s", err)
-	}
+		// Parse arguments
+		serviceName := args[0]
+		argVals, err := object.ParseArgs(args[1:])
+		if err != nil {
+			return fmt.Errorf("Failed to parse arguments: %s", err)
+		}
 
-	// Display startup info
-	task := "Uploading object in"
-	err = displayUserInfo(cliConnection, task)
-	if err != nil {
-		return fmt.Errorf("Failed to display user info: %s", err)
-	}
+		// Display startup info
+		task := "Uploading object in"
+		err = displayUserInfo(cliConnection, task)
+		if err != nil {
+			return fmt.Errorf("Failed to display user info: %s", err)
+		}
 
-	// Start console writer
-	go c.writer.Write()
+		// Start console writer
+		go c.writer.Write()
 
-	// Authenticate with Object Storage
-	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
-	if err != nil {
-		return fmt.Errorf("Failed to authenticate: %s", err)
-	}
+		// Authenticate with Object Storage
+		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		if err != nil {
+			return fmt.Errorf("Failed to authenticate: %s", err)
+		}
 
-	// Upload object
-	name, err := object.PutObject(cliConnection, c.writer, destination, argVals)
-	if err != nil {
-		return fmt.Errorf("Failed to upload object: %s", err)
-	}
+		// Upload object
+		name, err := object.PutObject(cliConnection, c.writer, destination, argVals)
+		if err != nil {
+			return fmt.Errorf("Failed to upload object: %s", err)
+		}
 
-	// Kill console writer and display completion info
-	c.writer.Quit()
-	fmt.Printf("\r%s%s\n\nUploaded %s to container %s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(name), cw.Cyan(argVals.Container))
+		// Kill console writer and display completion info
+		c.writer.Quit()
+		fmt.Printf("\r%s%s\n\nUploaded %s to container %s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(name), cw.Cyan(argVals.Container))
+	*/
 
 	return nil
 }
@@ -356,7 +364,8 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				Name:     getAuthInfoCommand,
 				HelpText: "Display an Object Storage service's authentication url and x-auth token",
 				UsageDetails: plugin.Usage{
-					Usage: "cf " + getAuthInfoCommand + " service_name [--url] [-x]",
+					Usage: "cf " + getAuthInfoCommand +
+						" service_name [--url] [-x]",
 					Options: map[string]string{
 						"url": "Display auth url in quiet mode",
 						"x":   "Display x-auth token in quiet mode",
@@ -364,10 +373,66 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				},
 			},
 			{
-				Name:     containerCommand,
-				HelpText: "Operations on containers",
+				Name:     showContainersCommand,
+				HelpText: "Show all containers in an Object Storage instance",
 				UsageDetails: plugin.Usage{
-					Usage: "cf " + containerCommand + " ARGS [-FLAGS]",
+					Usage: "cf " + showContainersCommand +
+						" ARGS [-FLAGS]",
+					Options: map[string]string{
+						"FLAG": "Description",
+					},
+				},
+			},
+			{
+				Name:     containerInfoCommand,
+				HelpText: "Show a given container's information",
+				UsageDetails: plugin.Usage{
+					Usage: "cf " + containerInfoCommand +
+						" ARGS [-FLAGS]",
+					Options: map[string]string{
+						"FLAG": "Description",
+					},
+				},
+			},
+			{
+				Name:     makeContainerCommand,
+				HelpText: "Create a new container in an Object Storage instance",
+				UsageDetails: plugin.Usage{
+					Usage: "cf " + makeContainerCommand +
+						" ARGS [-FLAGS]",
+					Options: map[string]string{
+						"FLAG": "Description",
+					},
+				},
+			},
+			{
+				Name:     deleteContainerCommand,
+				HelpText: "Remove a container from an Object Storage instance",
+				UsageDetails: plugin.Usage{
+					Usage: "cf " + deleteContainerCommand +
+						" ARGS [-FLAGS]",
+					Options: map[string]string{
+						"FLAG": "Description",
+					},
+				},
+			},
+			{
+				Name:     showObjectsCommand,
+				HelpText: "Show all objects in a container",
+				UsageDetails: plugin.Usage{
+					Usage: "cf " + showObjectsCommand +
+						" ARGS [-FLAGS]",
+					Options: map[string]string{
+						"FLAG": "Description",
+					},
+				},
+			},
+			{
+				Name:     objectInfoCommand,
+				HelpText: "Show a given object's information",
+				UsageDetails: plugin.Usage{
+					Usage: "cf " + objectInfoCommand +
+						" ARGS [-FLAGS]",
 					Options: map[string]string{
 						"FLAG": "Description",
 					},
@@ -377,9 +442,32 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				Name:     putObjectCommand,
 				HelpText: "Upload a file as an object to Object Storage",
 				UsageDetails: plugin.Usage{
-					Usage: "cf " + putObjectCommand + " service_name container_name path_to_source [-n object_name]",
+					Usage: "cf " + putObjectCommand +
+						" ARGS [-FLAGS]",
 					Options: map[string]string{
-						"n": "Rename object before uploading",
+						"FLAG": "Description",
+					},
+				},
+			},
+			{
+				Name:     getObjectCommand,
+				HelpText: "Dwonload an object from Object Storage",
+				UsageDetails: plugin.Usage{
+					Usage: "cf " + getObjectCommand +
+						" ARGS [-FLAGS]",
+					Options: map[string]string{
+						"FLAG": "Description",
+					},
+				},
+			},
+			{
+				Name:     deleteObjectCommand,
+				HelpText: "Remove an object from a container",
+				UsageDetails: plugin.Usage{
+					Usage: "cf " + deleteObjectCommand +
+						" ARGS [-FLAGS]",
+					Options: map[string]string{
+						"FLAG": "Description",
 					},
 				},
 			},
@@ -387,7 +475,8 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				Name:     makeDLOCommand,
 				HelpText: "Create a Dynamic Large Object in Object Storage",
 				UsageDetails: plugin.Usage{
-					Usage: "cf " + makeDLOCommand + " service_name dlo_container dlo_name [-c object_container] [-p dlo_prefix]",
+					Usage: "cf " + makeDLOCommand +
+						" service_name dlo_container dlo_name [-c object_container] [-p dlo_prefix]",
 					Options: map[string]string{
 						"c": "Destination container for DLO segments (defaults to dlo_container)",
 						"p": "Prefix to be used for DLO segments (default to dlo_name)",
@@ -398,7 +487,8 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				Name:     makeSLOCommand,
 				HelpText: "Create a Static Large Object in Object Storage",
 				UsageDetails: plugin.Usage{
-					Usage: "cf " + makeSLOCommand + " service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-j num_threads]",
+					Usage: "cf " + makeSLOCommand +
+						" service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-j num_threads]",
 					Options: map[string]string{
 						"m": "Only upload missing chunks",
 						"o": "Destination for log data, if desired",
