@@ -8,7 +8,7 @@ import (
 	cw "github.ibm.com/ckwaldon/cf-large-objects/console_writer"
 	"github.ibm.com/ckwaldon/cf-large-objects/container"
 	"github.ibm.com/ckwaldon/cf-large-objects/dlo"
-	//"github.ibm.com/ckwaldon/cf-large-objects/object"
+	"github.ibm.com/ckwaldon/cf-large-objects/object"
 	"github.ibm.com/ckwaldon/cf-large-objects/slo"
 	"github.ibm.com/ckwaldon/cf-large-objects/x_auth"
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
@@ -59,10 +59,16 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 		makeContainerCommand:   c.containers,
 		deleteContainerCommand: c.containers,
 
+		showObjectsCommand:  c.objects,
+		objectInfoCommand:   c.objects,
+		putObjectCommand:    c.objects,
+		getObjectCommand:    c.objects,
+		deleteObjectCommand: c.objects,
+
 		getAuthInfoCommand: c.getAuthInfo,
-		putObjectCommand:   c.putObject,
-		makeDLOCommand:     c.makeDLO,
-		makeSLOCommand:     c.makeSLO,
+		//putObjectCommand:   c.putObject,
+		makeDLOCommand: c.makeDLO,
+		makeSLOCommand: c.makeSLO,
 	}
 
 	// Create writer to provide output
@@ -165,6 +171,10 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 
 // container does things with containers
 func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args []string) error {
+	if len(args) < 2 {
+		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+	}
+
 	command := args[0]
 	serviceName := args[1]
 
@@ -180,10 +190,6 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 
 	switch command {
 	case showContainersCommand:
-		if len(args) < 2 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
-		}
-
 		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
@@ -211,7 +217,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 			return fmt.Errorf("Failed to get container %s: %s", containerArg, err)
 		}
 
-		fmt.Printf("\r%s%s\n\nName: %s\nNumber of objects: %d\nSize: %d\nHeaders:", cw.ClearLine, cw.Green("OK"), containerInfo.Name, containerInfo.Count, containerInfo.Bytes)
+		fmt.Printf("\r%s%s\n\nName: %s\nNumber of objects: %d\nSize: %d bytes\nHeaders:", cw.ClearLine, cw.Green("OK"), containerInfo.Name, containerInfo.Count, containerInfo.Bytes)
 		for k, h := range headers {
 			fmt.Printf("\n\tName: %s Value: %s", k, h)
 		}
@@ -251,6 +257,71 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		}
 
 		fmt.Printf("\r%s%s\n\nDeleted container %s from OS %s\n", cw.ClearLine, cw.Green("OK"), containerArg, serviceName)
+	}
+
+	// Kill console writer
+	c.writer.Quit()
+
+	return nil
+}
+
+// object does things with objects
+func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []string) error {
+	if len(args) < 3 {
+		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+	}
+
+	command := args[0]
+	serviceName := args[1]
+	containerName := args[2]
+
+	// Display startup info
+	task := "Working with objects in"
+	err := displayUserInfo(cliConnection, task)
+	if err != nil {
+		return fmt.Errorf("Failed to display user info: %s", err)
+	}
+
+	// Start console writer
+	go c.writer.Write()
+
+	switch command {
+	case showObjectsCommand:
+		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		if err != nil {
+			return fmt.Errorf("Failed to authenticate: %s", err)
+		}
+
+		objects, err := object.ShowObjects(destination, containerName)
+		if err != nil {
+			return fmt.Errorf("Failed to get objects: %s", err)
+		}
+
+		fmt.Printf("\r%s%s\n\nObjects in container %s: %v\n", cw.ClearLine, cw.Green("OK"), containerName, objects)
+	case objectInfoCommand:
+		if len(args) < 4 {
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+		}
+
+		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		if err != nil {
+			return fmt.Errorf("Failed to authenticate: %s", err)
+		}
+
+		objectArg := args[3]
+		objectInfo, headers, err := object.GetObjectInfo(destination, containerName, objectArg)
+		if err != nil {
+			return fmt.Errorf("Failed to get object %s: %s", objectArg, err)
+		}
+
+		fmt.Printf("\r%s%s\n\nName: %s\nContent type: %s\nSize: %d bytes\nLast modified: %s\nHash: %s\nIs pseudo dir: %t\nSubdirectory: \n%sHeaders:", cw.ClearLine, cw.Green("OK"), objectInfo.Name, objectInfo.ContentType, objectInfo.Bytes, objectInfo.ServerLastModified, objectInfo.Hash, objectInfo.PseudoDirectory, objectInfo.SubDir)
+		for k, h := range headers {
+			fmt.Printf("\n\tName: %s Value: %s", k, h)
+		}
+		fmt.Printf("\n")
+	case putObjectCommand:
+	case getObjectCommand:
+	case deleteObjectCommand:
 	}
 
 	// Kill console writer

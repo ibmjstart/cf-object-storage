@@ -12,13 +12,13 @@ import (
 
 const maxObjectSize uint = 1000 * 1000 * 1000 * 5
 
-func GetObjectInfo(dest auth.Destination, container string, object string) (string, swift.Headers, error) {
+func GetObjectInfo(dest auth.Destination, container string, object string) (swift.Object, swift.Headers, error) {
 	objectRet, headers, err := dest.(*auth.SwiftDestination).SwiftConnection.Object(container, object)
 	if err != nil {
-		return "", headers, fmt.Errorf("Failed to get object %s: %s", object, err)
+		return objectRet, headers, fmt.Errorf("Failed to get object %s: %s", object, err)
 	}
 
-	return objectRet.Name, headers, nil
+	return objectRet, headers, nil
 }
 
 func ShowObjects(dest auth.Destination, container string) ([]string, error) {
