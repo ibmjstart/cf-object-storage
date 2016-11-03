@@ -338,7 +338,40 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 
 		fmt.Printf("\r%s%s\n\nUploaded object %s to container %s\n", cw.ClearLine, cw.Green("OK"), objectArg, containerName)
 	case getObjectCommand:
+		if len(args) < 5 {
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+		}
+
+		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		if err != nil {
+			return fmt.Errorf("Failed to authenticate: %s", err)
+		}
+
+		objectArg := args[3]
+		destinationPath := args[4]
+		err = object.GetObject(destination, containerName, objectArg, destinationPath)
+		if err != nil {
+			return fmt.Errorf("Failed to upload object: %s", err)
+		}
+
+		fmt.Printf("\r%s%s\n\nDownloaded object %s to %s\n", cw.ClearLine, cw.Green("OK"), objectArg, destinationPath)
 	case deleteObjectCommand:
+		if len(args) < 4 {
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+		}
+
+		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		if err != nil {
+			return fmt.Errorf("Failed to authenticate: %s", err)
+		}
+
+		objectArg := args[3]
+		err = object.DeleteObject(destination, containerName, objectArg)
+		if err != nil {
+			return fmt.Errorf("Failed to delete object %s: %s", objectArg, err)
+		}
+
+		fmt.Printf("\r%s%s\n\nDeleted object %s from container %s\n", cw.ClearLine, cw.Green("OK"), objectArg, containerName)
 	}
 
 	// Kill console writer
@@ -587,7 +620,7 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 			},
 			{
 				Name:     getObjectCommand,
-				HelpText: "Dwonload an object from Object Storage",
+				HelpText: "Download an object from Object Storage",
 				UsageDetails: plugin.Usage{
 					Usage: "cf " + getObjectCommand +
 						" ARGS [-FLAGS]",
