@@ -165,18 +165,8 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 
 // container does things with containers
 func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args []string) error {
-	// Parse arguments
-	var containerArg string
-	var headersArg []string
-
 	command := args[0]
 	serviceName := args[1]
-	if len(args) > 2 {
-		containerArg = args[2]
-	}
-	if len(args) > 3 {
-		headersArg = args[3:]
-	}
 
 	// Display startup info
 	task := "Working with containers in"
@@ -188,44 +178,79 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 	// Start console writer
 	go c.writer.Write()
 
-	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
-	if err != nil {
-		return fmt.Errorf("Failed to authenticate: %s", err)
-	}
-
 	switch command {
 	case showContainersCommand:
+		if len(args) < 2 {
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+		}
+
+		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		if err != nil {
+			return fmt.Errorf("Failed to authenticate: %s", err)
+		}
+
 		containers, err := container.ShowContainers(destination)
 		if err != nil {
 			return fmt.Errorf("Failed to get containers: %s", err)
 		}
 
-		fmt.Printf("\nContainers in OS %s: %v\n", serviceName, containers)
+		fmt.Printf("\r%s%s\n\nContainers in OS %s: %v\n", cw.ClearLine, cw.Green("OK"), serviceName, containers)
 	case containerInfoCommand:
+		if len(args) < 3 {
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+		}
+
+		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		if err != nil {
+			return fmt.Errorf("Failed to authenticate: %s", err)
+		}
+
+		containerArg := args[2]
 		containerInfo, headers, err := container.GetContainerInfo(destination, containerArg)
 		if err != nil {
 			return fmt.Errorf("Failed to get container %s: %s", containerArg, err)
 		}
 
-		fmt.Printf("\nName: %s\nNumber of objects: %d\nSize: %d\nHeaders:", containerInfo.Name, containerInfo.Count, containerInfo.Bytes)
+		fmt.Printf("\r%s%s\n\nName: %s\nNumber of objects: %d\nSize: %d\nHeaders:", cw.ClearLine, cw.Green("OK"), containerInfo.Name, containerInfo.Count, containerInfo.Bytes)
 		for k, h := range headers {
 			fmt.Printf("\n\tName: %s Value: %s", k, h)
 		}
 		fmt.Printf("\n")
 	case makeContainerCommand:
+		if len(args) < 3 {
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+		}
+
+		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		if err != nil {
+			return fmt.Errorf("Failed to authenticate: %s", err)
+		}
+
+		containerArg := args[2]
+		headersArg := args[3:]
 		err = container.MakeContainer(destination, containerArg, headersArg...)
 		if err != nil {
 			return fmt.Errorf("Failed to make container: %s", err)
 		}
 
-		fmt.Printf("\nCreated container %s in OS %s\n", containerArg, serviceName)
+		fmt.Printf("\r%s%s\n\nCreated container %s in OS %s\n", cw.ClearLine, cw.Green("OK"), containerArg, serviceName)
 	case deleteContainerCommand:
+		if len(args) < 3 {
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+		}
+
+		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		if err != nil {
+			return fmt.Errorf("Failed to authenticate: %s", err)
+		}
+
+		containerArg := args[2]
 		err = container.DeleteContainer(destination, containerArg)
 		if err != nil {
 			return fmt.Errorf("Failed to delete container: %s", err)
 		}
 
-		fmt.Printf("\nDeleted container %s from OS %s\n", containerArg, serviceName)
+		fmt.Printf("\r%s%s\n\nDeleted container %s from OS %s\n", cw.ClearLine, cw.Green("OK"), containerArg, serviceName)
 	}
 
 	// Kill console writer
