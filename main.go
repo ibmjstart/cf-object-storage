@@ -54,6 +54,8 @@ type LargeObjectsPlugin struct {
 func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []string) {
 	// Associate each subcommand with a handler function
 	c.subcommands = map[string](func(plugin.CliConnection, []string) error){
+		getAuthInfoCommand: c.getAuthInfo,
+
 		showContainersCommand:  c.containers,
 		containerInfoCommand:   c.containers,
 		makeContainerCommand:   c.containers,
@@ -65,8 +67,6 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 		getObjectCommand:    c.objects,
 		deleteObjectCommand: c.objects,
 
-		getAuthInfoCommand: c.getAuthInfo,
-		//putObjectCommand:   c.putObject,
 		makeDLOCommand: c.makeDLO,
 		makeSLOCommand: c.makeSLO,
 	}
@@ -171,12 +171,7 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 
 // container does things with containers
 func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args []string) error {
-	if len(args) < 2 {
-		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
-	}
-
 	command := args[0]
-	serviceName := args[1]
 
 	// Display startup info
 	task := "Working with containers in"
@@ -190,6 +185,12 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 
 	switch command {
 	case showContainersCommand:
+		if len(args) < 2 {
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+		}
+
+		serviceName := args[1]
+
 		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
@@ -203,9 +204,10 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		fmt.Printf("\r%s%s\n\nContainers in OS %s: %v\n", cw.ClearLine, cw.Green("OK"), serviceName, containers)
 	case containerInfoCommand:
 		if len(args) < 3 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[2].UsageDetails.Usage)
 		}
 
+		serviceName := args[1]
 		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
@@ -224,9 +226,10 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		fmt.Printf("\n")
 	case makeContainerCommand:
 		if len(args) < 3 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[3].UsageDetails.Usage)
 		}
 
+		serviceName := args[1]
 		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
@@ -242,9 +245,10 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		fmt.Printf("\r%s%s\n\nCreated container %s in OS %s\n", cw.ClearLine, cw.Green("OK"), containerArg, serviceName)
 	case deleteContainerCommand:
 		if len(args) < 3 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[4].UsageDetails.Usage)
 		}
 
+		serviceName := args[1]
 		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
@@ -267,13 +271,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 
 // object does things with objects
 func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []string) error {
-	if len(args) < 3 {
-		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
-	}
-
 	command := args[0]
-	serviceName := args[1]
-	containerName := args[2]
 
 	// Display startup info
 	task := "Working with objects in"
@@ -287,11 +285,17 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 
 	switch command {
 	case showObjectsCommand:
+		if len(args) < 3 {
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[5].UsageDetails.Usage)
+		}
+
+		serviceName := args[1]
 		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
 
+		containerName := args[2]
 		objects, err := object.ShowObjects(destination, containerName)
 		if err != nil {
 			return fmt.Errorf("Failed to get objects: %s", err)
@@ -300,14 +304,16 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		fmt.Printf("\r%s%s\n\nObjects in container %s: %v\n", cw.ClearLine, cw.Green("OK"), containerName, objects)
 	case objectInfoCommand:
 		if len(args) < 4 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[6].UsageDetails.Usage)
 		}
 
+		serviceName := args[1]
 		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
 
+		containerName := args[2]
 		objectArg := args[3]
 		objectInfo, headers, err := object.GetObjectInfo(destination, containerName, objectArg)
 		if err != nil {
@@ -321,14 +327,16 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		fmt.Printf("\n")
 	case putObjectCommand:
 		if len(args) < 5 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[7].UsageDetails.Usage)
 		}
 
+		serviceName := args[1]
 		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
 
+		containerName := args[2]
 		objectArg := args[3]
 		path := args[4]
 		err = object.PutObject(destination, containerName, objectArg, path)
@@ -339,14 +347,16 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		fmt.Printf("\r%s%s\n\nUploaded object %s to container %s\n", cw.ClearLine, cw.Green("OK"), objectArg, containerName)
 	case getObjectCommand:
 		if len(args) < 5 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[8].UsageDetails.Usage)
 		}
 
+		serviceName := args[1]
 		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
 
+		containerName := args[2]
 		objectArg := args[3]
 		destinationPath := args[4]
 		err = object.GetObject(destination, containerName, objectArg, destinationPath)
@@ -357,14 +367,16 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		fmt.Printf("\r%s%s\n\nDownloaded object %s to %s\n", cw.ClearLine, cw.Green("OK"), objectArg, destinationPath)
 	case deleteObjectCommand:
 		if len(args) < 4 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[9].UsageDetails.Usage)
 		}
 
+		serviceName := args[1]
 		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
 
+		containerName := args[2]
 		objectArg := args[3]
 		err = object.DeleteObject(destination, containerName, objectArg)
 		if err != nil {
@@ -380,56 +392,11 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 	return nil
 }
 
-// putObject uploads an object to an Object Storage instance.
-func (c *LargeObjectsPlugin) putObject(cliConnection plugin.CliConnection, args []string) error {
-	/*
-		// Check that the minimum number of arguments are present
-		if len(args) < 3 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
-		}
-
-		// Parse arguments
-		serviceName := args[0]
-		argVals, err := object.ParseArgs(args[1:])
-		if err != nil {
-			return fmt.Errorf("Failed to parse arguments: %s", err)
-		}
-
-		// Display startup info
-		task := "Uploading object in"
-		err = displayUserInfo(cliConnection, task)
-		if err != nil {
-			return fmt.Errorf("Failed to display user info: %s", err)
-		}
-
-		// Start console writer
-		go c.writer.Write()
-
-		// Authenticate with Object Storage
-		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
-		if err != nil {
-			return fmt.Errorf("Failed to authenticate: %s", err)
-		}
-
-		// Upload object
-		name, err := object.PutObject(cliConnection, c.writer, destination, argVals)
-		if err != nil {
-			return fmt.Errorf("Failed to upload object: %s", err)
-		}
-
-		// Kill console writer and display completion info
-		c.writer.Quit()
-		fmt.Printf("\r%s%s\n\nUploaded %s to container %s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(name), cw.Cyan(argVals.Container))
-	*/
-
-	return nil
-}
-
 // makeDLO creates a Dynamic Large Object manifest in an Object Storage instance.
 func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
 	if len(args) < 4 {
-		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[2].UsageDetails.Usage)
+		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[10].UsageDetails.Usage)
 	}
 
 	// Parse arguments
@@ -472,7 +439,7 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
 	if len(args) < 5 {
-		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[3].UsageDetails.Usage)
+		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[11].UsageDetails.Usage)
 	}
 
 	// Parse arguments
@@ -546,10 +513,8 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				HelpText: "Show all containers in an Object Storage instance",
 				UsageDetails: plugin.Usage{
 					Usage: "cf " + showContainersCommand +
-						" ARGS [-FLAGS]",
-					Options: map[string]string{
-						"FLAG": "Description",
-					},
+						" service_name",
+					Options: map[string]string{},
 				},
 			},
 			{
@@ -557,10 +522,8 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				HelpText: "Show a given container's information",
 				UsageDetails: plugin.Usage{
 					Usage: "cf " + containerInfoCommand +
-						" ARGS [-FLAGS]",
-					Options: map[string]string{
-						"FLAG": "Description",
-					},
+						" service_name container_name",
+					Options: map[string]string{},
 				},
 			},
 			{
@@ -568,10 +531,8 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				HelpText: "Create a new container in an Object Storage instance",
 				UsageDetails: plugin.Usage{
 					Usage: "cf " + makeContainerCommand +
-						" ARGS [-FLAGS]",
-					Options: map[string]string{
-						"FLAG": "Description",
-					},
+						" service_name container_name",
+					Options: map[string]string{},
 				},
 			},
 			{
@@ -579,10 +540,8 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				HelpText: "Remove a container from an Object Storage instance",
 				UsageDetails: plugin.Usage{
 					Usage: "cf " + deleteContainerCommand +
-						" ARGS [-FLAGS]",
-					Options: map[string]string{
-						"FLAG": "Description",
-					},
+						" service_name container_name",
+					Options: map[string]string{},
 				},
 			},
 			{
@@ -590,10 +549,8 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				HelpText: "Show all objects in a container",
 				UsageDetails: plugin.Usage{
 					Usage: "cf " + showObjectsCommand +
-						" ARGS [-FLAGS]",
-					Options: map[string]string{
-						"FLAG": "Description",
-					},
+						" service_name container_name",
+					Options: map[string]string{},
 				},
 			},
 			{
@@ -601,10 +558,8 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				HelpText: "Show a given object's information",
 				UsageDetails: plugin.Usage{
 					Usage: "cf " + objectInfoCommand +
-						" ARGS [-FLAGS]",
-					Options: map[string]string{
-						"FLAG": "Description",
-					},
+						" service_name container_name object_name",
+					Options: map[string]string{},
 				},
 			},
 			{
@@ -612,10 +567,8 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				HelpText: "Upload a file as an object to Object Storage",
 				UsageDetails: plugin.Usage{
 					Usage: "cf " + putObjectCommand +
-						" ARGS [-FLAGS]",
-					Options: map[string]string{
-						"FLAG": "Description",
-					},
+						" service_name container_name object_name path_to_local_file",
+					Options: map[string]string{},
 				},
 			},
 			{
@@ -623,10 +576,8 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				HelpText: "Download an object from Object Storage",
 				UsageDetails: plugin.Usage{
 					Usage: "cf " + getObjectCommand +
-						" ARGS [-FLAGS]",
-					Options: map[string]string{
-						"FLAG": "Description",
-					},
+						" service_name container_name object_name path_to_dl_location",
+					Options: map[string]string{},
 				},
 			},
 			{
@@ -634,10 +585,8 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				HelpText: "Remove an object from a container",
 				UsageDetails: plugin.Usage{
 					Usage: "cf " + deleteObjectCommand +
-						" ARGS [-FLAGS]",
-					Options: map[string]string{
-						"FLAG": "Description",
-					},
+						" service_name container_name object_name",
+					Options: map[string]string{},
 				},
 			},
 			{
