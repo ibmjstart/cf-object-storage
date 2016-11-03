@@ -14,34 +14,30 @@ import (
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
 
-// pluginName defines the name of this plugin for use installing and
-// uninstalling it.
-const pluginName string = "ObjectStorageLargeObjects"
+const (
+	// Name of this plugin for use installing and uninstalling it
+	pluginName string = "cf-object-storage"
 
-// pluginNamespace defines the namespace that preceeds all commands.
-const pluginNamespace string = "os"
+	// Name of the command that fetches X-Auth Tokens
+	getAuthInfoCommand string = "get-auth-info"
 
-// getXAuthCommand defines the name of the command that fetches X-Auth Tokens.
-const getAuthInfoCommand string = "get-auth-info"
+	// Names of the container commands
+	showContainersCommand  string = "containers"
+	containerInfoCommand   string = "container-info"
+	makeContainerCommand   string = "new-container"
+	deleteContainerCommand string = "rm-container"
 
-const showContainersCommand string = "containers"
-const containerInfoCommand string = "container-info"
-const makeContainerCommand string = "new-container"
-const deleteContainerCommand string = "rm-container"
+	// Names of the single object commands
+	showObjectsCommand  string = "objects"
+	objectInfoCommand   string = "object-info"
+	putObjectCommand    string = "put-object"
+	getObjectCommand    string = "get-object"
+	deleteObjectCommand string = "rm-object"
 
-const showObjectsCommand string = "objects"
-const objectInfoCommand string = "object-info"
-const putObjectCommand string = "put-object"
-const getObjectCommand string = "object"
-const deleteObjectCommand string = "rm-object"
-
-// makeDLOCommand defines the name of the command that creates DLOs in
-// object storage.
-const makeDLOCommand string = "make-dlo"
-
-// makeDLOCommand defines the name of the command that creates SLOs in
-// object storage.
-const makeSLOCommand string = "make-slo"
+	// Names of the commands that creat large objects in object storage
+	makeDLOCommand string = "make-dlo"
+	makeSLOCommand string = "make-slo"
+)
 
 // LargeObjectsPlugin is the struct implementing the plugin interface.
 // It has no public members.
@@ -169,7 +165,7 @@ func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, arg
 	return nil
 }
 
-// container does things with containers
+// container executes the container commands
 func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args []string) error {
 	command := args[0]
 
@@ -269,7 +265,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 	return nil
 }
 
-// object does things with objects
+// object executes single object commands
 func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []string) error {
 	command := args[0]
 
