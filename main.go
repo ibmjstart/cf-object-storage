@@ -320,6 +320,23 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 		fmt.Printf("\n")
 	case putObjectCommand:
+		if len(args) < 5 {
+			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+		}
+
+		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		if err != nil {
+			return fmt.Errorf("Failed to authenticate: %s", err)
+		}
+
+		objectArg := args[3]
+		path := args[4]
+		err = object.PutObject(destination, containerName, objectArg, path)
+		if err != nil {
+			return fmt.Errorf("Failed to upload object: %s", err)
+		}
+
+		fmt.Printf("\r%s%s\n\nUploaded object %s to container %s\n", cw.ClearLine, cw.Green("OK"), objectArg, containerName)
 	case getObjectCommand:
 	case deleteObjectCommand:
 	}
