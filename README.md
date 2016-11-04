@@ -1,8 +1,8 @@
-# cf-large-objects
+# cf-object-storage
 
 [![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
-> A CloudFoundry Plugin for creating Static and Dynamic Large Objects in OpenStack Object Storage
+> A CloudFoundry Plugin for interacting with OpenStack Object Storage
 
 ## Table of Contents
 
@@ -18,8 +18,11 @@ Static Large Objects (SLOs) and Dynamic Large Objects (DLOs) are incredibly usef
 in OpenStack Object Storage. However, manipulating them can be quite difficult. This Cloud Foundry CLI plugin is
 designed to make using SLOs and DLOs much more accessible. 
 
-This plugin makes heavy use of the [swiftlygo](https://github.com/ibmjstart/swiftlygo) library. Much more information on SLOs and DLOs can be found by reading
-that library's README.
+This plugin makes heavy use of the [swiftlygo](https://github.com/ibmjstart/swiftlygo) library. Much more information 
+on SLOs and DLOs can be found by reading that library's README.
+
+Additionally, some basic object and container interactions are included as commands. This allows for working with
+Object Storage from the command line without having to go through the long authentication process on your own.
 
 ## Install
 
@@ -33,7 +36,7 @@ manually.
 - Install the plugin with `cf install-plugin cf-large-objects`
 - Verify the plugin has been installed with `cf plugins`
 
-**Note:** If you are reinstalling, run `cf uninstall-plugin ObjectStorageLargeObjects` first to uninstall the outdated
+**Note:** If you are reinstalling, run `cf uninstall-plugin cf-object-storage` first to uninstall the outdated
 version. Additionaly, if installing gives you a permission error run `chmod -x cf-large-objects`.
 
 #### Install From Source
@@ -59,7 +62,15 @@ swiftlygo library. More information can be found by using `cf help` followed by 
 Command		|Usage															|Description
 ---		|---															|---
 `get-auth-info` | `cf get-auth-info service_name [-url] [-x]`										|Retrieve a service's x-auth info
-`put-object`    | `cf put-object service_name container_name path_to_source [-n object_name]`						|Upload a file to Object Storage
+`containers` | `cf containers service_name` | Show all containers in an Object Storage instance
+`container-info` | `cf container-info service_name container_name` | Show a given container's information
+`new-container` | `cf new-container service_name container_name [headers...]` | Create a new container in an Object Storage instance
+`rm-container` | `cf remove-container service_name container_name` | Remove a container from an Object Storage instance
+`objects` | `cf objects service_name container_name` | Show all objects in a container
+`object-info` | `cf object-info service_name container_name object_name` | Show a given object's information
+`put-object`    | `cf put-object service_name container_name path_to_source [-n object_name]` | Upload a file to Object Storage
+`get-object` | `cf get-object service_name container_name object_name` | Download an object from Object Storage
+`rm-object` | `cf rm-object service_name container_name object_name` | Remove an object from a container
 `make-dlo`	| `cf make-dlo service_name dlo_container dlo_name [-c object_container] [-p dlo_prefix]`				|Create a DLO manifest in Object Storage
 `make-slo`	| `cf make-slo service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-t num_threads]`	|Upload a file to Object Storage as an SLO
 
