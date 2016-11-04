@@ -8,6 +8,11 @@ import (
 	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
 
+var shortHeaders = map[string]string{
+	"r":  "X-Container-Read:.r:*",
+	"-r": "X-Remove-Container-Read:1",
+}
+
 func ShowContainers(dest auth.Destination) ([]string, error) {
 	containers, err := dest.(*auth.SwiftDestination).SwiftConnection.ContainerNamesAll(nil)
 	if err != nil {
@@ -30,12 +35,16 @@ func MakeContainer(dest auth.Destination, container string, headers ...string) e
 	headerMap := make(map[string]string)
 
 	for _, h := range headers {
-		headerPair := strings.Split(h, ":")
+		hFromMap, found := shortHeaders[h]
+		if found {
+			h = hFromMap
+		}
+
+		headerPair := strings.SplitN(h, ":", 2)
 		if len(headerPair) != 2 {
 			return fmt.Errorf("Unable to parse headers (must use format header-name:header-value)")
 		}
 
-		fmt.Printf("\nHeader: %s Value: %s", headerPair[0], headerPair[1])
 		headerMap[headerPair[0]] = headerPair[1]
 	}
 

@@ -527,7 +527,7 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 				HelpText: "Create a new container in an Object Storage instance",
 				UsageDetails: plugin.Usage{
 					Usage: "cf " + makeContainerCommand +
-						" service_name container_name",
+						" service_name container_name [headers...] [r] [-r]",
 					Options: map[string]string{},
 				},
 			},
