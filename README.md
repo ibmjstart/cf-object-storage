@@ -54,17 +54,19 @@ should work fine.
 
 ## Usage
 
-This plugin provides the user with four new commands, described below. Each pertains to one of the main features of the
-swiftlygo library. More information can be found by using `cf help` followed by any of the four commands.
+This plugin is invoked as follows:
+`cf os SUBCOMMAND [ARGS...]`
 
-#### Command List
+Twelve subcommands are included in this plugin, described below. More information can be found by using `cf os help` followed by any of the subcommands.
 
-Command		|Usage															|Description
+#### Subommand List
+
+Subcommand		|Usage															|Description
 ---		|---															|---
 `get-auth-info` | `cf get-auth-info service_name [-url] [-x]`										|Retrieve a service's x-auth info
 `containers` | `cf containers service_name` | Show all containers in an Object Storage instance
 `container-info` | `cf container-info service_name container_name` | Show a given container's information
-`new-container` | `cf new-container service_name container_name [headers...]` | Create a new container in an Object Storage instance
+`put-container` | `cf new-container service_name container_name [headers...]` | Create a new container in an Object Storage instance
 `rm-container` | `cf remove-container service_name container_name` | Remove a container from an Object Storage instance
 `objects` | `cf objects service_name container_name` | Show all objects in a container
 `object-info` | `cf object-info service_name container_name object_name` | Show a given object's information
