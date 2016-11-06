@@ -30,7 +30,7 @@ const (
 	// Names of the container subcommands
 	showContainersCommand  string = "containers"
 	containerInfoCommand   string = "container-info"
-	makeContainerCommand   string = "new-container"
+	makeContainerCommand   string = "put-container"
 	deleteContainerCommand string = "rm-container"
 
 	// Names of the single object subcommands
@@ -656,7 +656,20 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 // commands.
 func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 	var usageContent = "cf " + namespace + " COMMAND [ARGS...] \n" +
-		"Object Storage commands:\n"
+		"\n   Object Storage commands:\n" +
+		"      " + getAuthInfoCommand + "\n" +
+		"      " + showContainersCommand + "\n" +
+		"      " + containerInfoCommand + "\n" +
+		"      " + makeContainerCommand + "\n" +
+		"      " + deleteContainerCommand + "\n" +
+		"      " + showObjectsCommand + "\n" +
+		"      " + objectInfoCommand + "\n" +
+		"      " + putObjectCommand + "\n" +
+		"      " + getObjectCommand + "\n" +
+		"      " + deleteObjectCommand + "\n" +
+		"      " + makeDLOCommand + "\n" +
+		"      " + makeSLOCommand + "\n" +
+		"   For more detailed information on subcommands use 'cf os help subcommand'"
 
 	return plugin.PluginMetadata{
 		Name: pluginName,
