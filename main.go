@@ -81,10 +81,14 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	// Dispatch the subcommand that the user wanted, if it exists
 	var err error
 	if len(args) < 2 {
-		err = fmt.Errorf("Please provide a valid subcommand.\nA list of subcommands can be found with the command 'cf help os'")
+		err = fmt.Errorf("Please provide a valid subcommand\nA list of subcommands can be found with the command 'cf help os'")
 	} else {
-		subcommandFunc := c.subcommands[args[1]]
-		err = subcommandFunc(cliConnection, args[1:])
+		subcommandFunc, found := c.subcommands[args[1]]
+		if !found {
+			err = fmt.Errorf("%s is not a valid subcommand", args[1])
+		} else {
+			err = subcommandFunc(cliConnection, args[1:])
+		}
 	}
 
 	// Report any fatal errors returned by the subcommand
@@ -123,7 +127,7 @@ func displayUserInfo(cliConnection plugin.CliConnection, task string) error {
 func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
 	if len(args) < 2 {
-		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[0].UsageDetails.Usage)
+		return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", getAuthInfoCommand)
 	}
 
 	// Parse arguments
@@ -195,7 +199,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 	switch command {
 	case showContainersCommand:
 		if len(args) < 2 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[1].UsageDetails.Usage)
+			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", showContainersCommand)
 		}
 
 		serviceName := args[1]
@@ -213,7 +217,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		fmt.Printf("\r%s%s\n\nContainers in OS %s: %v\n", cw.ClearLine, cw.Green("OK"), serviceName, containers)
 	case containerInfoCommand:
 		if len(args) < 3 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[2].UsageDetails.Usage)
+			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", containerInfoCommand)
 		}
 
 		serviceName := args[1]
@@ -235,7 +239,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		fmt.Printf("\n")
 	case makeContainerCommand:
 		if len(args) < 3 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[3].UsageDetails.Usage)
+			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", makeContainerCommand)
 		}
 
 		serviceName := args[1]
@@ -254,7 +258,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		fmt.Printf("\r%s%s\n\nCreated container %s in OS %s\n", cw.ClearLine, cw.Green("OK"), containerArg, serviceName)
 	case deleteContainerCommand:
 		if len(args) < 3 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[4].UsageDetails.Usage)
+			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", deleteContainerCommand)
 		}
 
 		serviceName := args[1]
@@ -295,7 +299,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 	switch command {
 	case showObjectsCommand:
 		if len(args) < 3 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[5].UsageDetails.Usage)
+			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", showObjectsCommand)
 		}
 
 		serviceName := args[1]
@@ -313,7 +317,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		fmt.Printf("\r%s%s\n\nObjects in container %s: %v\n", cw.ClearLine, cw.Green("OK"), containerName, objects)
 	case objectInfoCommand:
 		if len(args) < 4 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[6].UsageDetails.Usage)
+			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", objectInfoCommand)
 		}
 
 		serviceName := args[1]
@@ -336,7 +340,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		fmt.Printf("\n")
 	case putObjectCommand:
 		if len(args) < 5 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[7].UsageDetails.Usage)
+			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", putObjectCommand)
 		}
 
 		serviceName := args[1]
@@ -356,7 +360,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		fmt.Printf("\r%s%s\n\nUploaded object %s to container %s\n", cw.ClearLine, cw.Green("OK"), objectArg, containerName)
 	case getObjectCommand:
 		if len(args) < 5 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[8].UsageDetails.Usage)
+			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", getObjectCommand)
 		}
 
 		serviceName := args[1]
@@ -376,7 +380,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		fmt.Printf("\r%s%s\n\nDownloaded object %s to %s\n", cw.ClearLine, cw.Green("OK"), objectArg, destinationPath)
 	case deleteObjectCommand:
 		if len(args) < 4 {
-			return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[9].UsageDetails.Usage)
+			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", deleteObjectCommand)
 		}
 
 		serviceName := args[1]
@@ -405,7 +409,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
 	if len(args) < 4 {
-		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[10].UsageDetails.Usage)
+		return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", makeDLOCommand)
 	}
 
 	// Parse arguments
@@ -448,7 +452,7 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []string) error {
 	// Check that the minimum number of arguments are present
 	if len(args) < 5 {
-		return fmt.Errorf("Missing required arguments\nUsage: %s", c.GetMetadata().Commands[11].UsageDetails.Usage)
+		return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", makeSLOCommand)
 	}
 
 	// Parse arguments
@@ -490,7 +494,7 @@ func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []
 // help prints help info for a given subcommand
 func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []string) error {
 	if len(args) < 2 {
-		return fmt.Errorf("Must provide subcommand to fetch help info for.")
+		return fmt.Errorf("Must provide subcommand to fetch help info for")
 	}
 
 	var subcommands = []plugin.Command{
