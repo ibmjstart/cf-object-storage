@@ -18,23 +18,26 @@ const (
 	// Name of this plugin for use installing and uninstalling it
 	pluginName string = "cf-object-storage"
 
-	// Name of the command that fetches X-Auth Tokens
+	// Namespace for the plugin's subcommands
+	namespace string = "os"
+
+	// Name of the subcommand that fetches X-Auth Tokens
 	getAuthInfoCommand string = "get-auth-info"
 
-	// Names of the container commands
+	// Names of the container subcommands
 	showContainersCommand  string = "containers"
 	containerInfoCommand   string = "container-info"
 	makeContainerCommand   string = "new-container"
 	deleteContainerCommand string = "rm-container"
 
-	// Names of the single object commands
+	// Names of the single object subcommands
 	showObjectsCommand  string = "objects"
 	objectInfoCommand   string = "object-info"
 	putObjectCommand    string = "put-object"
 	getObjectCommand    string = "get-object"
 	deleteObjectCommand string = "rm-object"
 
-	// Names of the commands that creat large objects in object storage
+	// Names of the subcommands that create large objects in object storage
 	makeDLOCommand string = "make-dlo"
 	makeSLOCommand string = "make-slo"
 )
@@ -71,8 +74,13 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	c.writer = cw.NewConsoleWriter()
 
 	// Dispatch the subcommand that the user wanted, if it exists
-	subcommandFunc := c.subcommands[args[0]]
-	err := subcommandFunc(cliConnection, args)
+	var err error
+	if len(args) < 2 {
+		err = fmt.Errorf("Please provide a valid subcommand.\nA list of subcommands can be found with the command 'cf help os'")
+	} else {
+		subcommandFunc := c.subcommands[args[1]]
+		err = subcommandFunc(cliConnection, args[1:])
+	}
 
 	// Report any fatal errors returned by the subcommand
 	if err != nil {
@@ -479,6 +487,9 @@ func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []
 // information is used to build the CF CLI helptext for this plugin's
 // commands.
 func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
+	var usageContent = "cf " + namespace + " COMMAND [ARGS...] \n" +
+		"Object Storage commands:\n"
+
 	return plugin.PluginMetadata{
 		Name: pluginName,
 		Version: plugin.VersionType{
@@ -493,124 +504,132 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 		},
 		Commands: []plugin.Command{
 			{
-				Name:     getAuthInfoCommand,
-				HelpText: "Display an Object Storage service's authentication url and x-auth token",
+				Name:     namespace,
+				HelpText: "Work with SoftLayer Object Storage",
 				UsageDetails: plugin.Usage{
-					Usage: "cf " + getAuthInfoCommand +
-						" service_name [--url] [-x]",
-					Options: map[string]string{
-						"url": "Display auth url in quiet mode",
-						"x":   "Display x-auth token in quiet mode",
+					Usage: usageContent,
+				},
+			},
+			/*
+				{
+					Name:     getAuthInfoCommand,
+					HelpText: "Display an Object Storage service's authentication url and x-auth token",
+					UsageDetails: plugin.Usage{
+						Usage: "cf " + getAuthInfoCommand +
+							" service_name [--url] [-x]",
+						Options: map[string]string{
+							"url": "Display auth url in quiet mode",
+							"x":   "Display x-auth token in quiet mode",
+						},
 					},
 				},
-			},
-			{
-				Name:     showContainersCommand,
-				HelpText: "Show all containers in an Object Storage instance",
-				UsageDetails: plugin.Usage{
-					Usage: "cf " + showContainersCommand +
-						" service_name",
-					Options: map[string]string{},
-				},
-			},
-			{
-				Name:     containerInfoCommand,
-				HelpText: "Show a given container's information",
-				UsageDetails: plugin.Usage{
-					Usage: "cf " + containerInfoCommand +
-						" service_name container_name",
-					Options: map[string]string{},
-				},
-			},
-			{
-				Name:     makeContainerCommand,
-				HelpText: "Create a new container in an Object Storage instance",
-				UsageDetails: plugin.Usage{
-					Usage: "cf " + makeContainerCommand +
-						" service_name container_name [headers...] [r] [-r]",
-					Options: map[string]string{},
-				},
-			},
-			{
-				Name:     deleteContainerCommand,
-				HelpText: "Remove a container from an Object Storage instance",
-				UsageDetails: plugin.Usage{
-					Usage: "cf " + deleteContainerCommand +
-						" service_name container_name",
-					Options: map[string]string{},
-				},
-			},
-			{
-				Name:     showObjectsCommand,
-				HelpText: "Show all objects in a container",
-				UsageDetails: plugin.Usage{
-					Usage: "cf " + showObjectsCommand +
-						" service_name container_name",
-					Options: map[string]string{},
-				},
-			},
-			{
-				Name:     objectInfoCommand,
-				HelpText: "Show a given object's information",
-				UsageDetails: plugin.Usage{
-					Usage: "cf " + objectInfoCommand +
-						" service_name container_name object_name",
-					Options: map[string]string{},
-				},
-			},
-			{
-				Name:     putObjectCommand,
-				HelpText: "Upload a file as an object to Object Storage",
-				UsageDetails: plugin.Usage{
-					Usage: "cf " + putObjectCommand +
-						" service_name container_name object_name path_to_local_file",
-					Options: map[string]string{},
-				},
-			},
-			{
-				Name:     getObjectCommand,
-				HelpText: "Download an object from Object Storage",
-				UsageDetails: plugin.Usage{
-					Usage: "cf " + getObjectCommand +
-						" service_name container_name object_name path_to_dl_location",
-					Options: map[string]string{},
-				},
-			},
-			{
-				Name:     deleteObjectCommand,
-				HelpText: "Remove an object from a container",
-				UsageDetails: plugin.Usage{
-					Usage: "cf " + deleteObjectCommand +
-						" service_name container_name object_name",
-					Options: map[string]string{},
-				},
-			},
-			{
-				Name:     makeDLOCommand,
-				HelpText: "Create a Dynamic Large Object in Object Storage",
-				UsageDetails: plugin.Usage{
-					Usage: "cf " + makeDLOCommand +
-						" service_name dlo_container dlo_name [-c object_container] [-p dlo_prefix]",
-					Options: map[string]string{
-						"c": "Destination container for DLO segments (defaults to dlo_container)",
-						"p": "Prefix to be used for DLO segments (default to dlo_name)",
+				{
+					Name:     showContainersCommand,
+					HelpText: "Show all containers in an Object Storage instance",
+					UsageDetails: plugin.Usage{
+						Usage: "cf " + showContainersCommand +
+							" service_name",
+						Options: map[string]string{},
 					},
 				},
-			},
-			{
-				Name:     makeSLOCommand,
-				HelpText: "Create a Static Large Object in Object Storage",
-				UsageDetails: plugin.Usage{
-					Usage: "cf " + makeSLOCommand +
-						" service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-j num_threads]",
-					Options: map[string]string{
-						"m": "Only upload missing chunks",
-						"o": "Destination for log data, if desired",
-						"s": "Chunk size, in bytes (defaults to create 1000 chunks)",
-						"j": "Maximum number of uploader threads (defaults to the available number of CPUs)",
+				{
+					Name:     containerInfoCommand,
+					HelpText: "Show a given container's information",
+					UsageDetails: plugin.Usage{
+						Usage: "cf " + containerInfoCommand +
+							" service_name container_name",
+						Options: map[string]string{},
 					},
 				},
-			},
+				{
+					Name:     makeContainerCommand,
+					HelpText: "Create a new container in an Object Storage instance",
+					UsageDetails: plugin.Usage{
+						Usage: "cf " + makeContainerCommand +
+							" service_name container_name [headers...] [r] [-r]",
+						Options: map[string]string{},
+					},
+				},
+				{
+					Name:     deleteContainerCommand,
+					HelpText: "Remove a container from an Object Storage instance",
+					UsageDetails: plugin.Usage{
+						Usage: "cf " + deleteContainerCommand +
+							" service_name container_name",
+						Options: map[string]string{},
+					},
+				},
+				{
+					Name:     showObjectsCommand,
+					HelpText: "Show all objects in a container",
+					UsageDetails: plugin.Usage{
+						Usage: "cf " + showObjectsCommand +
+							" service_name container_name",
+						Options: map[string]string{},
+					},
+				},
+				{
+					Name:     objectInfoCommand,
+					HelpText: "Show a given object's information",
+					UsageDetails: plugin.Usage{
+						Usage: "cf " + objectInfoCommand +
+							" service_name container_name object_name",
+						Options: map[string]string{},
+					},
+				},
+				{
+					Name:     putObjectCommand,
+					HelpText: "Upload a file as an object to Object Storage",
+					UsageDetails: plugin.Usage{
+						Usage: "cf " + putObjectCommand +
+							" service_name container_name object_name path_to_local_file",
+						Options: map[string]string{},
+					},
+				},
+				{
+					Name:     getObjectCommand,
+					HelpText: "Download an object from Object Storage",
+					UsageDetails: plugin.Usage{
+						Usage: "cf " + getObjectCommand +
+							" service_name container_name object_name path_to_dl_location",
+						Options: map[string]string{},
+					},
+				},
+				{
+					Name:     deleteObjectCommand,
+					HelpText: "Remove an object from a container",
+					UsageDetails: plugin.Usage{
+						Usage: "cf " + deleteObjectCommand +
+							" service_name container_name object_name",
+						Options: map[string]string{},
+					},
+				},
+				{
+					Name:     makeDLOCommand,
+					HelpText: "Create a Dynamic Large Object in Object Storage",
+					UsageDetails: plugin.Usage{
+						Usage: "cf " + makeDLOCommand +
+							" service_name dlo_container dlo_name [-c object_container] [-p dlo_prefix]",
+						Options: map[string]string{
+							"c": "Destination container for DLO segments (defaults to dlo_container)",
+							"p": "Prefix to be used for DLO segments (default to dlo_name)",
+						},
+					},
+				},
+				{
+					Name:     makeSLOCommand,
+					HelpText: "Create a Static Large Object in Object Storage",
+					UsageDetails: plugin.Usage{
+						Usage: "cf " + makeSLOCommand +
+							" service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-j num_threads]",
+						Options: map[string]string{
+							"m": "Only upload missing chunks",
+							"o": "Destination for log data, if desired",
+							"s": "Chunk size, in bytes (defaults to create 1000 chunks)",
+							"j": "Maximum number of uploader threads (defaults to the available number of CPUs)",
+						},
+					},
+				},*/
 		},
 	}
 }
