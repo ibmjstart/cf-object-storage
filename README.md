@@ -63,18 +63,18 @@ Twelve subcommands are included in this plugin, described below. More informatio
 
 Subcommand		|Usage															|Description
 ---		|---															|---
-`get-auth-info` | `cf get-auth-info service_name [-url] [-x]`										|Retrieve a service's x-auth info
-`containers` | `cf containers service_name` | Show all containers in an Object Storage instance
-`container-info` | `cf container-info service_name container_name` | Show a given container's information
-`put-container` | `cf new-container service_name container_name [headers...]` | Create a new container in an Object Storage instance
-`rm-container` | `cf remove-container service_name container_name` | Remove a container from an Object Storage instance
-`objects` | `cf objects service_name container_name` | Show all objects in a container
-`object-info` | `cf object-info service_name container_name object_name` | Show a given object's information
-`put-object`    | `cf put-object service_name container_name path_to_source [-n object_name]` | Upload a file to Object Storage
-`get-object` | `cf get-object service_name container_name object_name` | Download an object from Object Storage
-`rm-object` | `cf rm-object service_name container_name object_name` | Remove an object from a container
-`make-dlo`	| `cf make-dlo service_name dlo_container dlo_name [-c object_container] [-p dlo_prefix]`				|Create a DLO manifest in Object Storage
-`make-slo`	| `cf make-slo service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-t num_threads]`	|Upload a file to Object Storage as an SLO
+`get-auth-info` | `cf os get-auth-info service_name [-url] [-x]`										|Retrieve a service's x-auth info
+`containers` | `cf os containers service_name` | Show all containers in an Object Storage instance
+`container-info` | `cf os container-info service_name container_name` | Show a given container's information
+`put-container` | `cf os new-container service_name container_name [headers...]` | Create a new container in an Object Storage instance
+`rm-container` | `cf os remove-container service_name container_name` | Remove a container from an Object Storage instance
+`objects` | `cf os objects service_name container_name` | Show all objects in a container
+`object-info` | `cf os object-info service_name container_name object_name` | Show a given object's information
+`put-object`    | `cf os put-object service_name container_name path_to_source [-n object_name]` | Upload a file to Object Storage
+`get-object` | `cf os get-object service_name container_name object_name` | Download an object from Object Storage
+`rm-object` | `cf os rm-object service_name container_name object_name` | Remove an object from a container
+`make-dlo`	| `cf os make-dlo service_name dlo_container dlo_name [-c object_container] [-p dlo_prefix]`				|Create a DLO manifest in Object Storage
+`make-slo`	| `cf os make-slo service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-t num_threads]`	|Upload a file to Object Storage as an SLO
 
 ## Contribute
 
