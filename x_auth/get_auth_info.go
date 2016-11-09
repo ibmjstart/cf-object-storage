@@ -99,7 +99,8 @@ func getJSONCredentials(cliConnection plugin.CliConnection, targetService, servi
 		AnythingBut("{").
 		BeginCapture().
 		Then("{").
-		AnythingBut("}").
+		Anything().
+		StartOfLine().
 		Then("}").
 		EndCapture().
 		Captures(strings.Join(stdout, ""))
