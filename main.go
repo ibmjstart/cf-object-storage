@@ -298,6 +298,20 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		}
 
 		containerArg := args[2]
+		if len(args) == 4 && args[3] == "-f" {
+			objects, err := object.ShowObjects(destination, containerArg)
+			if err != nil {
+				return fmt.Errorf("Failed to get objects to delete: %s", err)
+			}
+
+			for _, rmObject := range objects {
+				err = object.DeleteObject(destination, containerArg, rmObject)
+				if err != nil {
+					return fmt.Errorf("Failed to delete object %s: %s", rmObject, err)
+				}
+			}
+		}
+
 		err = container.DeleteContainer(destination, containerArg)
 		if err != nil {
 			return fmt.Errorf("Failed to delete container: %s", err)
@@ -596,7 +610,7 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 			HelpText: "Update a container's metadata",
 			UsageDetails: plugin.Usage{
 				Usage: "cf " + namespace + " " + updateContainerCommand +
-					" service_name container_name headers",
+					" service_name container_name headers...",
 				Options: map[string]string{},
 			},
 		},
@@ -613,7 +627,7 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 			HelpText: "Remove a container from an Object Storage instance",
 			UsageDetails: plugin.Usage{
 				Usage: "cf " + namespace + " " + deleteContainerCommand +
-					" service_name container_name",
+					" service_name container_name [-f]",
 				Options: map[string]string{},
 			},
 		},
