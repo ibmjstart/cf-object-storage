@@ -41,6 +41,7 @@ const (
 	putObjectCommand    string = "put-object"
 	getObjectCommand    string = "get-object"
 	renameObjectCommand string = "rename-object"
+	copyObjectCommand   string = "copy-object"
 	deleteObjectCommand string = "delete-object"
 
 	// Names of the subcommands that create large objects in object storage
@@ -75,6 +76,7 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 		putObjectCommand:    c.objects,
 		getObjectCommand:    c.objects,
 		renameObjectCommand: c.objects,
+		copyObjectCommand:   c.objects,
 		deleteObjectCommand: c.objects,
 
 		makeDLOCommand: c.makeDLO,
@@ -447,6 +449,26 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		fmt.Printf("\r%s%s\n\nRenamed object %s to %s\n", cw.ClearLine, cw.Green("OK"), objectArg, newNameArg)
+	case copyObjectCommand:
+		if len(args) < 5 {
+			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", putObjectCommand)
+		}
+
+		serviceName := args[1]
+		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		if err != nil {
+			return fmt.Errorf("Failed to authenticate: %s", err)
+		}
+
+		containerName := args[2]
+		objectArg := args[3]
+		newContainerName := args[4]
+		err = object.CopyObject(destination, containerName, objectArg, newContainerName, objectArg)
+		if err != nil {
+			return fmt.Errorf("Failed to copy object: %s", err)
+		}
+
+		fmt.Printf("\r%s%s\n\nCopied object %s to container %s\n", cw.ClearLine, cw.Green("OK"), objectArg, newContainerName)
 	case deleteObjectCommand:
 		if len(args) < 4 {
 			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", deleteObjectCommand)
@@ -671,8 +693,17 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 			Name:     renameObjectCommand,
 			HelpText: "Rename an object",
 			UsageDetails: plugin.Usage{
-				Usage: "cf " + namespace + " " + putObjectCommand +
+				Usage: "cf " + namespace + " " + renameObjectCommand +
 					" service_name container_name object_name new_object_name",
+				Options: map[string]string{},
+			},
+		},
+		{
+			Name:     copyObjectCommand,
+			HelpText: "Copy an object to another container",
+			UsageDetails: plugin.Usage{
+				Usage: "cf " + namespace + " " + copyObjectCommand +
+					" service_name container_name object_name new_container_name",
 				Options: map[string]string{},
 			},
 		},
@@ -726,9 +757,10 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 		putObjectCommand:       9,
 		getObjectCommand:       10,
 		renameObjectCommand:    11,
-		deleteObjectCommand:    12,
-		makeDLOCommand:         13,
-		makeSLOCommand:         14,
+		copyObjectCommand:      12,
+		deleteObjectCommand:    13,
+		makeDLOCommand:         14,
+		makeSLOCommand:         15,
 	}
 
 	idx, found := subcommandMap[args[1]]
@@ -766,6 +798,7 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 		"      " + putObjectCommand + "\n" +
 		"      " + getObjectCommand + "\n" +
 		"      " + renameObjectCommand + "\n" +
+		"      " + copyObjectCommand + "\n" +
 		"      " + deleteObjectCommand + "\n" +
 		"      " + makeDLOCommand + "\n" +
 		"      " + makeSLOCommand + "\n" +
