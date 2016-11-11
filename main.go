@@ -289,6 +289,59 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		}
 
 		fmt.Printf("\r%s%s\n\nUpdated container %s in OS %s\n", cw.ClearLine, cw.Green("OK"), containerArg, serviceName)
+	case renameContainerCommand:
+		if len(args) < 4 {
+			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", renameContainerCommand)
+		}
+
+		serviceName := args[1]
+		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		if err != nil {
+			return fmt.Errorf("Failed to authenticate: %s", err)
+		}
+
+		containerArg := args[2]
+		_, headers, err := container.GetContainerInfo(destination, containerArg)
+		if err != nil {
+			return fmt.Errorf("Failed to get container %s: %s", containerArg, err)
+		}
+
+		headersArg := make([]string, len(headers))
+		ctr := 0
+		for header, val := range headers {
+			headersArg[ctr] = header + ":" + val
+			ctr++
+		}
+
+		newContainerArg := args[3]
+		err = container.MakeContainer(destination, newContainerArg, headersArg...)
+		if err != nil {
+			return fmt.Errorf("Failed to make container: %s", err)
+		}
+
+		objects, err := object.ShowObjects(destination, containerArg)
+		if err != nil {
+			return fmt.Errorf("Failed to get objects to move: %s", err)
+		}
+
+		for _, mvObject := range objects {
+			err = object.CopyObject(destination, containerArg, mvObject, newContainerArg, mvObject)
+			if err != nil {
+				return fmt.Errorf("Failed to move object %s: %s", mvObject, err)
+			}
+
+			err = object.DeleteObject(destination, containerArg, mvObject)
+			if err != nil {
+				return fmt.Errorf("Failed to delete object %s: %s", mvObject, err)
+			}
+		}
+
+		err = container.DeleteContainer(destination, containerArg)
+		if err != nil {
+			return fmt.Errorf("Failed to delete container: %s", err)
+		}
+
+		fmt.Printf("\r%s%s\n\nRenamed container %s to %s\n", cw.ClearLine, cw.Green("OK"), containerArg, newContainerArg)
 	case deleteContainerCommand:
 		if len(args) < 3 {
 			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", deleteContainerCommand)
