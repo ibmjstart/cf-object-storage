@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/cloudfoundry/cli/plugin"
 	cw "github.ibm.com/ckwaldon/cf-large-objects/console_writer"
@@ -385,7 +386,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 		fmt.Printf("\n")
 	case putObjectCommand:
-		if len(args) < 5 {
+		if len(args) < 4 {
 			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", putObjectCommand)
 		}
 
@@ -396,8 +397,13 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		containerName := args[2]
-		objectArg := args[3]
-		path := args[4]
+		path := args[3]
+		objectArg := filepath.Base(path)
+
+		if len(args) == 6 && args[4] == "-n" {
+			objectArg = args[5]
+		}
+
 		err = object.PutObject(destination, containerName, objectArg, path, nil)
 		if err != nil {
 			return fmt.Errorf("Failed to upload object: %s", err)
@@ -676,7 +682,7 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 			HelpText: "Upload a file as an object to Object Storage",
 			UsageDetails: plugin.Usage{
 				Usage: "cf " + namespace + " " + putObjectCommand +
-					" service_name container_name object_name path_to_local_file",
+					" service_name container_name path_to_local_file [-n object_name]",
 				Options: map[string]string{},
 			},
 		},
