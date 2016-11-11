@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/cloudfoundry/cli/plugin"
-	cw "github.ibm.com/ckwaldon/cf-large-objects/console_writer"
-	sg "github.ibm.com/ckwaldon/swiftlygo"
-	"github.ibm.com/ckwaldon/swiftlygo/auth"
+	cw "github.com/ibmjstart/cf-large-objects/console_writer"
+	sg "github.com/ibmjstart/swiftlygo"
+	"github.com/ibmjstart/swiftlygo/auth"
 )
 
 // argVal holds the parsed argument values.

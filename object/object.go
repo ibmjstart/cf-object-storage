@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ibmjstart/swiftlygo/auth"
 	"github.com/ncw/swift"
-	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
 
 const maxObjectSize uint = 1000 * 1000 * 1000 * 5

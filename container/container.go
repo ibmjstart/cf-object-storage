@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ibmjstart/swiftlygo/auth"
 	"github.com/ncw/swift"
-	"github.ibm.com/ckwaldon/swiftlygo/auth"
 )
 
 var shortHeaders = map[string]string{

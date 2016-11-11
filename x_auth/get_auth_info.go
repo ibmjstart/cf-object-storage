@@ -8,8 +8,8 @@ import (
 
 	verbex "github.com/VerbalExpressions/GoVerbalExpressions"
 	"github.com/cloudfoundry/cli/plugin"
-	"github.ibm.com/ckwaldon/cf-large-objects/console_writer"
-	"github.ibm.com/ckwaldon/swiftlygo/auth"
+	"github.com/ibmjstart/cf-large-objects/console_writer"
+	"github.com/ibmjstart/swiftlygo/auth"
 )
 
 // flagVal holds the flag values.
