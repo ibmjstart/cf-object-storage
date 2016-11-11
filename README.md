@@ -34,7 +34,7 @@ manually.
 - Download the binary for your machine ([Linux](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/linux/cf-object-storage?raw=true), [Mac](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/darwin/cf-object-storage?raw=true), [Windows](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/windows/cf-object-storage.exe?raw=true))
 - Navigate to the downloaded binary
 - Install the plugin with `cf install-plugin cf-object-storage`
- -  If installing gives you a permission error run `chmod +x cf-object-storage`.
+ -  If installing gives you a permission error run `chmod +x cf-object-storage`
 - Verify the plugin has been installed with `cf plugins`
 
 **Note:** If you are reinstalling, run `cf uninstall-plugin cf-object-storage` first to uninstall the outdated
@@ -57,6 +57,7 @@ should work fine.
 
 This plugin is invoked as follows:
 `cf os SUBCOMMAND [ARGS...]`
+
 Sixteen subcommands are included in this plugin, described below. More information can be found by using `cf os help` followed by any of the subcommands.
 
 #### Subommand List
