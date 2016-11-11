@@ -756,15 +756,20 @@ func getSubcommandHelp(name string) (string, error) {
 				},
 			},
 		},
-		{Name: updateContainerCommand,
+		{
+			Name:     updateContainerCommand,
 			HelpText: "Update a container's metadata",
 			UsageDetails: plugin.Usage{
 				Usage: "cf " + namespace + " " + updateContainerCommand +
-					" service_name container_name headers...",
-				Options: map[string]string{},
+					" service_name container_name headers... [r] [-r]",
+				Options: map[string]string{
+					"r":  "Short name for global read header",
+					"-r": "Short name for remove read restrictions header",
+				},
 			},
 		},
-		{Name: renameContainerCommand,
+		{
+			Name:     renameContainerCommand,
 			HelpText: "Rename a container",
 			UsageDetails: plugin.Usage{
 				Usage: "cf " + namespace + " " + renameContainerCommand +
@@ -778,7 +783,9 @@ func getSubcommandHelp(name string) (string, error) {
 			UsageDetails: plugin.Usage{
 				Usage: "cf " + namespace + " " + deleteContainerCommand +
 					" service_name container_name [-f]",
-				Options: map[string]string{},
+				Options: map[string]string{
+					"f": "Force delete even if not empty",
+				},
 			},
 		},
 		{
@@ -882,7 +889,7 @@ func getSubcommandHelp(name string) (string, error) {
 	if len(subcommands[idx].UsageDetails.Options) > 0 {
 		help += fmt.Sprintf("\nOPTIONS:\n")
 		for k, v := range subcommands[idx].UsageDetails.Options {
-			if name != makeContainerCommand {
+			if name != makeContainerCommand && name != updateContainerCommand {
 				help += fmt.Sprintf("\t-%s\t\t%v\n", k, v)
 			} else {
 				help += fmt.Sprintf("\t%s\t\t%v\n", k, v)
