@@ -31,19 +31,20 @@ manually.
 
 #### Install From Binary (Recommended)
 
-- Download the binary for your machine ([Linux](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/linux/cf-large-objects?raw=true), [Mac](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/darwin/cf-large-objects?raw=true), [Windows](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/windows/cf-large-objects.exe?raw=true))
+- Download the binary for your machine ([Linux](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/linux/cf-object-storage?raw=true), [Mac](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/darwin/cf-object-storage?raw=true), [Windows](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/windows/cf-object-storage.exe?raw=true))
 - Navigate to the downloaded binary
-- Install the plugin with `cf install-plugin cf-large-objects`
+- Install the plugin with `cf install-plugin cf-object-storage`
+ -  If installing gives you a permission error run `chmod +x cf-object-storage`.
 - Verify the plugin has been installed with `cf plugins`
 
 **Note:** If you are reinstalling, run `cf uninstall-plugin cf-object-storage` first to uninstall the outdated
-version. Additionaly, if installing gives you a permission error run `chmod -x cf-large-objects`.
+version.
 
 #### Install From Source
 
 Installing this way requires Go. To download the package, run
 ```
-go get github.com/ibmjstart/cf-large-objects
+go get github.com/ibmjstart/cf-object-storage
 ```
 
 The provided `reinstall.sh` script can then be ran to install the plugin.
@@ -56,25 +57,28 @@ should work fine.
 
 This plugin is invoked as follows:
 `cf os SUBCOMMAND [ARGS...]`
-
-Twelve subcommands are included in this plugin, described below. More information can be found by using `cf os help` followed by any of the subcommands.
+Sixteen subcommands are included in this plugin, described below. More information can be found by using `cf os help` followed by any of the subcommands.
 
 #### Subommand List
 
 Subcommand		|Usage															|Description
 ---		|---															|---
-`get-auth-info` | `cf os get-auth-info service_name [-url] [-x]`										|Retrieve a service's x-auth info
+`auth` | `cf os auth service_name [-url] [-x]`										|Retrieve a service's x-auth info
 `containers` | `cf os containers service_name` | Show all containers in an Object Storage instance
-`container-info` | `cf os container-info service_name container_name` | Show a given container's information
-`put-container` | `cf os new-container service_name container_name [headers...]` | Create a new container in an Object Storage instance
-`rm-container` | `cf os remove-container service_name container_name` | Remove a container from an Object Storage instance
+`container` | `cf os container service_name container_name` | Show a given container's information
+`create-container` | `cf os create-container service_name container_name [headers...] [r] [-r]` | Create a new container in an Object Storage instance
+`update-container` | `cf os update-container service_name container_name headers... [r] [-r]` | Update an existing container's metadata
+`rename-container` | `cf os rename-container service_name container_name new_container_name` | Rename an existing container
+`delete-container` | `cf os delete-container service_name container_name [-f]` | Remove a container from an Object Storage instance
 `objects` | `cf os objects service_name container_name` | Show all objects in a container
-`object-info` | `cf os object-info service_name container_name object_name` | Show a given object's information
+`object` | `cf os object service_name container_name object_name` | Show a given object's information
 `put-object`    | `cf os put-object service_name container_name path_to_source [-n object_name]` | Upload a file to Object Storage
-`get-object` | `cf os get-object service_name container_name object_name` | Download an object from Object Storage
-`rm-object` | `cf os rm-object service_name container_name object_name` | Remove an object from a container
-`make-dlo`	| `cf os make-dlo service_name dlo_container dlo_name [-c object_container] [-p dlo_prefix]`				|Create a DLO manifest in Object Storage
-`make-slo`	| `cf os make-slo service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-t num_threads]`	|Upload a file to Object Storage as an SLO
+`get-object` | `cf os get-object service_name container_name object_name path_to_download` | Download an object from Object Storage
+`rename-object` | `cf os rename-object service_name container_name object_name new_object_name` | Rename an object
+`copy-object` | `cf os copy-object service_name container_name object_name new_container_name` | Copy an object from one container to another
+`delete-object` | `cf os delete-object service_name container_name object_name` | Remove an object from a container
+`create-dynamic-object`	| `cf os make-dlo service_name dlo_container dlo_name [-c object_container] [-p dlo_prefix]`				|Create a DLO manifest in Object Storage
+`put-large-object`	| `cf os make-slo service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-t num_threads]`	|Upload a file to Object Storage as an SLO
 
 ## Contribute
 
