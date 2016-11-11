@@ -37,14 +37,15 @@ const (
 
 	// Names of the single object subcommands
 	showObjectsCommand  string = "objects"
-	objectInfoCommand   string = "object-info"
+	objectInfoCommand   string = "object"
 	putObjectCommand    string = "put-object"
 	getObjectCommand    string = "get-object"
-	deleteObjectCommand string = "rm-object"
+	renameObjectCommand string = "rename-object"
+	deleteObjectCommand string = "delete-object"
 
 	// Names of the subcommands that create large objects in object storage
-	makeDLOCommand string = "make-dlo"
-	makeSLOCommand string = "make-slo"
+	makeDLOCommand string = "create-dynamic-object"
+	makeSLOCommand string = "put-large-object"
 )
 
 // LargeObjectsPlugin is the struct implementing the plugin interface.
@@ -65,12 +66,15 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 		showContainersCommand:  c.containers,
 		containerInfoCommand:   c.containers,
 		makeContainerCommand:   c.containers,
+		updateContainerCommand: c.containers,
+		renameContainerCommand: c.containers,
 		deleteContainerCommand: c.containers,
 
 		showObjectsCommand:  c.objects,
 		objectInfoCommand:   c.objects,
 		putObjectCommand:    c.objects,
 		getObjectCommand:    c.objects,
+		renameObjectCommand: c.objects,
 		deleteObjectCommand: c.objects,
 
 		makeDLOCommand: c.makeDLO,
@@ -270,7 +274,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		}
 
 		containerArg := args[2]
-		_, _, err := container.GetContainerInfo(destination, containerArg)
+		_, _, err = container.GetContainerInfo(destination, containerArg)
 		if err != nil {
 			return fmt.Errorf("Failed to get container %s: %s", containerArg, err)
 		}
@@ -281,7 +285,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 			return fmt.Errorf("Failed to make container: %s", err)
 		}
 
-		fmt.Printf("\r%s%s\n\nCreated container %s in OS %s\n", cw.ClearLine, cw.Green("OK"), containerArg, serviceName)
+		fmt.Printf("\r%s%s\n\nUpdated container %s in OS %s\n", cw.ClearLine, cw.Green("OK"), containerArg, serviceName)
 	case deleteContainerCommand:
 		if len(args) < 3 {
 			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", deleteContainerCommand)
@@ -378,7 +382,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		containerName := args[2]
 		objectArg := args[3]
 		path := args[4]
-		err = object.PutObject(destination, containerName, objectArg, path)
+		err = object.PutObject(destination, containerName, objectArg, path, nil)
 		if err != nil {
 			return fmt.Errorf("Failed to upload object: %s", err)
 		}
@@ -404,6 +408,31 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		fmt.Printf("\r%s%s\n\nDownloaded object %s to %s\n", cw.ClearLine, cw.Green("OK"), objectArg, destinationPath)
+	case renameObjectCommand:
+		if len(args) < 5 {
+			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", putObjectCommand)
+		}
+
+		serviceName := args[1]
+		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		if err != nil {
+			return fmt.Errorf("Failed to authenticate: %s", err)
+		}
+
+		containerName := args[2]
+		objectArg := args[3]
+		newNameArg := args[4]
+		err = object.CopyObject(destination, containerName, objectArg, containerName, newNameArg)
+		if err != nil {
+			return fmt.Errorf("Failed to rename object: %s", err)
+		}
+
+		err = object.DeleteObject(destination, containerName, objectArg)
+		if err != nil {
+			return fmt.Errorf("Failed to delete object %s: %s", objectArg, err)
+		}
+
+		fmt.Printf("\r%s%s\n\nRenamed object %s to %s\n", cw.ClearLine, cw.Green("OK"), objectArg, newNameArg)
 	case deleteObjectCommand:
 		if len(args) < 4 {
 			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", deleteObjectCommand)

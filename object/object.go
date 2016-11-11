@@ -30,7 +30,7 @@ func ShowObjects(dest auth.Destination, container string) ([]string, error) {
 	return objects, nil
 }
 
-func PutObject(dest auth.Destination, container, objectName, path string) error {
+func PutObject(dest auth.Destination, container, objectName, path string, headers swift.Headers) error {
 	data, err := getFileContents(path)
 	if err != nil {
 		return fmt.Errorf("Failed to get file contents at path %s: %s", path, err)
@@ -38,7 +38,7 @@ func PutObject(dest auth.Destination, container, objectName, path string) error 
 
 	hash := hashSource(data)
 
-	objectCreator, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectCreate(container, objectName, true, hash, "", nil)
+	objectCreator, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectCreate(container, objectName, true, hash, "", headers)
 	if err != nil {
 		return fmt.Errorf("Failed to create object: %s", err)
 	}
@@ -51,6 +51,15 @@ func PutObject(dest auth.Destination, container, objectName, path string) error 
 	err = objectCreator.Close()
 	if err != nil {
 		return fmt.Errorf("Failed to close object writer: %s", err)
+	}
+
+	return nil
+}
+
+func CopyObject(dest auth.Destination, container, objectName, newContainer, newName string) error {
+	_, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectCopy(container, objectName, newContainer, newName, nil)
+	if err != nil {
+		return fmt.Errorf("Failed to rename object: %s", err)
 	}
 
 	return nil
