@@ -557,7 +557,7 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 			Name:     getAuthInfoCommand,
 			HelpText: "Display an Object Storage service's authentication url and x-auth token",
 			UsageDetails: plugin.Usage{
-				Usage: "cf " + getAuthInfoCommand +
+				Usage: "cf " + namespace + " " + getAuthInfoCommand +
 					" service_name [--url] [-x]",
 				Options: map[string]string{
 					"url": "Display auth url in quiet mode",
@@ -569,7 +569,7 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 			Name:     showContainersCommand,
 			HelpText: "Show all containers in an Object Storage instance",
 			UsageDetails: plugin.Usage{
-				Usage: "cf " + showContainersCommand +
+				Usage: "cf " + namespace + " " + showContainersCommand +
 					" service_name",
 				Options: map[string]string{},
 			},
@@ -578,7 +578,7 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 			Name:     containerInfoCommand,
 			HelpText: "Show a given container's information",
 			UsageDetails: plugin.Usage{
-				Usage: "cf " + containerInfoCommand +
+				Usage: "cf " + namespace + " " + containerInfoCommand +
 					" service_name container_name",
 				Options: map[string]string{},
 			},
@@ -587,8 +587,24 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 			Name:     makeContainerCommand,
 			HelpText: "Create a new container in an Object Storage instance",
 			UsageDetails: plugin.Usage{
-				Usage: "cf " + makeContainerCommand +
+				Usage: "cf " + namespace + " " + makeContainerCommand +
 					" service_name container_name [headers...] [r] [-r]",
+				Options: map[string]string{},
+			},
+		},
+		{Name: updateContainerCommand,
+			HelpText: "Update a container's metadata",
+			UsageDetails: plugin.Usage{
+				Usage: "cf " + namespace + " " + updateContainerCommand +
+					" service_name container_name headers",
+				Options: map[string]string{},
+			},
+		},
+		{Name: renameContainerCommand,
+			HelpText: "Rename a container",
+			UsageDetails: plugin.Usage{
+				Usage: "cf " + namespace + " " + renameContainerCommand +
+					" service_name container_name new_container_name",
 				Options: map[string]string{},
 			},
 		},
@@ -596,7 +612,7 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 			Name:     deleteContainerCommand,
 			HelpText: "Remove a container from an Object Storage instance",
 			UsageDetails: plugin.Usage{
-				Usage: "cf " + deleteContainerCommand +
+				Usage: "cf " + namespace + " " + deleteContainerCommand +
 					" service_name container_name",
 				Options: map[string]string{},
 			},
@@ -605,7 +621,7 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 			Name:     showObjectsCommand,
 			HelpText: "Show all objects in a container",
 			UsageDetails: plugin.Usage{
-				Usage: "cf " + showObjectsCommand +
+				Usage: "cf " + namespace + " " + showObjectsCommand +
 					" service_name container_name",
 				Options: map[string]string{},
 			},
@@ -614,7 +630,7 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 			Name:     objectInfoCommand,
 			HelpText: "Show a given object's information",
 			UsageDetails: plugin.Usage{
-				Usage: "cf " + objectInfoCommand +
+				Usage: "cf " + namespace + " " + objectInfoCommand +
 					" service_name container_name object_name",
 				Options: map[string]string{},
 			},
@@ -623,7 +639,7 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 			Name:     putObjectCommand,
 			HelpText: "Upload a file as an object to Object Storage",
 			UsageDetails: plugin.Usage{
-				Usage: "cf " + putObjectCommand +
+				Usage: "cf " + namespace + " " + putObjectCommand +
 					" service_name container_name object_name path_to_local_file",
 				Options: map[string]string{},
 			},
@@ -632,8 +648,17 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 			Name:     getObjectCommand,
 			HelpText: "Download an object from Object Storage",
 			UsageDetails: plugin.Usage{
-				Usage: "cf " + getObjectCommand +
+				Usage: "cf " + namespace + " " + getObjectCommand +
 					" service_name container_name object_name path_to_dl_location",
+				Options: map[string]string{},
+			},
+		},
+		{
+			Name:     renameObjectCommand,
+			HelpText: "Rename an object",
+			UsageDetails: plugin.Usage{
+				Usage: "cf " + namespace + " " + putObjectCommand +
+					" service_name container_name object_name new_object_name",
 				Options: map[string]string{},
 			},
 		},
@@ -641,7 +666,7 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 			Name:     deleteObjectCommand,
 			HelpText: "Remove an object from a container",
 			UsageDetails: plugin.Usage{
-				Usage: "cf " + deleteObjectCommand +
+				Usage: "cf " + namespace + " " + deleteObjectCommand +
 					" service_name container_name object_name",
 				Options: map[string]string{},
 			},
@@ -650,7 +675,7 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 			Name:     makeDLOCommand,
 			HelpText: "Create a Dynamic Large Object in Object Storage",
 			UsageDetails: plugin.Usage{
-				Usage: "cf " + makeDLOCommand +
+				Usage: "cf " + namespace + " " + makeDLOCommand +
 					" service_name dlo_container dlo_name [-c object_container] [-p dlo_prefix]",
 				Options: map[string]string{
 					"c": "Destination container for DLO segments (defaults to dlo_container)",
@@ -662,7 +687,7 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 			Name:     makeSLOCommand,
 			HelpText: "Create a Static Large Object in Object Storage",
 			UsageDetails: plugin.Usage{
-				Usage: "cf " + makeSLOCommand +
+				Usage: "cf " + namespace + " " + makeSLOCommand +
 					" service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-j num_threads]",
 				Options: map[string]string{
 					"m": "Only upload missing chunks",
@@ -679,14 +704,17 @@ func (c *LargeObjectsPlugin) help(cliConnection plugin.CliConnection, args []str
 		showContainersCommand:  1,
 		containerInfoCommand:   2,
 		makeContainerCommand:   3,
-		deleteContainerCommand: 4,
-		showObjectsCommand:     5,
-		objectInfoCommand:      6,
-		putObjectCommand:       7,
-		getObjectCommand:       8,
-		deleteObjectCommand:    9,
-		makeDLOCommand:         10,
-		makeSLOCommand:         11,
+		updateContainerCommand: 4,
+		renameContainerCommand: 5,
+		deleteContainerCommand: 6,
+		showObjectsCommand:     7,
+		objectInfoCommand:      8,
+		putObjectCommand:       9,
+		getObjectCommand:       10,
+		renameObjectCommand:    11,
+		deleteObjectCommand:    12,
+		makeDLOCommand:         13,
+		makeSLOCommand:         14,
 	}
 
 	idx, found := subcommandMap[args[1]]
@@ -716,11 +744,14 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 		"      " + showContainersCommand + "\n" +
 		"      " + containerInfoCommand + "\n" +
 		"      " + makeContainerCommand + "\n" +
+		"      " + updateContainerCommand + "\n" +
+		"      " + renameContainerCommand + "\n" +
 		"      " + deleteContainerCommand + "\n" +
 		"      " + showObjectsCommand + "\n" +
 		"      " + objectInfoCommand + "\n" +
 		"      " + putObjectCommand + "\n" +
 		"      " + getObjectCommand + "\n" +
+		"      " + renameObjectCommand + "\n" +
 		"      " + deleteObjectCommand + "\n" +
 		"      " + makeDLOCommand + "\n" +
 		"      " + makeSLOCommand + "\n" +
