@@ -25,13 +25,15 @@ const (
 	helpCommand string = "help"
 
 	// Name of the subcommand that fetches X-Auth Tokens
-	getAuthInfoCommand string = "get-auth-info"
+	getAuthInfoCommand string = "auth"
 
 	// Names of the container subcommands
 	showContainersCommand  string = "containers"
-	containerInfoCommand   string = "container-info"
-	makeContainerCommand   string = "put-container"
-	deleteContainerCommand string = "rm-container"
+	containerInfoCommand   string = "container"
+	makeContainerCommand   string = "create-container"
+	updateContainerCommand string = "update-container"
+	renameContainerCommand string = "rename-container"
+	deleteContainerCommand string = "delete-container"
 
 	// Names of the single object subcommands
 	showObjectsCommand  string = "objects"
@@ -249,6 +251,30 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		}
 
 		containerArg := args[2]
+		headersArg := args[3:]
+		err = container.MakeContainer(destination, containerArg, headersArg...)
+		if err != nil {
+			return fmt.Errorf("Failed to make container: %s", err)
+		}
+
+		fmt.Printf("\r%s%s\n\nCreated container %s in OS %s\n", cw.ClearLine, cw.Green("OK"), containerArg, serviceName)
+	case updateContainerCommand:
+		if len(args) < 3 {
+			return fmt.Errorf("Missing required arguments\nSee 'cf os help %s' for details", makeContainerCommand)
+		}
+
+		serviceName := args[1]
+		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		if err != nil {
+			return fmt.Errorf("Failed to authenticate: %s", err)
+		}
+
+		containerArg := args[2]
+		_, _, err := container.GetContainerInfo(destination, containerArg)
+		if err != nil {
+			return fmt.Errorf("Failed to get container %s: %s", containerArg, err)
+		}
+
 		headersArg := args[3:]
 		err = container.MakeContainer(destination, containerArg, headersArg...)
 		if err != nil {
