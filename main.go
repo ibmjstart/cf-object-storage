@@ -872,7 +872,7 @@ func getSubcommandHelp(name string) (string, error) {
 				Options: map[string]string{
 					"m": "Only upload missing chunks",
 					"o": "Destination for log data, if desired",
-					"s": "Chunk size, in bytes (defaults to create 1000 chunks)",
+					"s": "Chunk size, in bytes (defaults to create 1GB chunks)",
 					"j": "Maximum number of uploader threads (defaults to the available number of CPUs)",
 				},
 			},

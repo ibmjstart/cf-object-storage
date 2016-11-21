@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"os"
 	"runtime"
 
@@ -41,7 +40,7 @@ func ParseArgs(args []string) (*argVal, error) {
 	// Define flags and set defaults
 	missing := flagSet.Bool("m", false, "Only upload missing chunks")
 	output := flagSet.String("o", "", "Destination for log data")
-	chunkSize := flagSet.Int("s", -1, "Chunk size, in bytes (defaults to create 1000 chunks)")
+	chunkSize := flagSet.Int("s", 1*1000*1000*1000, "Chunk size, in bytes (defaults to create 1GB chunks)")
 	threads := flagSet.Int("t", runtime.NumCPU(), "Maximum number of uploader threads (defaults to the available number of CPUs")
 
 	// Parse optional flags if they have been provided
@@ -80,14 +79,13 @@ func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest 
 	}
 	defer file.Close()
 
-	// Set default chunk size to create 1000 chunks if no size proveded
-	if argVals.flagVals.chunk_size_flag <= 0 {
-		fileStats, err := file.Stat()
-		if err != nil {
-			return fmt.Errorf("Failed to obtain file stats: %s", err)
-		}
+	fileStats, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("Failed to obtain file stats: %s", err)
+	}
 
-		argVals.flagVals.chunk_size_flag = int(math.Ceil(float64(fileStats.Size()) / 1000.0))
+	if int(fileStats.Size()) < argVals.flagVals.chunk_size_flag {
+		argVals.flagVals.chunk_size_flag = int(fileStats.Size())
 	}
 
 	writer.SetCurrentStage("Uploading SLO")
