@@ -9,7 +9,7 @@ import (
 	"runtime"
 
 	"github.com/cloudfoundry/cli/plugin"
-	cw "github.com/ibmjstart/cf-large-objects/console_writer"
+	cw "github.com/ibmjstart/cf-object-storage/console_writer"
 	"github.com/ibmjstart/swiftlygo/auth"
 	sg "github.com/ibmjstart/swiftlygo/slo"
 )

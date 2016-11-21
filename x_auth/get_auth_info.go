@@ -8,7 +8,7 @@ import (
 
 	verbex "github.com/VerbalExpressions/GoVerbalExpressions"
 	"github.com/cloudfoundry/cli/plugin"
-	"github.com/ibmjstart/cf-large-objects/console_writer"
+	"github.com/ibmjstart/cf-object-storage/console_writer"
 	"github.com/ibmjstart/swiftlygo/auth"
 )
 

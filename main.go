@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 
 	"github.com/cloudfoundry/cli/plugin"
-	cw "github.com/ibmjstart/cf-large-objects/console_writer"
-	"github.com/ibmjstart/cf-large-objects/container"
-	"github.com/ibmjstart/cf-large-objects/dlo"
-	"github.com/ibmjstart/cf-large-objects/object"
-	"github.com/ibmjstart/cf-large-objects/slo"
-	"github.com/ibmjstart/cf-large-objects/x_auth"
+	cw "github.com/ibmjstart/cf-object-storage/console_writer"
+	"github.com/ibmjstart/cf-object-storage/container"
+	"github.com/ibmjstart/cf-object-storage/dlo"
+	"github.com/ibmjstart/cf-object-storage/object"
+	"github.com/ibmjstart/cf-object-storage/slo"
+	"github.com/ibmjstart/cf-object-storage/x_auth"
 	"github.com/ibmjstart/swiftlygo/auth"
 )
 

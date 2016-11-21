@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cloudfoundry/cli/plugin"
-	cw "github.com/ibmjstart/cf-large-objects/console_writer"
+	cw "github.com/ibmjstart/cf-object-storage/console_writer"
 	sg "github.com/ibmjstart/swiftlygo"
 	"github.com/ibmjstart/swiftlygo/auth"
 )
