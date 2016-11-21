@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/ibmjstart/swiftlygo/auth"
@@ -84,6 +85,34 @@ func DeleteObject(dest auth.Destination, container, objectName string) error {
 	err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectDelete(container, objectName)
 	if err != nil {
 		return fmt.Errorf("Failed to delete object %s: %s", objectName, err)
+	}
+
+	return nil
+}
+
+func DeleteLargeObject(dest auth.Destination, container, objectName string) error {
+	// Using the Open Stack Object Storage API directly as large object support is not
+	// included in the ncw/swift library yet. There is an open pull request to merge the
+	// large-object branch as of 11/22/16 at https://github.com/ncw/swift/pull/74.
+	var client http.Client
+
+	authUrl := dest.(*auth.SwiftDestination).SwiftConnection.StorageUrl
+	authToken := dest.(*auth.SwiftDestination).SwiftConnection.AuthToken
+
+	deleteUrl := authUrl + "/" + container + "/" + objectName + "?multipart-manifest=delete"
+
+	request, err := http.NewRequest("DELETE", deleteUrl, nil)
+	if err != nil {
+		return fmt.Errorf("Failed to create request: %s")
+	}
+	request.Header.Set("X-Auth-Token", authToken)
+
+	response, err := client.Do(request)
+	if err != nil {
+		return fmt.Errorf("Failed to make request: %s")
+	}
+	if response.StatusCode < 200 || response.StatusCode >= 300 {
+		return fmt.Errorf("Failed to delete object with status %s", response.Status)
 	}
 
 	return nil

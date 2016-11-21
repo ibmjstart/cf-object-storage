@@ -555,7 +555,12 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 
 		containerName := args[2]
 		objectArg := args[3]
-		err = object.DeleteObject(destination, containerName, objectArg)
+
+		if len(args) == 5 && args[4] == "-l" {
+			err = object.DeleteLargeObject(destination, containerName, objectArg)
+		} else {
+			err = object.DeleteObject(destination, containerName, objectArg)
+		}
 		if err != nil {
 			return fmt.Errorf("Failed to delete object %s: %s", objectArg, err)
 		}
@@ -847,8 +852,10 @@ func getSubcommandHelp(name string) (string, error) {
 			HelpText: "Remove an object from a container",
 			UsageDetails: plugin.Usage{
 				Usage: "cf " + namespace + " " + deleteObjectCommand +
-					" service_name container_name object_name",
-				Options: map[string]string{},
+					" service_name container_name object_name [-l]",
+				Options: map[string]string{
+					"l": "Delete all files associated with large object manifest object_name",
+				},
 			},
 		},
 		{
