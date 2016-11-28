@@ -134,60 +134,73 @@ func displayUserInfo(cliConnection plugin.CliConnection, task string) error {
 
 // getAuthInfo fetches the x-auth token and auth url for an Object Storage instance.
 func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, args []string) error {
-	// Check that the minimum number of arguments are present
-	if len(args) < 2 {
-		help, _ := getSubcommandHelp(getAuthInfoCommand)
-		return fmt.Errorf("Missing required arguments\n%s", help)
-	}
-
-	// Parse arguments
-	serviceName := args[1]
-	flags, err := x_auth.ParseFlags(args[2:])
+	go c.writer.Write()
+	destination, err := x_auth.Authenticate(cliConnection, c.writer, args[1])
 	if err != nil {
 		return err
 	}
+	c.writer.Quit()
+	authUrl := destination.(*auth.SwiftDestination).SwiftConnection.StorageUrl
+	xAuth := destination.(*auth.SwiftDestination).SwiftConnection.AuthToken
+	fmt.Printf("\r%s%s\n\n%s\n%s%s\n%s%s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(args[1]),
+		cw.White("auth url: "), authUrl, cw.White("x-auth:   "), xAuth)
 
-	quiet := flags.Url_flag || flags.X_auth_flag
+	/*
+		// Check that the minimum number of arguments are present
+		if len(args) < 2 {
+			help, _ := getSubcommandHelp(getAuthInfoCommand)
+			return fmt.Errorf("Missing required arguments\n%s", help)
+		}
 
-	if !quiet {
-		// Start console writer if not in quiet mode
-		task := "Fetching auth info from"
-
-		err := displayUserInfo(cliConnection, task)
+		// Parse arguments
+		serviceName := args[1]
+		flags, err := x_auth.ParseFlags(args[2:])
 		if err != nil {
 			return err
 		}
 
-		go c.writer.Write()
-	} else {
-		// Clear any output that other processes generate
-		go c.writer.ClearStatus()
-	}
+		quiet := flags.Url_flag || flags.X_auth_flag
 
-	// Get authorization info
-	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
-	if err != nil {
-		return err
-	}
+		if !quiet {
+			// Start console writer if not in quiet mode
+			task := "Fetching auth info from"
 
-	authUrl := destination.(*auth.SwiftDestination).SwiftConnection.StorageUrl
-	xAuth := destination.(*auth.SwiftDestination).SwiftConnection.AuthToken
+			err := displayUserInfo(cliConnection, task)
+			if err != nil {
+				return err
+			}
 
-	// Print requested attributes
-	if flags.Url_flag {
-		fmt.Println(authUrl)
-	}
-	if flags.X_auth_flag {
-		fmt.Println(xAuth)
-	}
+			go c.writer.Write()
+		} else {
+			// Clear any output that other processes generate
+			go c.writer.ClearStatus()
+		}
 
-	// Kill console writer if not in quiet mode
-	if !quiet {
-		c.writer.Quit()
+		// Get authorization info
+		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		if err != nil {
+			return err
+		}
 
-		fmt.Printf("\r%s%s\n\n%s\n%s%s\n%s%s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(serviceName),
-			cw.White("auth url: "), authUrl, cw.White("x-auth:   "), xAuth)
-	}
+		authUrl := destination.(*auth.SwiftDestination).SwiftConnection.StorageUrl
+		xAuth := destination.(*auth.SwiftDestination).SwiftConnection.AuthToken
+
+		// Print requested attributes
+		if flags.Url_flag {
+			fmt.Println(authUrl)
+		}
+		if flags.X_auth_flag {
+			fmt.Println(xAuth)
+		}
+
+		// Kill console writer if not in quiet mode
+		if !quiet {
+			c.writer.Quit()
+
+			fmt.Printf("\r%s%s\n\n%s\n%s%s\n%s%s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(serviceName),
+				cw.White("auth url: "), authUrl, cw.White("x-auth:   "), xAuth)
+		}
+	*/
 
 	return nil
 }
