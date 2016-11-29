@@ -240,7 +240,7 @@ func Authenticate(cliConnection plugin.CliConnection, writer *console_writer.Con
 	}
 
 	// Open or create credential file
-	logFile, err := os.OpenFile(logLocation, os.O_CREATE|os.O_RDWR, 0700)
+	logFile, err := os.OpenFile(logLocation, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0700)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to open/create %s: %s", logLocation, err)
 	}
@@ -277,6 +277,7 @@ func Authenticate(cliConnection plugin.CliConnection, writer *console_writer.Con
 	// Authenticate using service credentials
 	writer.SetCurrentStage("Authenticating")
 	destination, err := auth.Authenticate(creds.Username, creds.Password, creds.Auth_URL+"/v3", creds.DomainName, "")
+	// destination, err := auth.AuthenticateWithToken()
 	if err != nil {
 		creds, err = getNewCredentials(cliConnection, writer, targetService)
 		if err != nil {
