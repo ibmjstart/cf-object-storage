@@ -215,7 +215,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 
 		serviceName := args[1]
 
-		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -233,7 +233,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -256,7 +256,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -276,7 +276,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -301,7 +301,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -355,7 +355,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -411,7 +411,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -430,7 +430,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -454,7 +454,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -480,7 +480,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -501,7 +501,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -527,7 +527,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -548,7 +548,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -600,7 +600,7 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 	go c.writer.Write()
 
 	// Authenticate with Object Storage
-	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+	destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
 	if err != nil {
 		return fmt.Errorf("Failed to authenticate: %s", err)
 	}
@@ -644,7 +644,7 @@ func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []
 	go c.writer.Write()
 
 	// Authenticate with Object Storage
-	destination, err := x_auth.GetAuthInfo(cliConnection, c.writer, serviceName)
+	destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
 	if err != nil {
 		return fmt.Errorf("Failed to authenticate: %s", err)
 	}
@@ -721,7 +721,7 @@ func getSubcommandHelp(name string) (string, error) {
 	var subcommands = []plugin.Command{
 		{
 			Name:     getAuthInfoCommand,
-			HelpText: "Display an Object Storage service's authentication url and x-auth token",
+			HelpText: "Authenticate with Object Storage and save credentials",
 			UsageDetails: plugin.Usage{
 				Usage: "cf " + namespace + " " + getAuthInfoCommand +
 					" service_name [--url] [-x]",
