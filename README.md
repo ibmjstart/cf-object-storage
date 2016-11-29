@@ -60,11 +60,11 @@ This plugin is invoked as follows:
 
 Sixteen subcommands are included in this plugin, described below. More information can be found by using `cf os help` followed by any of the subcommands.
 
-#### Subommand List
+#### Subcommand List
 
 Subcommand		|Usage															|Description
 ---		|---															|---
-`auth` | `cf os auth service_name [-url] [-x]`										|Retrieve a service's x-auth info
+`auth` | `cf os auth service_name [-url] [-x]`										|Retrieve and store<sup>!</sup> a service's x-auth info
 `containers` | `cf os containers service_name` | Show all containers in an Object Storage instance
 `container` | `cf os container service_name container_name` | Show a given container's information
 `create-container` | `cf os create-container service_name container_name [headers...] [r] [-r]` | Create a new container in an Object Storage instance
@@ -80,6 +80,10 @@ Subcommand		|Usage															|Description
 `delete-object` | `cf os delete-object service_name container_name object_name [-l]` | Remove an object from a container
 `create-dynamic-object`	| `cf os make-dlo service_name dlo_container dlo_name [-c object_container] [-p dlo_prefix]`				|Create a DLO manifest in Object Storage
 `put-large-object`	| `cf os make-slo service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-t num_threads]`	|Upload a file to Object Storage as an SLO
+
+**<sup>!</sup>** `auth` checks if `HOME/.cf/os_creds.json` exists and contains the target service's credentials. If it does,
+these credentials are used to authenticate with Object Storage (which saves a few http requests). Upon successful 
+authentication, `auth` will save a service's credentials to the above location to speed up subsequent commands.
 
 ## Contribute
 
