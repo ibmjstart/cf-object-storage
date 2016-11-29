@@ -35,10 +35,21 @@ type credentials struct {
 	Username   string
 }
 
+type authenticator struct {
+	flagVals      flagVal
+	creds         *credentials
+	logFile       *os.File
+	logFileSize   int64
+	cliConnection plugin.CliConnection
+	writer        *console_writer.ConsoleWriter
+	targetService string
+	doSave        bool
+}
+
 // findService returns true if the target service is present in the current space.
-func findService(cliConnection plugin.CliConnection, targetService string) error {
+func (a *authenticator) findService() error {
 	// Get the services in the current space
-	services, err := cliConnection.GetServices()
+	services, err := a.cliConnection.GetServices()
 	if err != nil {
 		return fmt.Errorf("Failed to get services in requested org: %s", err)
 	}
@@ -50,24 +61,24 @@ func findService(cliConnection plugin.CliConnection, targetService string) error
 	// Check for target service in the list of present services
 	found := false
 	for _, service := range services {
-		if service.Name == targetService {
+		if service.Name == a.targetService {
 			found = true
 		}
 	}
 
 	if !found {
-		return fmt.Errorf("Service '%s' not found in current space", targetService)
+		return fmt.Errorf("Service '%s' not found in current space", a.targetService)
 	}
 
 	return nil
 }
 
 // getCredentialsName returns the name of the target service's credentials.
-func getCredentialsName(cliConnection plugin.CliConnection, targetService string) (string, error) {
+func (a *authenticator) getCredentialsName() (string, error) {
 	// Get the service keys for the target service
-	stdout, err := cliConnection.CliCommandWithoutTerminalOutput("service-keys", targetService)
+	stdout, err := a.cliConnection.CliCommandWithoutTerminalOutput("service-keys", a.targetService)
 	if err != nil {
-		return "", fmt.Errorf("Failed to find credentials for service '%s': %s", targetService, err)
+		return "", fmt.Errorf("Failed to find credentials for service '%s': %s", a.targetService, err)
 	}
 
 	// Construct regex to extract credentials name
@@ -90,11 +101,11 @@ func getCredentialsName(cliConnection plugin.CliConnection, targetService string
 }
 
 // getJSONCredentials returns the target service's credentials.
-func getJSONCredentials(cliConnection plugin.CliConnection, targetService, serviceCredentialsName string) (string, error) {
+func (a *authenticator) getJSONCredentials(serviceCredentialsName string) (string, error) {
 	// Get the service key for the target service's credentials
-	stdout, err := cliConnection.CliCommandWithoutTerminalOutput("service-key", targetService, serviceCredentialsName)
+	stdout, err := a.cliConnection.CliCommandWithoutTerminalOutput("service-key", a.targetService, serviceCredentialsName)
 	if err != nil {
-		return "", fmt.Errorf("Failed to get credentials '%s' for service '%s': %s", serviceCredentialsName, targetService, err)
+		return "", fmt.Errorf("Failed to get credentials '%s' for service '%s': %s", serviceCredentialsName, a.targetService, err)
 	}
 
 	// Construct regex to extract JSON
@@ -113,18 +124,18 @@ func getJSONCredentials(cliConnection plugin.CliConnection, targetService, servi
 	if len(v) > 0 && len(v[0]) > 1 {
 		serviceCredentialsJSON = v[0][1]
 	} else {
-		return "", fmt.Errorf("Failed to fetch JSON credentials for service '%s'", targetService)
+		return "", fmt.Errorf("Failed to fetch JSON credentials for service '%s'", a.targetService)
 	}
 
 	return serviceCredentialsJSON, nil
 }
 
 // extractFromJSON unmarshalls the JSON returned by a new cliConnection.
-func extractFromJSON(serviceCredentialsJSON string) (*credentials, error) {
+func (a *authenticator) extractFromJSON(serviceCredentialsJSON string) error {
 	var creds credentials
 	err := json.Unmarshal([]byte(serviceCredentialsJSON), &creds)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to unmarshall JSON credentials: %s", err)
+		return fmt.Errorf("Failed to unmarshall JSON credentials: %s", err)
 	}
 
 	// Handle escaped unicode characters in JSON
@@ -150,7 +161,9 @@ func extractFromJSON(serviceCredentialsJSON string) (*credentials, error) {
 	creds.UserID = unescape(creds.UserID)
 	creds.Username = unescape(creds.Username)
 
-	return &creds, nil
+	a.creds = &creds
+
+	return nil
 }
 
 // ParseFlags reads the flags provided.
@@ -175,58 +188,55 @@ func ParseFlags(flags []string) (*flagVal, error) {
 
 // GetAuthInfo executes the logic to fetch the auth URL and X-Auth token for an object storage instance.
 func GetAuthInfo(cliConnection plugin.CliConnection, writer *console_writer.ConsoleWriter, targetService string) (auth.Destination, error) {
+	return nil, fmt.Errorf("NOT IMPLEMENTED")
+}
+
+func (a *authenticator) getNewCredentials() error {
 	// Ensure that user is logged in
-	if loggedIn, err := cliConnection.IsLoggedIn(); !loggedIn {
-		return nil, fmt.Errorf("You are not logged in, please run `cf login` and rerun this command")
+	if loggedIn, err := a.cliConnection.IsLoggedIn(); !loggedIn {
+		return fmt.Errorf("You are not logged in, please run `cf login` and rerun this command")
 	} else if err != nil {
-		return nil, fmt.Errorf("Failed to log in to Cloud Foundry: %s", err)
+		return fmt.Errorf("Failed to log in to Cloud Foundry: %s", err)
 	}
 
 	// Find and display services. Ensure target service is within current space
-	writer.SetCurrentStage("Searching for target service")
-	err := findService(cliConnection, targetService)
+	a.writer.SetCurrentStage("Searching for target service")
+	err := a.findService()
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("Failed to fetch services: %s", err)
 	}
 
 	// Get service keys for target service
-	writer.SetCurrentStage("Locating target service's credentials")
-	serviceCredentialsName, err := getCredentialsName(cliConnection, targetService)
+	a.writer.SetCurrentStage("Locating target service's credentials")
+	serviceCredentialsName, err := a.getCredentialsName()
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("Failed to locate target service's credentials: %s", err)
 	}
 
 	// Fetch the JSON credentials
-	writer.SetCurrentStage("Fetching credentials")
-	serviceCredentialsJSON, err := getJSONCredentials(cliConnection, targetService, serviceCredentialsName)
+	a.writer.SetCurrentStage("Fetching credentials")
+	serviceCredentialsJSON, err := a.getJSONCredentials(serviceCredentialsName)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("Failed to fetch target service's credentials: %s", err)
 	}
 
 	// Parse the JSON credentials
-	writer.SetCurrentStage("Parsing credentials")
-	credentials, err := extractFromJSON(serviceCredentialsJSON)
+	a.writer.SetCurrentStage("Parsing credentials")
+	err = a.extractFromJSON(serviceCredentialsJSON)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("Failed to extract JSON credentials: %s", err)
 	}
 
-	// Authenticate using service credentials
-	writer.SetCurrentStage("Authenticating")
-	destination, err := auth.Authenticate(credentials.Username, credentials.Password, credentials.Auth_URL+"/v3", credentials.DomainName, "")
-	if err != nil {
-		return nil, err
-	}
-
-	//return connection.AuthUrl(), connection.AuthToken(), nil
-	return destination, nil
+	return nil
 }
 
-func Authenticate(cliConnection plugin.CliConnection, writer *console_writer.ConsoleWriter, targetService string) (auth.Destination, error) {
+func (a *authenticator) getSavedCredentials() error {
+	a.writer.SetCurrentStage("Locating service credentials")
+
 	// Get current user
-	writer.SetCurrentStage("Locating service credentials")
 	currentUser, err := user.Current()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get current user: %s", err)
+		return fmt.Errorf("Failed to get current user: %s", err)
 	}
 
 	// Find current user's home directory and construct path to credential file
@@ -236,111 +246,110 @@ func Authenticate(cliConnection plugin.CliConnection, writer *console_writer.Con
 	// Create directory structure if necessary
 	err = os.MkdirAll(filepath.Dir(logLocation), 0700)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create directory %s: %s", filepath.Dir(logLocation), err)
+		return fmt.Errorf("Failed to create directory %s: %s", filepath.Dir(logLocation), err)
 	}
 
 	// Open or create credential file
-	logFile, err := os.OpenFile(logLocation, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0700)
+	logFile, err := os.OpenFile(logLocation, os.O_CREATE|os.O_RDWR, 0700)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to open/create %s: %s", logLocation, err)
+		return fmt.Errorf("Failed to open/create %s: %s", logLocation, err)
 	}
-	defer logFile.Close()
 
 	// Get credential file's size
 	logFileStat, err := logFile.Stat()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get file size: %s", err)
+		return fmt.Errorf("Failed to get file size: %s", err)
 	}
 
-	var creds *credentials
-	if logFileStat.Size() > 0 {
+	a.logFile = logFile
+	a.logFileSize = logFileStat.Size()
+
+	return nil
+}
+
+func (a *authenticator) saveCredentials() error {
+	// Encode JSON credentials
+	marshalledCredentials, err := json.Marshal(a.creds)
+	if err != nil {
+		return fmt.Errorf("Failed to JSON encode credentials: %s", err)
+	}
+
+	// Write credentails to file
+	err = a.logFile.Truncate(0)
+	if err != nil {
+		return fmt.Errorf("Failed to truncate file: %s", err)
+	}
+	_, err = a.logFile.Seek(0, 0)
+	if err != nil {
+		return fmt.Errorf("Failed to set file offset to 0: %s", err)
+	}
+	_, err = a.logFile.Write(marshalledCredentials)
+	if err != nil {
+		return fmt.Errorf("Failed to write credentials to file: %s", err)
+	}
+
+	return nil
+}
+
+func Authenticate(cliConnection plugin.CliConnection, writer *console_writer.ConsoleWriter, targetService string, doSave bool) (auth.Destination, error) {
+	var a = authenticator{
+		cliConnection: cliConnection,
+		writer:        writer,
+		targetService: targetService,
+		doSave:        doSave,
+	}
+
+	// Check for and get saved service credentials
+	err := a.getSavedCredentials()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get saved credentials: %s", err)
+	}
+	defer a.logFile.Close()
+
+	if a.logFileSize > 0 {
 		// Read contents of credential file
-		logContents := make([]byte, logFileStat.Size())
-		_, err = logFile.Read(logContents)
+		logContents := make([]byte, a.logFileSize)
+		_, err = a.logFile.Read(logContents)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read credentials: %s", err)
 		}
 
 		// Parse the JSON credentials
-		writer.SetCurrentStage("Parsing credentials")
-		creds, err = extractFromJSON(string(logContents))
+		a.writer.SetCurrentStage("Parsing credentials")
+		err = a.extractFromJSON(string(logContents))
 		if err != nil {
 			return nil, fmt.Errorf("Failed to extract JSON credentials: %s", err)
 		}
 	} else {
-		creds, err = getNewCredentials(cliConnection, writer, targetService)
+		err = a.getNewCredentials()
 		if err != nil {
 			return nil, fmt.Errorf("Failed to fetch a new set of credentials: %s", err)
 		}
 	}
 
 	// Authenticate using service credentials
-	writer.SetCurrentStage("Authenticating")
-	destination, err := auth.Authenticate(creds.Username, creds.Password, creds.Auth_URL+"/v3", creds.DomainName, "")
-	// destination, err := auth.AuthenticateWithToken()
+	a.writer.SetCurrentStage("Authenticating")
+	destination, err := auth.Authenticate(a.creds.Username, a.creds.Password, a.creds.Auth_URL+"/v3", a.creds.DomainName, "")
 	if err != nil {
-		creds, err = getNewCredentials(cliConnection, writer, targetService)
+		err = a.getNewCredentials()
 		if err != nil {
 			return nil, fmt.Errorf("Failed to fetch a new set of credentials: %s", err)
 		}
 
-		destination, err = auth.Authenticate(creds.Username, creds.Password, creds.Auth_URL+"/v3", creds.DomainName, "")
+		destination, err = auth.Authenticate(a.creds.Username, a.creds.Password, a.creds.Auth_URL+"/v3", a.creds.DomainName, "")
 		if err != nil {
 			return nil, fmt.Errorf("Failed to authenticate: %s", err)
 		}
 	}
 
-	// Encode JSON credentials
-	writer.SetCurrentStage("Saving credentials")
-	marshalledCredentials, err := json.Marshal(creds)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to JSON encode credentials: %s", err)
-	}
-
-	// Write credentails to file
-	_, err = logFile.Write(marshalledCredentials)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to write credentials to file: %s", err)
+	// Save the credentials, if necessary
+	if a.doSave {
+		a.writer.SetCurrentStage("Saving credentials")
+		err = a.saveCredentials()
+		if err != nil {
+			return nil, fmt.Errorf("Failed to save credentials: %s", err)
+		}
 	}
 
 	return destination, nil
-}
-
-func getNewCredentials(cliConnection plugin.CliConnection, writer *console_writer.ConsoleWriter, targetService string) (*credentials, error) {
-	// Ensure that user is logged in
-	if loggedIn, err := cliConnection.IsLoggedIn(); !loggedIn {
-		return nil, fmt.Errorf("You are not logged in, please run `cf login` and rerun this command")
-	} else if err != nil {
-		return nil, fmt.Errorf("Failed to log in to Cloud Foundry: %s", err)
-	}
-
-	// Find and display services. Ensure target service is within current space
-	writer.SetCurrentStage("Searching for target service")
-	err := findService(cliConnection, targetService)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch services: %s", err)
-	}
-
-	// Get service keys for target service
-	writer.SetCurrentStage("Locating target service's credentials")
-	serviceCredentialsName, err := getCredentialsName(cliConnection, targetService)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to locate target service's credentials: %s", err)
-	}
-
-	// Fetch the JSON credentials
-	writer.SetCurrentStage("Fetching credentials")
-	serviceCredentialsJSON, err := getJSONCredentials(cliConnection, targetService, serviceCredentialsName)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch target service's credentials: %s", err)
-	}
-
-	// Parse the JSON credentials
-	writer.SetCurrentStage("Parsing credentials")
-	credentials, err := extractFromJSON(serviceCredentialsJSON)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to extract JSON credentials: %s", err)
-	}
-
-	return credentials, nil
 }
