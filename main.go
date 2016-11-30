@@ -105,8 +105,13 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 			numExpectedArgs: 3,
 			execute:         x_auth.DisplayAuthInfo,
 		},
+		showContainersCommand: command{
+			name:            showContainersCommand,
+			task:            "Displaying containers in",
+			numExpectedArgs: 3,
+			execute:         container.ShowContainers,
+		},
 		/*
-			showContainersCommand:  c.containers,
 			containerInfoCommand:   c.containers,
 			makeContainerCommand:   c.containers,
 			updateContainerCommand: c.containers,
@@ -196,24 +201,26 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 
 	switch command {
 	case showContainersCommand:
-		if len(args) < 2 {
-			help, _ := getSubcommandHelp(showContainersCommand)
-			return fmt.Errorf("Missing required arguments\n%s", help)
-		}
+		/*
+			if len(args) < 2 {
+				help, _ := getSubcommandHelp(showContainersCommand)
+				return fmt.Errorf("Missing required arguments\n%s", help)
+			}
 
-		serviceName := args[1]
+			serviceName := args[1]
 
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
-		if err != nil {
-			return fmt.Errorf("Failed to authenticate: %s", err)
-		}
+			destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
+			if err != nil {
+				return fmt.Errorf("Failed to authenticate: %s", err)
+			}
 
-		containers, err := container.ShowContainers(destination)
-		if err != nil {
-			return fmt.Errorf("Failed to get containers: %s", err)
-		}
+			containers, err := container.ShowContainers(destination)
+			if err != nil {
+				return fmt.Errorf("Failed to get containers: %s", err)
+			}
 
-		fmt.Printf("\r%s%s\n\nContainers in OS %s: %v\n", cw.ClearLine, cw.Green("OK"), serviceName, containers)
+			fmt.Printf("\r%s%s\n\nContainers in OS %s: %v\n", cw.ClearLine, cw.Green("OK"), serviceName, containers)
+		*/
 	case containerInfoCommand:
 		if len(args) < 3 {
 			help, _ := getSubcommandHelp(containerInfoCommand)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	cw "github.com/ibmjstart/cf-object-storage/console_writer"
 	"github.com/ibmjstart/swiftlygo/auth"
 	"github.com/ncw/swift"
 )
@@ -13,13 +14,15 @@ var shortHeaders = map[string]string{
 	"-r": "X-Remove-Container-Read:1",
 }
 
-func ShowContainers(dest auth.Destination) ([]string, error) {
+func ShowContainers(dest auth.Destination, args []string) (string, error) {
+	serviceName := args[2]
+
 	containers, err := dest.(*auth.SwiftDestination).SwiftConnection.ContainerNamesAll(nil)
 	if err != nil {
-		return containers, fmt.Errorf("Failed to get containers: %s", err)
+		return "", fmt.Errorf("Failed to get containers: %s", err)
 	}
 
-	return containers, nil
+	return fmt.Sprintf("\r%s%s\n\nContainers in OS %s: %v\n", cw.ClearLine, cw.Green("OK"), serviceName, containers), nil
 }
 
 func GetContainerInfo(dest auth.Destination, container string) (swift.Container, swift.Headers, error) {
