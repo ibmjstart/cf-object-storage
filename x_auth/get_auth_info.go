@@ -299,12 +299,12 @@ func parseFlags(args []string) (*flagVal, error) {
 }
 
 // Authenticate authenticates the current session with Object Storage and saves the credentails.
-func Authenticate(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, targetService string, doSave bool) (auth.Destination, error) {
+func Authenticate(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, targetService string) (auth.Destination, error) {
 	var a = authenticator{
 		cliConnection: cliConnection,
 		writer:        writer,
 		targetService: targetService,
-		doSave:        doSave,
+		doSave:        false,
 	}
 
 	// Check for and get saved service credentials

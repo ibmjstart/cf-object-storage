@@ -58,12 +58,37 @@ type LargeObjectsPlugin struct {
 	writer        *cw.ConsoleWriter
 }
 
-// command contains the info needed to execute a subcommand
+// command contains the info needed to execute a subcommand.
 type command struct {
 	name            string
 	task            string
 	numExpectedArgs int
 	execute         func(auth.Destination, []string) (string, error)
+}
+
+// displayUserInfo shows the username, org and space corresponding to the requested service.
+func displayUserInfo(cliConnection plugin.CliConnection, task string) error {
+	// Find username
+	username, err := cliConnection.Username()
+	if err != nil {
+		return fmt.Errorf("Failed to get username: %s", err)
+	}
+
+	// Find org
+	org, err := cliConnection.GetCurrentOrg()
+	if err != nil {
+		return fmt.Errorf("Failed to get organization: %s", err)
+	}
+
+	// Find space
+	space, err := cliConnection.GetCurrentSpace()
+	if err != nil {
+		return fmt.Errorf("Failed to get space: %s", err)
+	}
+
+	fmt.Printf("%s org %s / space %s as %s...\n", task, cw.Cyan(org.Name), cw.Cyan(space.Name), cw.Cyan(username))
+
+	return nil
 }
 
 // Run handles each invocation of the CLI plugin.
@@ -124,31 +149,6 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	}
 }
 
-// displayUserInfo shows the username, org and space corresponding to the requested service.
-func displayUserInfo(cliConnection plugin.CliConnection, task string) error {
-	// Find username
-	username, err := cliConnection.Username()
-	if err != nil {
-		return fmt.Errorf("Failed to get username: %s", err)
-	}
-
-	// Find org
-	org, err := cliConnection.GetCurrentOrg()
-	if err != nil {
-		return fmt.Errorf("Failed to get organization: %s", err)
-	}
-
-	// Find space
-	space, err := cliConnection.GetCurrentSpace()
-	if err != nil {
-		return fmt.Errorf("Failed to get space: %s", err)
-	}
-
-	fmt.Printf("%s org %s / space %s as %s...\n", task, cw.Cyan(org.Name), cw.Cyan(space.Name), cw.Cyan(username))
-
-	return nil
-}
-
 func (c *LargeObjectsPlugin) executeCommand(cmd command, args []string) error {
 	if len(args) < cmd.numExpectedArgs {
 		help, _ := getSubcommandHelp(cmd.name)
@@ -163,7 +163,7 @@ func (c *LargeObjectsPlugin) executeCommand(cmd command, args []string) error {
 	go c.writer.Write()
 
 	serviceName := args[2]
-	destination, err := x_auth.Authenticate(c.cliConnection, c.writer, serviceName, true)
+	destination, err := x_auth.Authenticate(c.cliConnection, c.writer, serviceName)
 	if err != nil {
 		return err
 	}
@@ -176,68 +176,6 @@ func (c *LargeObjectsPlugin) executeCommand(cmd command, args []string) error {
 	c.writer.Quit()
 
 	fmt.Print(result)
-
-	return nil
-}
-
-// getAuthInfo fetches the x-auth token and auth url for an Object Storage instance.
-func (c *LargeObjectsPlugin) getAuthInfo(cliConnection plugin.CliConnection, args []string) error {
-	// Check that the minimum number of arguments are present
-	if len(args) < 2 {
-		help, _ := getSubcommandHelp(getAuthInfoCommand)
-		return fmt.Errorf("Missing required arguments\n%s", help)
-	}
-
-	// Parse arguments
-	/*
-		serviceName := args[1]
-			// flags, err := x_auth.ParseFlags(args[2:])
-			// if err != nil {
-			//	return err
-			// }
-
-			// quiet := flags.Url_flag || flags.X_auth_flag
-
-			if !quiet {
-				// Start console writer if not in quiet mode
-				task := "Fetching auth info from"
-
-				err := displayUserInfo(cliConnection, task)
-				if err != nil {
-					return err
-				}
-
-				go c.writer.Write()
-			} else {
-				// Clear any output that other processes generate
-				go c.writer.ClearStatus()
-			}
-
-			// Get authorization info
-			destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, true)
-			if err != nil {
-				return err
-			}
-
-			authUrl := destination.(*auth.SwiftDestination).SwiftConnection.StorageUrl
-			xAuth := destination.(*auth.SwiftDestination).SwiftConnection.AuthToken
-
-			// Print requested attributes
-			if flags.Url_flag {
-				fmt.Println(authUrl)
-			}
-			if flags.X_auth_flag {
-				fmt.Println(xAuth)
-			}
-
-			// Kill console writer if not in quiet mode
-			if !quiet {
-				c.writer.Quit()
-
-				fmt.Printf("\r%s%s\n\n%s\n%s%s\n%s%s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(serviceName),
-					cw.White("auth url: "), authUrl, cw.White("x-auth:   "), xAuth)
-			}
-	*/
 
 	return nil
 }
@@ -265,7 +203,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 
 		serviceName := args[1]
 
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -283,7 +221,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -306,7 +244,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -326,7 +264,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -351,7 +289,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -405,7 +343,7 @@ func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -461,7 +399,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -480,7 +418,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -504,7 +442,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -530,7 +468,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -551,7 +489,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -577,7 +515,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -598,7 +536,7 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 		}
 
 		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
+		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
 		if err != nil {
 			return fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -650,7 +588,7 @@ func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []
 	go c.writer.Write()
 
 	// Authenticate with Object Storage
-	destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
+	destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
 	if err != nil {
 		return fmt.Errorf("Failed to authenticate: %s", err)
 	}
@@ -694,7 +632,7 @@ func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []
 	go c.writer.Write()
 
 	// Authenticate with Object Storage
-	destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName, false)
+	destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
 	if err != nil {
 		return fmt.Errorf("Failed to authenticate: %s", err)
 	}
