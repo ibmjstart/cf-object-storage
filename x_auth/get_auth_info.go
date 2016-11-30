@@ -11,7 +11,7 @@ import (
 
 	verbex "github.com/VerbalExpressions/GoVerbalExpressions"
 	"github.com/cloudfoundry/cli/plugin"
-	"github.com/ibmjstart/cf-object-storage/console_writer"
+	cw "github.com/ibmjstart/cf-object-storage/console_writer"
 	"github.com/ibmjstart/swiftlygo/auth"
 )
 
@@ -39,11 +39,11 @@ type credentials struct {
 // authenticator holds the info required to authenticate with Object Storage.
 type authenticator struct {
 	flagVals      flagVal
-	creds         *credentials
+	creds         credentials
 	logFile       *os.File
 	logFileSize   int64
 	cliConnection plugin.CliConnection
-	writer        *console_writer.ConsoleWriter
+	writer        *cw.ConsoleWriter
 	targetService string
 	doSave        bool
 }
@@ -163,29 +163,9 @@ func (a *authenticator) extractFromJSON(serviceCredentialsJSON string) error {
 	creds.UserID = unescape(creds.UserID)
 	creds.Username = unescape(creds.Username)
 
-	a.creds = &creds
+	a.creds = creds
 
 	return nil
-}
-
-// ParseFlags reads the flags provided.
-func ParseFlags(flags []string) (*flagVal, error) {
-	flagSet := flag.NewFlagSet("flagSet", flag.ContinueOnError)
-
-	url := flagSet.Bool("url", false, "Display auth url in quiet mode")
-	x_auth := flagSet.Bool("x", false, "Display x-auth token in quiet mode")
-
-	err := flagSet.Parse(flags)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to parse arguments: %s")
-	}
-
-	flagVals := flagVal{
-		Url_flag:    bool(*url),
-		X_auth_flag: bool(*x_auth),
-	}
-
-	return &flagVals, nil
 }
 
 // getNewCredentials fetches a new set of authentication credentials from Object Storage.
@@ -297,8 +277,29 @@ func (a *authenticator) saveCredentials() error {
 	return nil
 }
 
+// parseFlags reads the flags provided.
+func parseFlags(args []string) (*flagVal, error) {
+	flags := args[3:]
+	flagSet := flag.NewFlagSet("flagSet", flag.ContinueOnError)
+
+	url := flagSet.Bool("url", false, "Display auth url in quiet mode")
+	x_auth := flagSet.Bool("x", false, "Display x-auth token in quiet mode")
+
+	err := flagSet.Parse(flags)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse arguments: %s")
+	}
+
+	flagVals := flagVal{
+		Url_flag:    bool(*url),
+		X_auth_flag: bool(*x_auth),
+	}
+
+	return &flagVals, nil
+}
+
 // Authenticate authenticates the current session with Object Storage and saves the credentails.
-func Authenticate(cliConnection plugin.CliConnection, writer *console_writer.ConsoleWriter, targetService string, doSave bool) (auth.Destination, error) {
+func Authenticate(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, targetService string, doSave bool) (auth.Destination, error) {
 	var a = authenticator{
 		cliConnection: cliConnection,
 		writer:        writer,
@@ -361,4 +362,27 @@ func Authenticate(cliConnection plugin.CliConnection, writer *console_writer.Con
 	}
 
 	return destination, nil
+}
+
+// DisplayAuthInfo prints the requested values.
+func DisplayAuthInfo(destination auth.Destination, args []string) (string, error) {
+	serviceName := args[2]
+	flagVals, err := parseFlags(args)
+	if err != nil {
+		return "", fmt.Errorf("Failed to parse flags: %s", err)
+	}
+
+	result := fmt.Sprintf("\r%s%s\n\nAuthenticated with %s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(serviceName))
+
+	// Print requested attributes
+	if flagVals.Url_flag {
+		authUrl := destination.(*auth.SwiftDestination).SwiftConnection.StorageUrl
+		result += fmt.Sprintf("%s%s\n", cw.White("auth url: "), authUrl)
+	}
+	if flagVals.X_auth_flag {
+		xAuth := destination.(*auth.SwiftDestination).SwiftConnection.AuthToken
+		result += fmt.Sprintf("%s%s\n", cw.White("x-auth: "), xAuth)
+	}
+
+	return result, nil
 }
