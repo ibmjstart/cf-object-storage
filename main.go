@@ -53,9 +53,17 @@ const (
 // LargeObjectsPlugin is the struct implementing the plugin interface.
 // It has no public members.
 type LargeObjectsPlugin struct {
-	subcommands   map[string](func(plugin.CliConnection, []string) error)
+	subcommands   map[string](command)
 	cliConnection plugin.CliConnection
 	writer        *cw.ConsoleWriter
+}
+
+// command contains the info needed to execute a subcommand
+type command struct {
+	name            string
+	task            string
+	numExpectedArgs int
+	execute         func(auth.Destination, []string) (string, error)
 }
 
 // Run handles each invocation of the CLI plugin.
@@ -64,57 +72,50 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	c.cliConnection = cliConnection
 
 	// Associate each subcommand with a handler function
-	c.subcommands = map[string](func(plugin.CliConnection, []string) error){
-		helpCommand: c.help,
+	c.subcommands = map[string](command){
+		//helpCommand: c.help,
+		getAuthInfoCommand: command{
+			name:            getAuthInfoCommand,
+			task:            "Authenticating with",
+			numExpectedArgs: 3,
+			execute:         x_auth.DisplayAuthInfo,
+		},
+		/*
+			showContainersCommand:  c.containers,
+			containerInfoCommand:   c.containers,
+			makeContainerCommand:   c.containers,
+			updateContainerCommand: c.containers,
+			renameContainerCommand: c.containers,
+			deleteContainerCommand: c.containers,
 
-		getAuthInfoCommand: c.getAuthInfo,
+			showObjectsCommand:  c.objects,
+			objectInfoCommand:   c.objects,
+			putObjectCommand:    c.objects,
+			getObjectCommand:    c.objects,
+			renameObjectCommand: c.objects,
+			copyObjectCommand:   c.objects,
+			deleteObjectCommand: c.objects,
 
-		showContainersCommand:  c.containers,
-		containerInfoCommand:   c.containers,
-		makeContainerCommand:   c.containers,
-		updateContainerCommand: c.containers,
-		renameContainerCommand: c.containers,
-		deleteContainerCommand: c.containers,
-
-		showObjectsCommand:  c.objects,
-		objectInfoCommand:   c.objects,
-		putObjectCommand:    c.objects,
-		getObjectCommand:    c.objects,
-		renameObjectCommand: c.objects,
-		copyObjectCommand:   c.objects,
-		deleteObjectCommand: c.objects,
-
-		makeDLOCommand: c.makeDLO,
-		makeSLOCommand: c.makeSLO,
+			makeDLOCommand: c.makeDLO,
+			makeSLOCommand: c.makeSLO,
+		*/
 	}
 
 	// Create writer to provide output
 	c.writer = cw.NewConsoleWriter()
 
-	/*
-		// Dispatch the subcommand that the user wanted, if it exists
-		var err error
-		if len(args) < 2 {
-			err = fmt.Errorf("Please provide a valid subcommand\nA list of subcommands can be found with the command 'cf help os'")
+	// Dispatch the subcommand that the user wanted, if it exists
+	var err error
+	if len(args) < 2 {
+		err = fmt.Errorf("Please provide a valid subcommand\nA list of subcommands can be found with the command 'cf help os'")
+	} else {
+		subcommand, found := c.subcommands[args[1]]
+		if !found {
+			err = fmt.Errorf("%s is not a valid subcommand", args[1])
 		} else {
-			subcommandFunc, found := c.subcommands[args[1]]
-			if !found {
-				err = fmt.Errorf("%s is not a valid subcommand", args[1])
-			} else {
-				err = subcommandFunc(cliConnection, args[1:])
-			}
+			err = c.executeCommand(subcommand, args)
 		}
-	*/
-
-	// TEST COMMAND EXEC FUNC
-	var testCmd = command{
-		name:            getAuthInfoCommand,
-		task:            "Authenticating with",
-		numExpectedArgs: 2,
-		execute:         x_auth.DisplayAuthInfo,
 	}
-	err := c.executeCommand(testCmd, args)
-	// END TEST
 
 	// Report any fatal errors returned by the subcommand
 	if err != nil {
@@ -146,13 +147,6 @@ func displayUserInfo(cliConnection plugin.CliConnection, task string) error {
 	fmt.Printf("%s org %s / space %s as %s...\n", task, cw.Cyan(org.Name), cw.Cyan(space.Name), cw.Cyan(username))
 
 	return nil
-}
-
-type command struct {
-	name            string
-	task            string
-	numExpectedArgs int
-	execute         func(auth.Destination, []string) (string, error)
 }
 
 func (c *LargeObjectsPlugin) executeCommand(cmd command, args []string) error {
