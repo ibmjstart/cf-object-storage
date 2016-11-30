@@ -31,10 +31,12 @@ type credentials struct {
 	ProjectID  string
 	Region     string
 	Role       string
+	Service    string
 	UserID     string
 	Username   string
 }
 
+// authenticator holds the info required to authenticate with Object Storage.
 type authenticator struct {
 	flagVals      flagVal
 	creds         *credentials
@@ -186,11 +188,7 @@ func ParseFlags(flags []string) (*flagVal, error) {
 	return &flagVals, nil
 }
 
-// GetAuthInfo executes the logic to fetch the auth URL and X-Auth token for an object storage instance.
-func GetAuthInfo(cliConnection plugin.CliConnection, writer *console_writer.ConsoleWriter, targetService string) (auth.Destination, error) {
-	return nil, fmt.Errorf("NOT IMPLEMENTED")
-}
-
+// getNewCredentials fetches a new set of authentication credentials from Object Storage.
 func (a *authenticator) getNewCredentials() error {
 	// Ensure that user is logged in
 	if loggedIn, err := a.cliConnection.IsLoggedIn(); !loggedIn {
@@ -227,9 +225,16 @@ func (a *authenticator) getNewCredentials() error {
 		return fmt.Errorf("Failed to extract JSON credentials: %s", err)
 	}
 
+	// Note what Object Storage instance these credentials are for
+	a.creds.Service = a.targetService
+
+	// Ensure new credentails are saved
+	a.doSave = true
+
 	return nil
 }
 
+// getSavedCredentials loads the locally saved credentails.
 func (a *authenticator) getSavedCredentials() error {
 	a.writer.SetCurrentStage("Locating service credentials")
 
@@ -267,6 +272,7 @@ func (a *authenticator) getSavedCredentials() error {
 	return nil
 }
 
+// saveCredentials writes the credentails to a local file.
 func (a *authenticator) saveCredentials() error {
 	// Encode JSON credentials
 	marshalledCredentials, err := json.Marshal(a.creds)
@@ -291,6 +297,7 @@ func (a *authenticator) saveCredentials() error {
 	return nil
 }
 
+// Authenticate authenticates the current session with Object Storage and saves the credentails.
 func Authenticate(cliConnection plugin.CliConnection, writer *console_writer.ConsoleWriter, targetService string, doSave bool) (auth.Destination, error) {
 	var a = authenticator{
 		cliConnection: cliConnection,
@@ -306,21 +313,23 @@ func Authenticate(cliConnection plugin.CliConnection, writer *console_writer.Con
 	}
 	defer a.logFile.Close()
 
-	if a.logFileSize > 0 {
-		// Read contents of credential file
-		logContents := make([]byte, a.logFileSize)
-		_, err = a.logFile.Read(logContents)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to read credentials: %s", err)
-		}
+	// Read contents of credential file
+	logContents := make([]byte, a.logFileSize)
+	bytesRead, err := a.logFile.Read(logContents)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to read credentials: %s", err)
+	}
 
+	if bytesRead > 0 {
 		// Parse the JSON credentials
 		a.writer.SetCurrentStage("Parsing credentials")
 		err = a.extractFromJSON(string(logContents))
 		if err != nil {
 			return nil, fmt.Errorf("Failed to extract JSON credentials: %s", err)
 		}
-	} else {
+	}
+
+	if bytesRead <= 0 || a.creds.Service != a.targetService {
 		err = a.getNewCredentials()
 		if err != nil {
 			return nil, fmt.Errorf("Failed to fetch a new set of credentials: %s", err)
