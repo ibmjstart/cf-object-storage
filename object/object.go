@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	cw "github.com/ibmjstart/cf-object-storage/console_writer"
 	"github.com/ibmjstart/swiftlygo/auth"
-	"github.com/ncw/swift"
+	//"github.com/ncw/swift"
 )
 
 const maxObjectSize uint = 1000 * 1000 * 1000 * 5
@@ -46,30 +47,39 @@ func ShowObjects(dest auth.Destination, args []string) (string, error) {
 	return fmt.Sprintf("\r%s%s\n\nObjects in container %s: %v\n", cw.ClearLine, cw.Green("OK"), container, objects), nil
 }
 
-func PutObject(dest auth.Destination, container, objectName, path string, headers swift.Headers) error {
+func PutObject(dest auth.Destination, args []string) (string, error) {
+	container := args[3]
+	path := args[4]
+	object := filepath.Base(path)
+
+	if len(args) == 7 && args[5] == "-n" {
+		object = args[6]
+	}
+
 	data, err := getFileContents(path)
 	if err != nil {
-		return fmt.Errorf("Failed to get file contents at path %s: %s", path, err)
+		return "", fmt.Errorf("Failed to get file contents at path %s: %s", path, err)
 	}
 
 	hash := hashSource(data)
 
-	objectCreator, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectCreate(container, objectName, true, hash, "", headers)
+	// PUT HEADERS BACK IN
+	objectCreator, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectCreate(container, object, true, hash, "", nil)
 	if err != nil {
-		return fmt.Errorf("Failed to create object: %s", err)
+		return "", fmt.Errorf("Failed to create object: %s", err)
 	}
 
 	_, err = objectCreator.Write(data)
 	if err != nil {
-		return fmt.Errorf("Failed to write object: %s", err)
+		return "", fmt.Errorf("Failed to write object: %s", err)
 	}
 
 	err = objectCreator.Close()
 	if err != nil {
-		return fmt.Errorf("Failed to close object writer: %s", err)
+		return "", fmt.Errorf("Failed to close object writer: %s", err)
 	}
 
-	return nil
+	return fmt.Sprintf("\r%s%s\n\nUploaded object %s to container %s\n", cw.ClearLine, cw.Green("OK"), object, container), nil
 }
 
 func CopyObject(dest auth.Destination, container, objectName, newContainer, newName string) error {
@@ -81,19 +91,41 @@ func CopyObject(dest auth.Destination, container, objectName, newContainer, newN
 	return nil
 }
 
-func GetObject(dest auth.Destination, container, objectName, destinationPath string) error {
+func GetObject(dest auth.Destination, args []string) (string, error) {
+	container := args[3]
+	objectName := args[4]
+	destinationPath := args[5]
+
 	object, err := os.OpenFile(destinationPath, os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
-		return fmt.Errorf("Failed to open/create object file: %s", err)
+		return "", fmt.Errorf("Failed to open/create object file: %s", err)
 	}
 	defer object.Close()
 
 	_, err = dest.(*auth.SwiftDestination).SwiftConnection.ObjectGet(container, objectName, object, true, nil)
 	if err != nil {
-		return fmt.Errorf("Failed to get object %s: %s", objectName, err)
+		return "", fmt.Errorf("Failed to get object %s: %s", objectName, err)
 	}
 
-	return nil
+	return fmt.Sprintf("\r%s%s\n\nDownloaded object %s to %s\n", cw.ClearLine, cw.Green("OK"), objectName, destinationPath), nil
+}
+
+func RenameObject(dest auth.Destination, args []string) (string, error) {
+	container := args[3]
+	object := args[4]
+	newName := args[5]
+
+	_, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectCopy(container, object, container, newName, nil)
+	if err != nil {
+		return "", fmt.Errorf("Failed to rename object: %s", err)
+	}
+
+	err = dest.(*auth.SwiftDestination).SwiftConnection.ObjectDelete(container, object)
+	if err != nil {
+		return "", fmt.Errorf("Failed to delete object %s: %s", object, err)
+	}
+
+	return fmt.Sprintf("\r%s%s\n\nRenamed object %s to %s\n", cw.ClearLine, cw.Green("OK"), object, newName), nil
 }
 
 func DeleteObject(dest auth.Destination, container, objectName string) error {

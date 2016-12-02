@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/cloudfoundry/cli/plugin"
@@ -155,11 +154,25 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 			numExpectedArgs: 5,
 			execute:         object.GetObjectInfo,
 		},
+		putObjectCommand: command{
+			name:            putObjectCommand,
+			task:            "Uploading object to",
+			numExpectedArgs: 5,
+			execute:         object.PutObject,
+		},
+		getObjectCommand: command{
+			name:            getObjectCommand,
+			task:            "Downloading object from",
+			numExpectedArgs: 6,
+			execute:         object.GetObject,
+		},
+		renameObjectCommand: command{
+			name:            renameObjectCommand,
+			task:            "Renaming object in",
+			numExpectedArgs: 6,
+			execute:         object.RenameObject,
+		},
 		/*
-			objectInfoCommand:   c.objects,
-			putObjectCommand:    c.objects,
-			getObjectCommand:    c.objects,
-			renameObjectCommand: c.objects,
 			copyObjectCommand:   c.objects,
 			deleteObjectCommand: c.objects,
 
@@ -289,78 +302,84 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 			fmt.Printf("\n")
 		*/
 	case putObjectCommand:
-		if len(args) < 4 {
-			help, _ := getSubcommandHelp(putObjectCommand)
-			return fmt.Errorf("Missing required arguments\n%s", help)
-		}
+		/*
+			if len(args) < 4 {
+				help, _ := getSubcommandHelp(putObjectCommand)
+				return fmt.Errorf("Missing required arguments\n%s", help)
+			}
 
-		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
-		if err != nil {
-			return fmt.Errorf("Failed to authenticate: %s", err)
-		}
+			serviceName := args[1]
+			destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
+			if err != nil {
+				return fmt.Errorf("Failed to authenticate: %s", err)
+			}
 
-		containerName := args[2]
-		path := args[3]
-		objectArg := filepath.Base(path)
+			containerName := args[2]
+			path := args[3]
+			objectArg := filepath.Base(path)
 
-		if len(args) == 6 && args[4] == "-n" {
-			objectArg = args[5]
-		}
+			if len(args) == 6 && args[4] == "-n" {
+				objectArg = args[5]
+			}
 
-		err = object.PutObject(destination, containerName, objectArg, path, nil)
-		if err != nil {
-			return fmt.Errorf("Failed to upload object: %s", err)
-		}
+			err = object.PutObject(destination, containerName, objectArg, path, nil)
+			if err != nil {
+				return fmt.Errorf("Failed to upload object: %s", err)
+			}
 
-		fmt.Printf("\r%s%s\n\nUploaded object %s to container %s\n", cw.ClearLine, cw.Green("OK"), objectArg, containerName)
+			fmt.Printf("\r%s%s\n\nUploaded object %s to container %s\n", cw.ClearLine, cw.Green("OK"), objectArg, containerName)
+		*/
 	case getObjectCommand:
-		if len(args) < 5 {
-			help, _ := getSubcommandHelp(getObjectCommand)
-			return fmt.Errorf("Missing required arguments\n%s", help)
-		}
+		/*
+			if len(args) < 5 {
+				help, _ := getSubcommandHelp(getObjectCommand)
+				return fmt.Errorf("Missing required arguments\n%s", help)
+			}
 
-		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
-		if err != nil {
-			return fmt.Errorf("Failed to authenticate: %s", err)
-		}
+			serviceName := args[1]
+			destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
+			if err != nil {
+				return fmt.Errorf("Failed to authenticate: %s", err)
+			}
 
-		containerName := args[2]
-		objectArg := args[3]
-		destinationPath := args[4]
-		err = object.GetObject(destination, containerName, objectArg, destinationPath)
-		if err != nil {
-			return fmt.Errorf("Failed to upload object: %s", err)
-		}
+			containerName := args[2]
+			objectArg := args[3]
+			destinationPath := args[4]
+			err = object.GetObject(destination, containerName, objectArg, destinationPath)
+			if err != nil {
+				return fmt.Errorf("Failed to upload object: %s", err)
+			}
 
-		fmt.Printf("\r%s%s\n\nDownloaded object %s to %s\n", cw.ClearLine, cw.Green("OK"), objectArg, destinationPath)
+			fmt.Printf("\r%s%s\n\nDownloaded object %s to %s\n", cw.ClearLine, cw.Green("OK"), objectArg, destinationPath)
+		*/
 	case renameObjectCommand:
-		if len(args) < 5 {
-			help, _ := getSubcommandHelp(renameObjectCommand)
-			return fmt.Errorf("Missing required arguments\n%s", help)
-		}
+		/*
+			if len(args) < 5 {
+				help, _ := getSubcommandHelp(renameObjectCommand)
+				return fmt.Errorf("Missing required arguments\n%s", help)
+			}
 
-		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
-		if err != nil {
-			return fmt.Errorf("Failed to authenticate: %s", err)
-		}
+			serviceName := args[1]
+			destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
+			if err != nil {
+				return fmt.Errorf("Failed to authenticate: %s", err)
+			}
 
-		containerName := args[2]
-		objectArg := args[3]
-		newNameArg := args[4]
-		err = object.CopyObject(destination, containerName, objectArg, containerName, newNameArg)
-		if err != nil {
-			return fmt.Errorf("Failed to rename object: %s", err)
-		}
+			containerName := args[2]
+			objectArg := args[3]
+			newNameArg := args[4]
+			err = object.CopyObject(destination, containerName, objectArg, containerName, newNameArg)
+			if err != nil {
+				return fmt.Errorf("Failed to rename object: %s", err)
+			}
 
-		err = object.DeleteObject(destination, containerName, objectArg)
-		if err != nil {
-			return fmt.Errorf("Failed to delete object %s: %s", objectArg, err)
-		}
+			err = object.DeleteObject(destination, containerName, objectArg)
+			if err != nil {
+				return fmt.Errorf("Failed to delete object %s: %s", objectArg, err)
+			}
 
-		fmt.Printf("\r%s%s\n\nRenamed object %s to %s\n", cw.ClearLine, cw.Green("OK"), objectArg, newNameArg)
+			fmt.Printf("\r%s%s\n\nRenamed object %s to %s\n", cw.ClearLine, cw.Green("OK"), objectArg, newNameArg)
+		*/
 	case copyObjectCommand:
 		if len(args) < 5 {
 			help, _ := getSubcommandHelp(copyObjectCommand)
