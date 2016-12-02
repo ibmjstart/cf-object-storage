@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/cloudfoundry/cli/plugin"
 	cw "github.com/ibmjstart/cf-object-storage/console_writer"
@@ -111,13 +112,37 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 			numExpectedArgs: 3,
 			execute:         container.ShowContainers,
 		},
+		containerInfoCommand: command{
+			name:            containerInfoCommand,
+			task:            "Fetching container info from",
+			numExpectedArgs: 4,
+			execute:         container.GetContainerInfo,
+		},
+		makeContainerCommand: command{
+			name:            makeContainerCommand,
+			task:            "Creating container in",
+			numExpectedArgs: 4,
+			execute:         container.MakeContainer,
+		},
+		updateContainerCommand: command{
+			name:            updateContainerCommand,
+			task:            "Updating container in",
+			numExpectedArgs: 4,
+			execute:         container.UpdateContainer,
+		},
+		renameContainerCommand: command{
+			name:            renameContainerCommand,
+			task:            "Renaming container in",
+			numExpectedArgs: 5,
+			execute:         container.RenameContainer,
+		},
+		deleteContainerCommand: command{
+			name:            deleteContainerCommand,
+			task:            "Removing container from",
+			numExpectedArgs: 4,
+			execute:         container.DeleteContainer,
+		},
 		/*
-			containerInfoCommand:   c.containers,
-			makeContainerCommand:   c.containers,
-			updateContainerCommand: c.containers,
-			renameContainerCommand: c.containers,
-			deleteContainerCommand: c.containers,
-
 			showObjectsCommand:  c.objects,
 			objectInfoCommand:   c.objects,
 			putObjectCommand:    c.objects,
@@ -173,6 +198,10 @@ func (c *LargeObjectsPlugin) executeCommand(cmd command, args []string) error {
 		return err
 	}
 
+	splitTask := strings.Split(cmd.task, " ")
+	curStage := strings.Join(splitTask[:len(splitTask)-1], " ")
+	c.writer.SetCurrentStage(curStage)
+
 	result, err := cmd.execute(destination, args)
 	if err != nil {
 		return err
@@ -181,205 +210,6 @@ func (c *LargeObjectsPlugin) executeCommand(cmd command, args []string) error {
 	c.writer.Quit()
 
 	fmt.Print(result)
-
-	return nil
-}
-
-// container executes the container commands
-func (c *LargeObjectsPlugin) containers(cliConnection plugin.CliConnection, args []string) error {
-	command := args[0]
-
-	// Display startup info
-	task := "Working with containers in"
-	err := displayUserInfo(cliConnection, task)
-	if err != nil {
-		return fmt.Errorf("Failed to display user info: %s", err)
-	}
-
-	// Start console writer
-	go c.writer.Write()
-
-	switch command {
-	case showContainersCommand:
-		/*
-			if len(args) < 2 {
-				help, _ := getSubcommandHelp(showContainersCommand)
-				return fmt.Errorf("Missing required arguments\n%s", help)
-			}
-
-			serviceName := args[1]
-
-			destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
-			if err != nil {
-				return fmt.Errorf("Failed to authenticate: %s", err)
-			}
-
-			containers, err := container.ShowContainers(destination)
-			if err != nil {
-				return fmt.Errorf("Failed to get containers: %s", err)
-			}
-
-			fmt.Printf("\r%s%s\n\nContainers in OS %s: %v\n", cw.ClearLine, cw.Green("OK"), serviceName, containers)
-		*/
-	case containerInfoCommand:
-		if len(args) < 3 {
-			help, _ := getSubcommandHelp(containerInfoCommand)
-			return fmt.Errorf("Missing required arguments\n%s", help)
-		}
-
-		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
-		if err != nil {
-			return fmt.Errorf("Failed to authenticate: %s", err)
-		}
-
-		containerArg := args[2]
-		containerInfo, headers, err := container.GetContainerInfo(destination, containerArg)
-		if err != nil {
-			return fmt.Errorf("Failed to get container %s: %s", containerArg, err)
-		}
-
-		fmt.Printf("\r%s%s\n\nName: %s\nNumber of objects: %d\nSize: %d bytes\nHeaders:", cw.ClearLine, cw.Green("OK"), containerInfo.Name, containerInfo.Count, containerInfo.Bytes)
-		for k, h := range headers {
-			fmt.Printf("\n\tName: %s Value: %s", k, h)
-		}
-		fmt.Printf("\n")
-	case makeContainerCommand:
-		if len(args) < 3 {
-			help, _ := getSubcommandHelp(makeContainerCommand)
-			return fmt.Errorf("Missing required arguments\n%s", help)
-		}
-
-		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
-		if err != nil {
-			return fmt.Errorf("Failed to authenticate: %s", err)
-		}
-
-		containerArg := args[2]
-		headersArg := args[3:]
-		err = container.MakeContainer(destination, containerArg, headersArg...)
-		if err != nil {
-			return fmt.Errorf("Failed to make container: %s", err)
-		}
-
-		fmt.Printf("\r%s%s\n\nCreated container %s in OS %s\n", cw.ClearLine, cw.Green("OK"), containerArg, serviceName)
-	case updateContainerCommand:
-		if len(args) < 3 {
-			help, _ := getSubcommandHelp(updateContainerCommand)
-			return fmt.Errorf("Missing required arguments\n%s", help)
-		}
-
-		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
-		if err != nil {
-			return fmt.Errorf("Failed to authenticate: %s", err)
-		}
-
-		containerArg := args[2]
-		_, _, err = container.GetContainerInfo(destination, containerArg)
-		if err != nil {
-			return fmt.Errorf("Failed to get container %s: %s", containerArg, err)
-		}
-
-		headersArg := args[3:]
-		err = container.MakeContainer(destination, containerArg, headersArg...)
-		if err != nil {
-			return fmt.Errorf("Failed to make container: %s", err)
-		}
-
-		fmt.Printf("\r%s%s\n\nUpdated container %s in OS %s\n", cw.ClearLine, cw.Green("OK"), containerArg, serviceName)
-	case renameContainerCommand:
-		if len(args) < 4 {
-			help, _ := getSubcommandHelp(renameContainerCommand)
-			return fmt.Errorf("Missing required arguments\n%s", help)
-		}
-
-		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
-		if err != nil {
-			return fmt.Errorf("Failed to authenticate: %s", err)
-		}
-
-		containerArg := args[2]
-		_, headers, err := container.GetContainerInfo(destination, containerArg)
-		if err != nil {
-			return fmt.Errorf("Failed to get container %s: %s", containerArg, err)
-		}
-
-		headersArg := make([]string, len(headers))
-		ctr := 0
-		for header, val := range headers {
-			headersArg[ctr] = header + ":" + val
-			ctr++
-		}
-
-		newContainerArg := args[3]
-		err = container.MakeContainer(destination, newContainerArg, headersArg...)
-		if err != nil {
-			return fmt.Errorf("Failed to make container: %s", err)
-		}
-
-		objects, err := object.ShowObjects(destination, containerArg)
-		if err != nil {
-			return fmt.Errorf("Failed to get objects to move: %s", err)
-		}
-
-		for _, mvObject := range objects {
-			err = object.CopyObject(destination, containerArg, mvObject, newContainerArg, mvObject)
-			if err != nil {
-				return fmt.Errorf("Failed to move object %s: %s", mvObject, err)
-			}
-
-			err = object.DeleteObject(destination, containerArg, mvObject)
-			if err != nil {
-				return fmt.Errorf("Failed to delete object %s: %s", mvObject, err)
-			}
-		}
-
-		err = container.DeleteContainer(destination, containerArg)
-		if err != nil {
-			return fmt.Errorf("Failed to delete container: %s", err)
-		}
-
-		fmt.Printf("\r%s%s\n\nRenamed container %s to %s\n", cw.ClearLine, cw.Green("OK"), containerArg, newContainerArg)
-	case deleteContainerCommand:
-		if len(args) < 3 {
-			help, _ := getSubcommandHelp(deleteContainerCommand)
-			return fmt.Errorf("Missing required arguments\n%s", help)
-		}
-
-		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
-		if err != nil {
-			return fmt.Errorf("Failed to authenticate: %s", err)
-		}
-
-		containerArg := args[2]
-		if len(args) == 4 && args[3] == "-f" {
-			objects, err := object.ShowObjects(destination, containerArg)
-			if err != nil {
-				return fmt.Errorf("Failed to get objects to delete: %s", err)
-			}
-
-			for _, rmObject := range objects {
-				err = object.DeleteObject(destination, containerArg, rmObject)
-				if err != nil {
-					return fmt.Errorf("Failed to delete object %s: %s", rmObject, err)
-				}
-			}
-		}
-
-		err = container.DeleteContainer(destination, containerArg)
-		if err != nil {
-			return fmt.Errorf("Failed to delete container: %s", err)
-		}
-
-		fmt.Printf("\r%s%s\n\nDeleted container %s from OS %s\n", cw.ClearLine, cw.Green("OK"), containerArg, serviceName)
-	}
-
-	// Kill console writer
-	c.writer.Quit()
 
 	return nil
 }
