@@ -49,9 +49,9 @@ const (
 	makeSLOCommand string = "put-large-object"
 )
 
-// LargeObjectsPlugin is the struct implementing the plugin interface.
+// ObjectStoragePlugin is the struct implementing the plugin interface.
 // It has no public members.
-type LargeObjectsPlugin struct {
+type ObjectStoragePlugin struct {
 	subcommands   map[string](command)
 	cliConnection plugin.CliConnection
 	writer        *cw.ConsoleWriter
@@ -91,7 +91,7 @@ func displayUserInfo(cliConnection plugin.CliConnection, task string) error {
 }
 
 // Run handles each invocation of the CLI plugin.
-func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []string) {
+func (c *ObjectStoragePlugin) Run(cliConnection plugin.CliConnection, args []string) {
 	// Attach connection object to plugin struct
 	c.cliConnection = cliConnection
 
@@ -225,7 +225,7 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	}
 }
 
-func (c *LargeObjectsPlugin) executeCommand(cmd command, args []string) error {
+func (c *ObjectStoragePlugin) executeCommand(cmd command, args []string) error {
 	if len(args) < cmd.numExpectedArgs {
 		help, _ := getSubcommandHelp(cmd.name)
 		return fmt.Errorf("Missing required arguments\n%s", help)
@@ -260,7 +260,7 @@ func (c *LargeObjectsPlugin) executeCommand(cmd command, args []string) error {
 // about the current version of this plugin and how to use it. This
 // information is used to build the CF CLI helptext for this plugin's
 // commands.
-func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
+func (c *ObjectStoragePlugin) GetMetadata() plugin.PluginMetadata {
 	var usageContent = "cf " + namespace + " COMMAND [ARGS...] \n" +
 		"\n   Object Storage commands:\n" +
 		"      " + getAuthInfoCommand + "\n" +
@@ -310,5 +310,5 @@ func (c *LargeObjectsPlugin) GetMetadata() plugin.PluginMetadata {
 // is actually used.
 func main() {
 	// Any initialization for your plugin can be handled here
-	plugin.Start(new(LargeObjectsPlugin))
+	plugin.Start(new(ObjectStoragePlugin))
 }
