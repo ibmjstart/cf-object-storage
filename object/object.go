@@ -10,11 +10,12 @@ import (
 
 	cw "github.com/ibmjstart/cf-object-storage/console_writer"
 	"github.com/ibmjstart/swiftlygo/auth"
-	//"github.com/ncw/swift"
 )
 
+// maxObjectSize is the largest size a file can be in Object Storage.
 const maxObjectSize uint = 1000 * 1000 * 1000 * 5
 
+// GetObjectInfo returns metadata for a given object.
 func GetObjectInfo(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Fetching object info")
 
@@ -38,6 +39,7 @@ func GetObjectInfo(dest auth.Destination, writer *cw.ConsoleWriter, args []strin
 	return retval, nil
 }
 
+// ShowObjects returns the names of all objects in a given container.
 func ShowObjects(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Displaying objects")
 
@@ -51,6 +53,7 @@ func ShowObjects(dest auth.Destination, writer *cw.ConsoleWriter, args []string)
 	return fmt.Sprintf("\r%s%s\n\nObjects in container %s: %v\n", cw.ClearLine, cw.Green("OK"), container, objects), nil
 }
 
+// PutObject uploads an object to Object Storage.
 func PutObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Uploading object")
 
@@ -69,7 +72,7 @@ func PutObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (
 
 	hash := hashSource(data)
 
-	// PUT HEADERS BACK IN
+	// ADD SUPPORT FOR HEADERS
 	objectCreator, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectCreate(container, object, true, hash, "", nil)
 	if err != nil {
 		return "", fmt.Errorf("Failed to create object: %s", err)
@@ -88,6 +91,7 @@ func PutObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (
 	return fmt.Sprintf("\r%s%s\n\nUploaded object %s to container %s\n", cw.ClearLine, cw.Green("OK"), object, container), nil
 }
 
+// CopyObject copies an object from one container to another
 func CopyObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Copying object")
 
@@ -103,6 +107,7 @@ func CopyObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) 
 	return fmt.Sprintf("\r%s%s\n\nCopied object %s to container %s\n", cw.ClearLine, cw.Green("OK"), object, newContainer), nil
 }
 
+// GetObject downloads an object from object storage.
 func GetObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Downloading object")
 
@@ -124,6 +129,7 @@ func GetObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (
 	return fmt.Sprintf("\r%s%s\n\nDownloaded object %s to %s\n", cw.ClearLine, cw.Green("OK"), objectName, destinationPath), nil
 }
 
+// RenameObject renames a given object.
 func RenameObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Renaming object")
 
@@ -144,6 +150,7 @@ func RenameObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string
 	return fmt.Sprintf("\r%s%s\n\nRenamed object %s to %s\n", cw.ClearLine, cw.Green("OK"), object, newName), nil
 }
 
+//DeleteObject removes a given object from Object Storage.
 func DeleteObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
 	var err error
 
@@ -164,6 +171,7 @@ func DeleteObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string
 	return fmt.Sprintf("\r%s%s\n\nDeleted object %s from container %s\n", cw.ClearLine, cw.Green("OK"), object, container), nil
 }
 
+//deleteObject deletes a regular object.
 func deleteObject(dest auth.Destination, container, objectName string) error {
 	err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectDelete(container, objectName)
 	if err != nil {
@@ -173,6 +181,7 @@ func deleteObject(dest auth.Destination, container, objectName string) error {
 	return nil
 }
 
+//deleteLargeObject deletes a large object, such as an SLO or DLO.
 func deleteLargeObject(dest auth.Destination, container, objectName string) error {
 	// Using the Open Stack Object Storage API directly as large object support is not
 	// included in the ncw/swift library yet. There is an open pull request to merge the
@@ -201,6 +210,7 @@ func deleteLargeObject(dest auth.Destination, container, objectName string) erro
 	return nil
 }
 
+// getFileContents returns the raw contents of a file.
 func getFileContents(sourcePath string) ([]byte, error) {
 	file, err := os.Open(sourcePath)
 	if err != nil {
@@ -226,6 +236,7 @@ func getFileContents(sourcePath string) ([]byte, error) {
 	return data, nil
 }
 
+// hashSource hashes raw file contents.
 func hashSource(sourceData []byte) string {
 	hashBytes := md5.Sum(sourceData)
 	hash := hex.EncodeToString(hashBytes[:])
