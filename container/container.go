@@ -155,20 +155,17 @@ func RenameContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []str
 		return "", fmt.Errorf("Failed to make container: %s", err)
 	}
 
+	writer.SetCurrentStage("Renaming container")
+
 	objects, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectNamesAll(container, nil)
 	if err != nil {
 		return "", fmt.Errorf("Failed to get objects to move: %s", err)
 	}
 
 	for _, mvObject := range objects {
-		_, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectCopy(container, mvObject, newContainer, mvObject, nil)
+		err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectMove(container, mvObject, newContainer, mvObject)
 		if err != nil {
 			return "", fmt.Errorf("Failed to move object %s: %s", mvObject, err)
-		}
-
-		err = dest.(*auth.SwiftDestination).SwiftConnection.ObjectDelete(container, mvObject)
-		if err != nil {
-			return "", fmt.Errorf("Failed to delete object %s: %s", mvObject, err)
 		}
 	}
 
