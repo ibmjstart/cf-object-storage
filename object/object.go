@@ -7,28 +7,43 @@ import (
 	"net/http"
 	"os"
 
+	cw "github.com/ibmjstart/cf-object-storage/console_writer"
 	"github.com/ibmjstart/swiftlygo/auth"
 	"github.com/ncw/swift"
 )
 
 const maxObjectSize uint = 1000 * 1000 * 1000 * 5
 
-func GetObjectInfo(dest auth.Destination, container string, object string) (swift.Object, swift.Headers, error) {
-	objectRet, headers, err := dest.(*auth.SwiftDestination).SwiftConnection.Object(container, object)
+func GetObjectInfo(dest auth.Destination, args []string) (string, error) {
+	container := args[3]
+	object := args[4]
+
+	objectInfo, headers, err := dest.(*auth.SwiftDestination).SwiftConnection.Object(container, object)
 	if err != nil {
-		return objectRet, headers, fmt.Errorf("Failed to get object %s: %s", object, err)
+		return "", fmt.Errorf("Failed to get object %s: %s", object, err)
 	}
 
-	return objectRet, headers, nil
+	retval := fmt.Sprintf("\r%s%s\n\nName: %s\nContent type: %s\nSize: %d bytes\nLast modified: %s\n"+
+		"Hash: %s\nIs pseudo dir: %t\nSubdirectory: \n%sHeaders:", cw.ClearLine, cw.Green("OK"),
+		objectInfo.Name, objectInfo.ContentType, objectInfo.Bytes, objectInfo.ServerLastModified,
+		objectInfo.Hash, objectInfo.PseudoDirectory, objectInfo.SubDir)
+	for k, h := range headers {
+		retval += fmt.Sprintf("\n\tName: %s Value: %s", k, h)
+	}
+	retval += fmt.Sprintf("\n")
+
+	return retval, nil
 }
 
-func ShowObjects(dest auth.Destination, container string) ([]string, error) {
+func ShowObjects(dest auth.Destination, args []string) (string, error) {
+	container := args[3]
+
 	objects, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectNamesAll(container, nil)
 	if err != nil {
-		return objects, fmt.Errorf("Failed to get objects: %s", err)
+		return "", fmt.Errorf("Failed to get objects: %s", err)
 	}
 
-	return objects, nil
+	return fmt.Sprintf("\r%s%s\n\nObjects in container %s: %v\n", cw.ClearLine, cw.Green("OK"), container, objects), nil
 }
 
 func PutObject(dest auth.Destination, container, objectName, path string, headers swift.Headers) error {

@@ -77,7 +77,7 @@ func DeleteContainer(dest auth.Destination, args []string) (string, error) {
 	container := args[3]
 
 	if len(args) == 5 && args[4] == "-f" {
-		objects, err := object.ShowObjects(dest, container)
+		objects, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectNamesAll(container, nil)
 		if err != nil {
 			return "", fmt.Errorf("Failed to get objects to delete: %s", err)
 		}
@@ -135,7 +135,7 @@ func RenameContainer(dest auth.Destination, args []string) (string, error) {
 		return "", fmt.Errorf("Failed to make container: %s", err)
 	}
 
-	objects, err := object.ShowObjects(dest, container)
+	objects, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectNamesAll(container, nil)
 	if err != nil {
 		return "", fmt.Errorf("Failed to get objects to move: %s", err)
 	}

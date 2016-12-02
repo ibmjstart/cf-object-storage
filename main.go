@@ -142,8 +142,20 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 			numExpectedArgs: 4,
 			execute:         container.DeleteContainer,
 		},
+
+		showObjectsCommand: command{
+			name:            showObjectsCommand,
+			task:            "Displaying objects in",
+			numExpectedArgs: 4,
+			execute:         object.ShowObjects,
+		},
+		objectInfoCommand: command{
+			name:            objectInfoCommand,
+			task:            "Fetching object info from",
+			numExpectedArgs: 5,
+			execute:         object.GetObjectInfo,
+		},
 		/*
-			showObjectsCommand:  c.objects,
 			objectInfoCommand:   c.objects,
 			putObjectCommand:    c.objects,
 			getObjectCommand:    c.objects,
@@ -230,48 +242,52 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 
 	switch command {
 	case showObjectsCommand:
-		if len(args) < 3 {
-			help, _ := getSubcommandHelp(showObjectsCommand)
-			return fmt.Errorf("Missing required arguments\n%s", help)
-		}
+		/*
+			if len(args) < 3 {
+				help, _ := getSubcommandHelp(showObjectsCommand)
+				return fmt.Errorf("Missing required arguments\n%s", help)
+			}
 
-		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
-		if err != nil {
-			return fmt.Errorf("Failed to authenticate: %s", err)
-		}
+			serviceName := args[1]
+			destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
+			if err != nil {
+				return fmt.Errorf("Failed to authenticate: %s", err)
+			}
 
-		containerName := args[2]
-		objects, err := object.ShowObjects(destination, containerName)
-		if err != nil {
-			return fmt.Errorf("Failed to get objects: %s", err)
-		}
+			containerName := args[2]
+			objects, err := object.ShowObjects(destination, containerName)
+			if err != nil {
+				return fmt.Errorf("Failed to get objects: %s", err)
+			}
 
-		fmt.Printf("\r%s%s\n\nObjects in container %s: %v\n", cw.ClearLine, cw.Green("OK"), containerName, objects)
+			fmt.Printf("\r%s%s\n\nObjects in container %s: %v\n", cw.ClearLine, cw.Green("OK"), containerName, objects)
+		*/
 	case objectInfoCommand:
-		if len(args) < 4 {
-			help, _ := getSubcommandHelp(objectInfoCommand)
-			return fmt.Errorf("Missing required arguments\n%s", help)
-		}
+		/*
+			if len(args) < 4 {
+				help, _ := getSubcommandHelp(objectInfoCommand)
+				return fmt.Errorf("Missing required arguments\n%s", help)
+			}
 
-		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
-		if err != nil {
-			return fmt.Errorf("Failed to authenticate: %s", err)
-		}
+			serviceName := args[1]
+			destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
+			if err != nil {
+				return fmt.Errorf("Failed to authenticate: %s", err)
+			}
 
-		containerName := args[2]
-		objectArg := args[3]
-		objectInfo, headers, err := object.GetObjectInfo(destination, containerName, objectArg)
-		if err != nil {
-			return fmt.Errorf("Failed to get object %s: %s", objectArg, err)
-		}
+			containerName := args[2]
+			objectArg := args[3]
+			objectInfo, headers, err := object.GetObjectInfo(destination, containerName, objectArg)
+			if err != nil {
+				return fmt.Errorf("Failed to get object %s: %s", objectArg, err)
+			}
 
-		fmt.Printf("\r%s%s\n\nName: %s\nContent type: %s\nSize: %d bytes\nLast modified: %s\nHash: %s\nIs pseudo dir: %t\nSubdirectory: \n%sHeaders:", cw.ClearLine, cw.Green("OK"), objectInfo.Name, objectInfo.ContentType, objectInfo.Bytes, objectInfo.ServerLastModified, objectInfo.Hash, objectInfo.PseudoDirectory, objectInfo.SubDir)
-		for k, h := range headers {
-			fmt.Printf("\n\tName: %s Value: %s", k, h)
-		}
-		fmt.Printf("\n")
+			fmt.Printf("\r%s%s\n\nName: %s\nContent type: %s\nSize: %d bytes\nLast modified: %s\nHash: %s\nIs pseudo dir: %t\nSubdirectory: \n%sHeaders:", cw.ClearLine, cw.Green("OK"), objectInfo.Name, objectInfo.ContentType, objectInfo.Bytes, objectInfo.ServerLastModified, objectInfo.Hash, objectInfo.PseudoDirectory, objectInfo.SubDir)
+			for k, h := range headers {
+				fmt.Printf("\n\tName: %s Value: %s", k, h)
+			}
+			fmt.Printf("\n")
+		*/
 	case putObjectCommand:
 		if len(args) < 4 {
 			help, _ := getSubcommandHelp(putObjectCommand)
