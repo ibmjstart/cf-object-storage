@@ -7,7 +7,6 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/cloudfoundry/cli/plugin"
 	cw "github.com/ibmjstart/cf-object-storage/console_writer"
 	"github.com/ibmjstart/swiftlygo/auth"
 	sg "github.com/ibmjstart/swiftlygo/slo"
@@ -29,8 +28,8 @@ type flagVal struct {
 	num_threads_flag  int
 }
 
-// ParseArgs parses the arguments provided to make-slo.
-func ParseArgs(args []string) (*argVal, error) {
+// parseArgs parses the arguments provided to make-slo.
+func parseArgs(args []string) (*argVal, error) {
 	sloContainer := args[0]
 	sloName := args[1]
 	source := args[2]
@@ -69,19 +68,21 @@ func ParseArgs(args []string) (*argVal, error) {
 }
 
 // MakeSlo uploads the given file as an SLO to Object Storage.
-func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest auth.Destination, argVals *argVal) error {
+func MakeSlo(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Preparing SLO")
+
+	argVals, err := parseArgs(args[3:])
 
 	// Verify source file exists
 	file, err := os.Open(argVals.source)
 	if err != nil {
-		return fmt.Errorf("Failed to open source file: %s", err)
+		return "", fmt.Errorf("Failed to open source file: %s", err)
 	}
 	defer file.Close()
 
 	fileStats, err := file.Stat()
 	if err != nil {
-		return fmt.Errorf("Failed to obtain file stats: %s", err)
+		return "", fmt.Errorf("Failed to obtain file stats: %s", err)
 	}
 
 	if int(fileStats.Size()) < argVals.flagVals.chunk_size_flag {
@@ -93,21 +94,25 @@ func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest 
 	var uploader *sg.Uploader
 	if argVals.flagVals.output_file_flag == "" {
 		// Create SLO uploader without output file
-		uploader, err = sg.NewUploader(dest, uint(argVals.flagVals.chunk_size_flag), argVals.SloContainer, argVals.SloName, file, uint(argVals.flagVals.num_threads_flag), argVals.flagVals.only_missing_flag, ioutil.Discard)
+		uploader, err = sg.NewUploader(dest, uint(argVals.flagVals.chunk_size_flag),
+			argVals.SloContainer, argVals.SloName, file, uint(argVals.flagVals.num_threads_flag),
+			argVals.flagVals.only_missing_flag, ioutil.Discard)
 	} else {
 		// Verify output file exists and create it if it does not
 		outFile, err := os.OpenFile(argVals.flagVals.output_file_flag, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		defer file.Close()
 		if err != nil {
-			return fmt.Errorf("Failed to open output file: %s", err)
+			return "", fmt.Errorf("Failed to open output file: %s", err)
 		}
 
 		// Create SLO uploader with output file
-		uploader, err = sg.NewUploader(dest, uint(argVals.flagVals.chunk_size_flag), argVals.SloContainer, argVals.SloName, file, uint(argVals.flagVals.num_threads_flag), argVals.flagVals.only_missing_flag, outFile)
+		uploader, err = sg.NewUploader(dest, uint(argVals.flagVals.chunk_size_flag),
+			argVals.SloContainer, argVals.SloName, file, uint(argVals.flagVals.num_threads_flag),
+			argVals.flagVals.only_missing_flag, outFile)
 	}
 
 	if err != nil {
-		return fmt.Errorf("Failed to create SLO uploader: %s", err)
+		return "", fmt.Errorf("Failed to create SLO uploader: %s", err)
 	}
 
 	// Provide the console writer with upload status
@@ -116,8 +121,8 @@ func MakeSlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest 
 	// Upload SLO
 	err = uploader.Upload()
 	if err != nil {
-		return fmt.Errorf("Failed to upload SLO: %s", err)
+		return "", fmt.Errorf("Failed to upload SLO: %s", err)
 	}
 
-	return nil
+	return fmt.Sprintf("\r%s%s\n%s\nSuccessfully created SLO %s in container %s\n", cw.ClearLine, cw.Green("OK"), cw.ClearLine, cw.Cyan(argVals.SloName), cw.Cyan(argVals.SloContainer)), nil
 }

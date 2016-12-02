@@ -365,7 +365,9 @@ func Authenticate(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, 
 }
 
 // DisplayAuthInfo prints the requested values.
-func DisplayAuthInfo(destination auth.Destination, args []string) (string, error) {
+func DisplayAuthInfo(destination auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+	writer.SetCurrentStage("Fetching authentication info")
+
 	serviceName := args[2]
 	flagVals, err := parseFlags(args)
 	if err != nil {

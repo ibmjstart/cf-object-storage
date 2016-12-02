@@ -56,7 +56,9 @@ func parseArgs(args []string) (*argVal, error) {
 }
 
 // MakeDlo uploads a DLO manifest to Object Storage.
-func MakeDlo(dest auth.Destination, args []string) (string, error) {
+func MakeDlo(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+	writer.SetCurrentStage("Creating DLO")
+
 	argVals, err := parseArgs(args[3:])
 
 	uploader := sg.NewDloManifestUploader(dest, argVals.dloContainer, argVals.DloName, argVals.FlagVals.Container_flag, argVals.FlagVals.Prefix_flag)

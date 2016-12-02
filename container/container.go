@@ -14,7 +14,9 @@ var shortHeaders = map[string]string{
 	"-r": "X-Remove-Container-Read:1",
 }
 
-func ShowContainers(dest auth.Destination, args []string) (string, error) {
+func ShowContainers(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+	writer.SetCurrentStage("Displaying containers")
+
 	serviceName := args[2]
 
 	containers, err := dest.(*auth.SwiftDestination).SwiftConnection.ContainerNamesAll(nil)
@@ -25,7 +27,9 @@ func ShowContainers(dest auth.Destination, args []string) (string, error) {
 	return fmt.Sprintf("\r%s%s\n\nContainers in OS %s: %v\n", cw.ClearLine, cw.Green("OK"), serviceName, containers), nil
 }
 
-func GetContainerInfo(dest auth.Destination, args []string) (string, error) {
+func GetContainerInfo(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+	writer.SetCurrentStage("Fetching container info")
+
 	container := args[3]
 	containerInfo, headers, err := dest.(*auth.SwiftDestination).SwiftConnection.Container(container)
 	if err != nil {
@@ -41,7 +45,9 @@ func GetContainerInfo(dest auth.Destination, args []string) (string, error) {
 	return retval, nil
 }
 
-func MakeContainer(dest auth.Destination, args []string) (string, error) {
+func MakeContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+	writer.SetCurrentStage("Creating container")
+
 	headerMap := make(map[string]string)
 	serviceName := args[2]
 	container := args[3]
@@ -71,11 +77,13 @@ func MakeContainer(dest auth.Destination, args []string) (string, error) {
 	return fmt.Sprintf("\r%s%s\n\nCreated container %s in OS %s\n", cw.ClearLine, cw.Green("OK"), container, serviceName), nil
 }
 
-func DeleteContainer(dest auth.Destination, args []string) (string, error) {
+func DeleteContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
 	serviceName := args[2]
 	container := args[3]
 
 	if len(args) == 5 && args[4] == "-f" {
+		writer.SetCurrentStage("Deleting objects in container")
+
 		objects, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectNamesAll(container, nil)
 		if err != nil {
 			return "", fmt.Errorf("Failed to get objects to delete: %s", err)
@@ -89,6 +97,8 @@ func DeleteContainer(dest auth.Destination, args []string) (string, error) {
 		}
 	}
 
+	writer.SetCurrentStage("Deleting container")
+
 	err := dest.(*auth.SwiftDestination).SwiftConnection.ContainerDelete(container)
 	if err != nil {
 		return "", fmt.Errorf("Failed to delete container: %s", err)
@@ -97,16 +107,18 @@ func DeleteContainer(dest auth.Destination, args []string) (string, error) {
 	return fmt.Sprintf("\r%s%s\n\nDeleted container %s from OS %s\n", cw.ClearLine, cw.Green("OK"), container, serviceName), nil
 }
 
-func UpdateContainer(dest auth.Destination, args []string) (string, error) {
+func UpdateContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+	writer.SetCurrentStage("Updating container")
+
 	serviceName := args[2]
 	container := args[3]
 
-	_, err := GetContainerInfo(dest, args)
+	_, err := GetContainerInfo(dest, writer, args)
 	if err != nil {
 		return "", fmt.Errorf("Failed to get container %s: %s", container, err)
 	}
 
-	_, err = MakeContainer(dest, args)
+	_, err = MakeContainer(dest, writer, args)
 	if err != nil {
 		return "", fmt.Errorf("Failed to make container: %s", err)
 	}
@@ -114,7 +126,9 @@ func UpdateContainer(dest auth.Destination, args []string) (string, error) {
 	return fmt.Sprintf("\r%s%s\n\nUpdated container %s in OS %s\n", cw.ClearLine, cw.Green("OK"), container, serviceName), nil
 }
 
-func RenameContainer(dest auth.Destination, args []string) (string, error) {
+func RenameContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+	writer.SetCurrentStage("Renaming container")
+
 	container := args[3]
 	newContainer := args[4]
 
@@ -129,7 +143,7 @@ func RenameContainer(dest auth.Destination, args []string) (string, error) {
 	}
 
 	makeArg := append(args[:3], append([]string{newContainer}, headersArg...)...)
-	_, err = MakeContainer(dest, makeArg)
+	_, err = MakeContainer(dest, writer, makeArg)
 	if err != nil {
 		return "", fmt.Errorf("Failed to make container: %s", err)
 	}
@@ -151,7 +165,7 @@ func RenameContainer(dest auth.Destination, args []string) (string, error) {
 		}
 	}
 
-	_, err = DeleteContainer(dest, args[:4])
+	_, err = DeleteContainer(dest, writer, args[:4])
 	if err != nil {
 		return "", fmt.Errorf("Failed to delete container: %s", err)
 	}

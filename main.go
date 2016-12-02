@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/cloudfoundry/cli/plugin"
 	cw "github.com/ibmjstart/cf-object-storage/console_writer"
@@ -63,7 +62,7 @@ type command struct {
 	name            string
 	task            string
 	numExpectedArgs int
-	execute         func(auth.Destination, []string) (string, error)
+	execute         func(auth.Destination, *cw.ConsoleWriter, []string) (string, error)
 }
 
 // displayUserInfo shows the username, org and space corresponding to the requested service.
@@ -198,9 +197,12 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 			numExpectedArgs: 5,
 			execute:         dlo.MakeDlo,
 		},
-		/*
-			makeSLOCommand: c.makeSLO,
-		*/
+		makeSLOCommand: command{
+			name:            makeSLOCommand,
+			task:            "Creating SLO in",
+			numExpectedArgs: 6,
+			execute:         slo.MakeSlo,
+		},
 	}
 
 	// Create writer to provide output
@@ -209,7 +211,8 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 	// Dispatch the subcommand that the user wanted, if it exists
 	var err error
 	if len(args) < 2 {
-		err = fmt.Errorf("Please provide a valid subcommand\nA list of subcommands can be found with the command 'cf help os'")
+		err = fmt.Errorf("Please provide a valid subcommand\n" +
+			"A list of subcommands can be found with the command 'cf help os'")
 	} else {
 		subcommand, found := c.subcommands[args[1]]
 		if !found {
@@ -245,11 +248,7 @@ func (c *LargeObjectsPlugin) executeCommand(cmd command, args []string) error {
 		return err
 	}
 
-	splitTask := strings.Split(cmd.task, " ")
-	curStage := strings.Join(splitTask[:len(splitTask)-1], " ")
-	c.writer.SetCurrentStage(curStage)
-
-	result, err := cmd.execute(destination, args)
+	result, err := cmd.execute(destination, c.writer, args)
 	if err != nil {
 		return err
 	}
@@ -257,50 +256,6 @@ func (c *LargeObjectsPlugin) executeCommand(cmd command, args []string) error {
 	c.writer.Quit()
 
 	fmt.Print(result)
-
-	return nil
-}
-
-// makeSLO creates a Static Large Object in an Object Storage instance.
-func (c *LargeObjectsPlugin) makeSLO(cliConnection plugin.CliConnection, args []string) error {
-	// Check that the minimum number of arguments are present
-	if len(args) < 5 {
-		help, _ := getSubcommandHelp(makeSLOCommand)
-		return fmt.Errorf("Missing required arguments\n%s", help)
-	}
-
-	// Parse arguments
-	serviceName := args[1]
-	argVals, err := slo.ParseArgs(args[2:])
-	if err != nil {
-		return fmt.Errorf("Failed to parse arguments: %s", err)
-	}
-
-	// Display startup info
-	task := "Creating SLO in"
-	err = displayUserInfo(cliConnection, task)
-	if err != nil {
-		return fmt.Errorf("Failed to display user info: %s", err)
-	}
-
-	// Start console writer
-	go c.writer.Write()
-
-	// Authenticate with Object Storage
-	destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
-	if err != nil {
-		return fmt.Errorf("Failed to authenticate: %s", err)
-	}
-
-	// Create SLO
-	err = slo.MakeSlo(cliConnection, c.writer, destination, argVals)
-	if err != nil {
-		return fmt.Errorf("Failed to create SLO: %s", err)
-	}
-
-	// Kill console writer and display completion info
-	c.writer.Quit()
-	fmt.Printf("\r%s%s\n%s\nSuccessfully created SLO %s in container %s\n", cw.ClearLine, cw.Green("OK"), cw.ClearLine, cw.Cyan(argVals.SloName), cw.Cyan(argVals.SloContainer))
 
 	return nil
 }

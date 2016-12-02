@@ -15,7 +15,9 @@ import (
 
 const maxObjectSize uint = 1000 * 1000 * 1000 * 5
 
-func GetObjectInfo(dest auth.Destination, args []string) (string, error) {
+func GetObjectInfo(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+	writer.SetCurrentStage("Fetching object info")
+
 	container := args[3]
 	object := args[4]
 
@@ -36,7 +38,9 @@ func GetObjectInfo(dest auth.Destination, args []string) (string, error) {
 	return retval, nil
 }
 
-func ShowObjects(dest auth.Destination, args []string) (string, error) {
+func ShowObjects(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+	writer.SetCurrentStage("Displaying objects")
+
 	container := args[3]
 
 	objects, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectNamesAll(container, nil)
@@ -47,7 +51,9 @@ func ShowObjects(dest auth.Destination, args []string) (string, error) {
 	return fmt.Sprintf("\r%s%s\n\nObjects in container %s: %v\n", cw.ClearLine, cw.Green("OK"), container, objects), nil
 }
 
-func PutObject(dest auth.Destination, args []string) (string, error) {
+func PutObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+	writer.SetCurrentStage("Uploading object")
+
 	container := args[3]
 	path := args[4]
 	object := filepath.Base(path)
@@ -82,7 +88,9 @@ func PutObject(dest auth.Destination, args []string) (string, error) {
 	return fmt.Sprintf("\r%s%s\n\nUploaded object %s to container %s\n", cw.ClearLine, cw.Green("OK"), object, container), nil
 }
 
-func CopyObject(dest auth.Destination, args []string) (string, error) {
+func CopyObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+	writer.SetCurrentStage("Copying object")
+
 	container := args[3]
 	object := args[4]
 	newContainer := args[5]
@@ -95,7 +103,9 @@ func CopyObject(dest auth.Destination, args []string) (string, error) {
 	return fmt.Sprintf("\r%s%s\n\nCopied object %s to container %s\n", cw.ClearLine, cw.Green("OK"), object, newContainer), nil
 }
 
-func GetObject(dest auth.Destination, args []string) (string, error) {
+func GetObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+	writer.SetCurrentStage("Downloading object")
+
 	container := args[3]
 	objectName := args[4]
 	destinationPath := args[5]
@@ -114,7 +124,9 @@ func GetObject(dest auth.Destination, args []string) (string, error) {
 	return fmt.Sprintf("\r%s%s\n\nDownloaded object %s to %s\n", cw.ClearLine, cw.Green("OK"), objectName, destinationPath), nil
 }
 
-func RenameObject(dest auth.Destination, args []string) (string, error) {
+func RenameObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+	writer.SetCurrentStage("Renaming object")
+
 	container := args[3]
 	object := args[4]
 	newName := args[5]
@@ -132,8 +144,10 @@ func RenameObject(dest auth.Destination, args []string) (string, error) {
 	return fmt.Sprintf("\r%s%s\n\nRenamed object %s to %s\n", cw.ClearLine, cw.Green("OK"), object, newName), nil
 }
 
-func DeleteObject(dest auth.Destination, args []string) (string, error) {
+func DeleteObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
 	var err error
+
+	writer.SetCurrentStage("Deleting object")
 
 	container := args[3]
 	object := args[4]
