@@ -172,8 +172,19 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 			numExpectedArgs: 6,
 			execute:         object.RenameObject,
 		},
+		copyObjectCommand: command{
+			name:            copyObjectCommand,
+			task:            "Copying object in",
+			numExpectedArgs: 6,
+			execute:         object.CopyObject,
+		},
+		deleteObjectCommand: command{
+			name:            deleteObjectCommand,
+			task:            "Removing object from",
+			numExpectedArgs: 5,
+			execute:         object.DeleteObject,
+		},
 		/*
-			copyObjectCommand:   c.objects,
 			deleteObjectCommand: c.objects,
 
 			makeDLOCommand: c.makeDLO,
@@ -381,51 +392,55 @@ func (c *LargeObjectsPlugin) objects(cliConnection plugin.CliConnection, args []
 			fmt.Printf("\r%s%s\n\nRenamed object %s to %s\n", cw.ClearLine, cw.Green("OK"), objectArg, newNameArg)
 		*/
 	case copyObjectCommand:
-		if len(args) < 5 {
-			help, _ := getSubcommandHelp(copyObjectCommand)
-			return fmt.Errorf("Missing required arguments\n%s", help)
-		}
+		/*
+			if len(args) < 5 {
+				help, _ := getSubcommandHelp(copyObjectCommand)
+				return fmt.Errorf("Missing required arguments\n%s", help)
+			}
 
-		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
-		if err != nil {
-			return fmt.Errorf("Failed to authenticate: %s", err)
-		}
+			serviceName := args[1]
+			destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
+			if err != nil {
+				return fmt.Errorf("Failed to authenticate: %s", err)
+			}
 
-		containerName := args[2]
-		objectArg := args[3]
-		newContainerName := args[4]
-		err = object.CopyObject(destination, containerName, objectArg, newContainerName, objectArg)
-		if err != nil {
-			return fmt.Errorf("Failed to copy object: %s", err)
-		}
+			containerName := args[2]
+			objectArg := args[3]
+			newContainerName := args[4]
+			err = object.CopyObject(destination, containerName, objectArg, newContainerName, objectArg)
+			if err != nil {
+				return fmt.Errorf("Failed to copy object: %s", err)
+			}
 
-		fmt.Printf("\r%s%s\n\nCopied object %s to container %s\n", cw.ClearLine, cw.Green("OK"), objectArg, newContainerName)
+			fmt.Printf("\r%s%s\n\nCopied object %s to container %s\n", cw.ClearLine, cw.Green("OK"), objectArg, newContainerName)
+		*/
 	case deleteObjectCommand:
-		if len(args) < 4 {
-			help, _ := getSubcommandHelp(deleteObjectCommand)
-			return fmt.Errorf("Missing required arguments\n%s", help)
-		}
+		/*
+			if len(args) < 4 {
+				help, _ := getSubcommandHelp(deleteObjectCommand)
+				return fmt.Errorf("Missing required arguments\n%s", help)
+			}
 
-		serviceName := args[1]
-		destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
-		if err != nil {
-			return fmt.Errorf("Failed to authenticate: %s", err)
-		}
+			serviceName := args[1]
+			destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
+			if err != nil {
+				return fmt.Errorf("Failed to authenticate: %s", err)
+			}
 
-		containerName := args[2]
-		objectArg := args[3]
+			containerName := args[2]
+			objectArg := args[3]
 
-		if len(args) == 5 && args[4] == "-l" {
-			err = object.DeleteLargeObject(destination, containerName, objectArg)
-		} else {
-			err = object.DeleteObject(destination, containerName, objectArg)
-		}
-		if err != nil {
-			return fmt.Errorf("Failed to delete object %s: %s", objectArg, err)
-		}
+			if len(args) == 5 && args[4] == "-l" {
+				err = object.DeleteLargeObject(destination, containerName, objectArg)
+			} else {
+				err = object.DeleteObject(destination, containerName, objectArg)
+			}
+			if err != nil {
+				return fmt.Errorf("Failed to delete object %s: %s", objectArg, err)
+			}
 
-		fmt.Printf("\r%s%s\n\nDeleted object %s from container %s\n", cw.ClearLine, cw.Green("OK"), objectArg, containerName)
+			fmt.Printf("\r%s%s\n\nDeleted object %s from container %s\n", cw.ClearLine, cw.Green("OK"), objectArg, containerName)
+		*/
 	}
 
 	// Kill console writer

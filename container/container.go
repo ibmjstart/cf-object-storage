@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	cw "github.com/ibmjstart/cf-object-storage/console_writer"
-	"github.com/ibmjstart/cf-object-storage/object"
 	"github.com/ibmjstart/swiftlygo/auth"
 	"github.com/ncw/swift"
 )
@@ -83,7 +82,7 @@ func DeleteContainer(dest auth.Destination, args []string) (string, error) {
 		}
 
 		for _, rmObject := range objects {
-			err = object.DeleteObject(dest, container, rmObject)
+			err = dest.(*auth.SwiftDestination).SwiftConnection.ObjectDelete(container, rmObject)
 			if err != nil {
 				return "", fmt.Errorf("Failed to delete object %s: %s", rmObject, err)
 			}
@@ -141,12 +140,12 @@ func RenameContainer(dest auth.Destination, args []string) (string, error) {
 	}
 
 	for _, mvObject := range objects {
-		err = object.CopyObject(dest, container, mvObject, newContainer, mvObject)
+		_, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectCopy(container, mvObject, newContainer, mvObject, nil)
 		if err != nil {
 			return "", fmt.Errorf("Failed to move object %s: %s", mvObject, err)
 		}
 
-		err = object.DeleteObject(dest, container, mvObject)
+		err = dest.(*auth.SwiftDestination).SwiftConnection.ObjectDelete(container, mvObject)
 		if err != nil {
 			return "", fmt.Errorf("Failed to delete object %s: %s", mvObject, err)
 		}

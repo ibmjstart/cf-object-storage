@@ -82,13 +82,17 @@ func PutObject(dest auth.Destination, args []string) (string, error) {
 	return fmt.Sprintf("\r%s%s\n\nUploaded object %s to container %s\n", cw.ClearLine, cw.Green("OK"), object, container), nil
 }
 
-func CopyObject(dest auth.Destination, container, objectName, newContainer, newName string) error {
-	_, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectCopy(container, objectName, newContainer, newName, nil)
+func CopyObject(dest auth.Destination, args []string) (string, error) {
+	container := args[3]
+	object := args[4]
+	newContainer := args[5]
+
+	_, err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectCopy(container, object, newContainer, object, nil)
 	if err != nil {
-		return fmt.Errorf("Failed to rename object: %s", err)
+		return "", fmt.Errorf("Failed to copy object: %s", err)
 	}
 
-	return nil
+	return fmt.Sprintf("\r%s%s\n\nCopied object %s to container %s\n", cw.ClearLine, cw.Green("OK"), object, newContainer), nil
 }
 
 func GetObject(dest auth.Destination, args []string) (string, error) {
@@ -128,7 +132,25 @@ func RenameObject(dest auth.Destination, args []string) (string, error) {
 	return fmt.Sprintf("\r%s%s\n\nRenamed object %s to %s\n", cw.ClearLine, cw.Green("OK"), object, newName), nil
 }
 
-func DeleteObject(dest auth.Destination, container, objectName string) error {
+func DeleteObject(dest auth.Destination, args []string) (string, error) {
+	var err error
+
+	container := args[3]
+	object := args[4]
+
+	if len(args) == 6 && args[5] == "-l" {
+		err = deleteLargeObject(dest, container, object)
+	} else {
+		err = deleteObject(dest, container, object)
+	}
+	if err != nil {
+		return "", fmt.Errorf("Failed to delete object %s: %s", object, err)
+	}
+
+	return fmt.Sprintf("\r%s%s\n\nDeleted object %s from container %s\n", cw.ClearLine, cw.Green("OK"), object, container), nil
+}
+
+func deleteObject(dest auth.Destination, container, objectName string) error {
 	err := dest.(*auth.SwiftDestination).SwiftConnection.ObjectDelete(container, objectName)
 	if err != nil {
 		return fmt.Errorf("Failed to delete object %s: %s", objectName, err)
@@ -137,7 +159,7 @@ func DeleteObject(dest auth.Destination, container, objectName string) error {
 	return nil
 }
 
-func DeleteLargeObject(dest auth.Destination, container, objectName string) error {
+func deleteLargeObject(dest auth.Destination, container, objectName string) error {
 	// Using the Open Stack Object Storage API directly as large object support is not
 	// included in the ncw/swift library yet. There is an open pull request to merge the
 	// large-object branch as of 11/22/16 at https://github.com/ncw/swift/pull/74.
