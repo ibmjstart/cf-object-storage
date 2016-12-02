@@ -69,7 +69,7 @@ Subcommand		|Usage															|Description
 `container` | `cf os container service_name container_name` | Show a given container's information
 `create-container` | `cf os create-container service_name container_name [headers...] [r] [-r]` | Create a new container in an Object Storage instance
 `update-container` | `cf os update-container service_name container_name headers... [r] [-r]` | Update an existing container's metadata
-`rename-container` | `cf os rename-container service_name container_name new_container_name` | Rename an existing container
+`rename-container` | `cf os rename-container service_name container_name new_container_name` | Rename an existing container<sup>!!</sup>
 `delete-container` | `cf os delete-container service_name container_name [-f]` | Remove a container from an Object Storage instance
 `objects` | `cf os objects service_name container_name` | Show all objects in a container
 `object` | `cf os object service_name container_name object_name` | Show a given object's information
@@ -84,6 +84,8 @@ Subcommand		|Usage															|Description
 **<sup>!</sup>** `auth` checks if `HOME/.cf/os_creds.json` exists and contains the target service's credentials. If it does,
 these credentials are used to authenticate with Object Storage (which saves a few http requests). Upon successful 
 authentication, `auth` will save a service's credentials to the above location to speed up subsequent commands.
+
+**<sup>!!</sup>** `rename-container` should not be used (and will likely fail) on containers containing SLOs and DLOs. This is due to their strict naming conventions that expect certain containers to have certain names.
 
 ## Contribute
 
