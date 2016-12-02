@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/cloudfoundry/cli/plugin"
 	cw "github.com/ibmjstart/cf-object-storage/console_writer"
 	sg "github.com/ibmjstart/swiftlygo"
 	"github.com/ibmjstart/swiftlygo/auth"
@@ -23,8 +22,8 @@ type flagVal struct {
 	Prefix_flag    string
 }
 
-// ParseArgs parses the arguments provided to make-dlo.
-func ParseArgs(args []string) (*argVal, error) {
+// parseArgs parses the arguments provided to make-dlo.
+func parseArgs(args []string) (*argVal, error) {
 	dloContainer := args[0]
 	dloName := args[1]
 
@@ -57,16 +56,14 @@ func ParseArgs(args []string) (*argVal, error) {
 }
 
 // MakeDlo uploads a DLO manifest to Object Storage.
-func MakeDlo(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, dest auth.Destination, argVals *argVal) error {
-	writer.SetCurrentStage("Preparing DLO manifest")
+func MakeDlo(dest auth.Destination, args []string) (string, error) {
+	argVals, err := parseArgs(args[3:])
 
-	// Create uploader to build manifest
-	writer.SetCurrentStage("Uploading DLO manifest")
 	uploader := sg.NewDloManifestUploader(dest, argVals.dloContainer, argVals.DloName, argVals.FlagVals.Container_flag, argVals.FlagVals.Prefix_flag)
-	err := uploader.Upload()
+	err = uploader.Upload()
 	if err != nil {
-		return fmt.Errorf("Failed to upload DLO manifest: %s", err)
+		return "", fmt.Errorf("Failed to upload DLO manifest: %s", err)
 	}
 
-	return nil
+	return fmt.Sprintf("\r%s%s\n\nCreated manifest for %s, upload segments to container %s prefixed with %s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(argVals.DloName), cw.Cyan(argVals.FlagVals.Container_flag), cw.Cyan(argVals.FlagVals.Prefix_flag)), nil
 }

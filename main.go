@@ -98,13 +98,18 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 
 	// Associate each subcommand with a handler function
 	c.subcommands = map[string](command){
+		// Help command
 		//helpCommand: c.help,
+
+		// Authenticate command
 		getAuthInfoCommand: command{
 			name:            getAuthInfoCommand,
 			task:            "Authenticating with",
 			numExpectedArgs: 3,
 			execute:         x_auth.DisplayAuthInfo,
 		},
+
+		// Container commands
 		showContainersCommand: command{
 			name:            showContainersCommand,
 			task:            "Displaying containers in",
@@ -142,6 +147,7 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 			execute:         container.DeleteContainer,
 		},
 
+		// Object commands
 		showObjectsCommand: command{
 			name:            showObjectsCommand,
 			task:            "Displaying objects in",
@@ -184,8 +190,15 @@ func (c *LargeObjectsPlugin) Run(cliConnection plugin.CliConnection, args []stri
 			numExpectedArgs: 5,
 			execute:         object.DeleteObject,
 		},
+
+		// Large object commands
+		makeDLOCommand: command{
+			name:            makeDLOCommand,
+			task:            "Creating DLO in",
+			numExpectedArgs: 5,
+			execute:         dlo.MakeDlo,
+		},
 		/*
-			makeDLOCommand: c.makeDLO,
 			makeSLOCommand: c.makeSLO,
 		*/
 	}
@@ -244,50 +257,6 @@ func (c *LargeObjectsPlugin) executeCommand(cmd command, args []string) error {
 	c.writer.Quit()
 
 	fmt.Print(result)
-
-	return nil
-}
-
-// makeDLO creates a Dynamic Large Object manifest in an Object Storage instance.
-func (c *LargeObjectsPlugin) makeDLO(cliConnection plugin.CliConnection, args []string) error {
-	// Check that the minimum number of arguments are present
-	if len(args) < 4 {
-		help, _ := getSubcommandHelp(makeDLOCommand)
-		return fmt.Errorf("Missing required arguments\n%s", help)
-	}
-
-	// Parse arguments
-	serviceName := args[1]
-	argVals, err := dlo.ParseArgs(args[2:])
-	if err != nil {
-		return fmt.Errorf("Failed to parse arguments: %s", err)
-	}
-
-	// Display startup info
-	task := "Creating DLO in"
-	err = displayUserInfo(cliConnection, task)
-	if err != nil {
-		return fmt.Errorf("Failed to display user info: %s", err)
-	}
-
-	// Start console writer
-	go c.writer.Write()
-
-	// Authenticate with Object Storage
-	destination, err := x_auth.Authenticate(cliConnection, c.writer, serviceName)
-	if err != nil {
-		return fmt.Errorf("Failed to authenticate: %s", err)
-	}
-
-	// Create DLO
-	err = dlo.MakeDlo(cliConnection, c.writer, destination, argVals)
-	if err != nil {
-		return fmt.Errorf("Failed to create DLO manifest: %s", err)
-	}
-
-	// Kill console writer and display completion info
-	c.writer.Quit()
-	fmt.Printf("\r%s%s\n\nCreated manifest for %s, upload segments to container %s prefixed with %s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(argVals.DloName), cw.Cyan(argVals.FlagVals.Container_flag), cw.Cyan(argVals.FlagVals.Prefix_flag))
 
 	return nil
 }
