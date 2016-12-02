@@ -195,6 +195,7 @@ var (
 	}
 )
 
+// toString creates a help message from a given plugin.Command
 func toString(s plugin.Command) string {
 	help := ""
 
@@ -213,6 +214,7 @@ func toString(s plugin.Command) string {
 	return help
 }
 
+// getSubcommandHelp returns the help info for a given subcommand
 func getSubcommandHelp(name string) (string, error) {
 	subcommand, found := subcommandMap[name]
 	if !found {

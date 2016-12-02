@@ -90,6 +90,38 @@ func displayUserInfo(cliConnection plugin.CliConnection, task string) error {
 	return nil
 }
 
+// executeCommand authenticates with Object Storage and runs a command
+func (c *ObjectStoragePlugin) executeCommand(cmd command, args []string) error {
+	if len(args) < cmd.numExpectedArgs {
+		help, _ := getSubcommandHelp(cmd.name)
+		return fmt.Errorf("Missing required arguments\n%s", help)
+	}
+
+	err := displayUserInfo(c.cliConnection, cmd.task)
+	if err != nil {
+		return err
+	}
+
+	go c.writer.Write()
+
+	serviceName := args[2]
+	destination, err := x_auth.Authenticate(c.cliConnection, c.writer, serviceName)
+	if err != nil {
+		return err
+	}
+
+	result, err := cmd.execute(destination, c.writer, args)
+	if err != nil {
+		return err
+	}
+
+	c.writer.Quit()
+
+	fmt.Print(result)
+
+	return nil
+}
+
 // Run handles each invocation of the CLI plugin.
 func (c *ObjectStoragePlugin) Run(cliConnection plugin.CliConnection, args []string) {
 	// Attach connection object to plugin struct
@@ -223,37 +255,6 @@ func (c *ObjectStoragePlugin) Run(cliConnection plugin.CliConnection, args []str
 		fmt.Printf("\r%s\n%s\n%s\n", cw.ClearLine, cw.Red("FAILED"), err)
 		os.Exit(1)
 	}
-}
-
-func (c *ObjectStoragePlugin) executeCommand(cmd command, args []string) error {
-	if len(args) < cmd.numExpectedArgs {
-		help, _ := getSubcommandHelp(cmd.name)
-		return fmt.Errorf("Missing required arguments\n%s", help)
-	}
-
-	err := displayUserInfo(c.cliConnection, cmd.task)
-	if err != nil {
-		return err
-	}
-
-	go c.writer.Write()
-
-	serviceName := args[2]
-	destination, err := x_auth.Authenticate(c.cliConnection, c.writer, serviceName)
-	if err != nil {
-		return err
-	}
-
-	result, err := cmd.execute(destination, c.writer, args)
-	if err != nil {
-		return err
-	}
-
-	c.writer.Quit()
-
-	fmt.Print(result)
-
-	return nil
 }
 
 // GetMetadata returns a PluginMetadata struct with information

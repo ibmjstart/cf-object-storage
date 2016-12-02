@@ -9,11 +9,13 @@ import (
 	"github.com/ncw/swift"
 )
 
+// shortHeaders define shortcuts for header input.
 var shortHeaders = map[string]string{
 	"r":  "X-Container-Read:.r:*",
 	"-r": "X-Remove-Container-Read:1",
 }
 
+// ShowContainers displays the containers in a given Object Storage service.
 func ShowContainers(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Displaying containers")
 
@@ -27,6 +29,7 @@ func ShowContainers(dest auth.Destination, writer *cw.ConsoleWriter, args []stri
 	return fmt.Sprintf("\r%s%s\n\nContainers in OS %s: %v\n", cw.ClearLine, cw.Green("OK"), serviceName, containers), nil
 }
 
+// GetContainerInfo displays metadata for a given container.
 func GetContainerInfo(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Fetching container info")
 
@@ -45,6 +48,7 @@ func GetContainerInfo(dest auth.Destination, writer *cw.ConsoleWriter, args []st
 	return retval, nil
 }
 
+// MakeContainer creates a new container.
 func MakeContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Creating container")
 
@@ -77,6 +81,7 @@ func MakeContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []strin
 	return fmt.Sprintf("\r%s%s\n\nCreated container %s in OS %s\n", cw.ClearLine, cw.Green("OK"), container, serviceName), nil
 }
 
+// DeleteContainer removes a container and all of its contents.
 func DeleteContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
 	serviceName := args[2]
 	container := args[3]
@@ -107,6 +112,7 @@ func DeleteContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []str
 	return fmt.Sprintf("\r%s%s\n\nDeleted container %s from OS %s\n", cw.ClearLine, cw.Green("OK"), container, serviceName), nil
 }
 
+// UpdateContainer updates a containers metadata.
 func UpdateContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Updating container")
 
@@ -126,6 +132,7 @@ func UpdateContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []str
 	return fmt.Sprintf("\r%s%s\n\nUpdated container %s in OS %s\n", cw.ClearLine, cw.Green("OK"), container, serviceName), nil
 }
 
+// RenameContainer renames a container.
 func RenameContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Renaming container")
 
