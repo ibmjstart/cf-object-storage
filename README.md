@@ -87,8 +87,8 @@ Subcommand		|Usage															|Description
 `auth` | `cf os auth service_name [-url] [-x]`										|Retrieve and store<sup>!</sup> a service's x-auth info
 `containers` | `cf os containers service_name` | Show all containers in an Object Storage instance
 `container` | `cf os container service_name container_name` | Show a given container's information
-`create-container` | `cf os create-container service_name container_name [headers...] [r] [-r]` | Create a new container in an Object Storage instance
-`update-container` | `cf os update-container service_name container_name headers... [r] [-r]` | Update an existing container's metadata
+`create-container` | `cf os create-container service_name container_name [headers...] [-gr] [-rm-gr]` | Create a new container in an Object Storage instance
+`update-container` | `cf os update-container service_name container_name headers... [-gr] [-rm-gr]` | Update an existing container's metadata
 `rename-container` | `cf os rename-container service_name container_name new_container_name` | Rename an existing container<sup>!!</sup>
 `delete-container` | `cf os delete-container service_name container_name [-f]` | Remove a container from an Object Storage instance
 `objects` | `cf os objects service_name container_name` | Show all objects in a container
