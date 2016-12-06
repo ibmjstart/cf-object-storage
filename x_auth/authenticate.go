@@ -313,7 +313,7 @@ func parseFlags(args []string) (*flagVal, error) {
 
 	err := flagSet.Parse(flags)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse arguments: %s")
+		return nil, fmt.Errorf("Failed to parse arguments: %s", err)
 	}
 
 	flagVals := flagVal{

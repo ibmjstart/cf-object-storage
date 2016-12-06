@@ -195,13 +195,13 @@ func deleteLargeObject(dest auth.Destination, container, objectName string) erro
 
 	request, err := http.NewRequest("DELETE", deleteUrl, nil)
 	if err != nil {
-		return fmt.Errorf("Failed to create request: %s")
+		return fmt.Errorf("Failed to create request: %s", err)
 	}
 	request.Header.Set("X-Auth-Token", authToken)
 
 	response, err := client.Do(request)
 	if err != nil {
-		return fmt.Errorf("Failed to make request: %s")
+		return fmt.Errorf("Failed to make request: %s", err)
 	}
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		return fmt.Errorf("Failed to delete object with status %s", response.Status)
@@ -220,7 +220,7 @@ func getFileContents(sourcePath string) ([]byte, error) {
 
 	info, err := file.Stat()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get source file info: %s")
+		return nil, fmt.Errorf("Failed to get source file info: %s", err)
 	}
 
 	if uint(info.Size()) > maxObjectSize {

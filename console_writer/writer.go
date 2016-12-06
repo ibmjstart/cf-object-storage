@@ -77,7 +77,7 @@ func (c *ConsoleWriter) SetStatus(status *sg.Status) {
 
 // ClearStatus ensures that the currentStage does not block in quiet mode
 func (c *ConsoleWriter) ClearStatus() {
-	for _ = range c.currentStage {
+	for range c.currentStage {
 	}
 }
 
@@ -104,7 +104,7 @@ func (c *ConsoleWriter) writeWithANSI() {
 		select {
 		case <-c.quit:
 			if c.status != nil {
-				fmt.Print("\r%s", upLine)
+				fmt.Printf("\r%s", upLine)
 			}
 			return
 		case cur = <-c.currentStage:
