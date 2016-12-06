@@ -8,12 +8,18 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
+	"time"
 
 	verbex "github.com/VerbalExpressions/GoVerbalExpressions"
 	"github.com/cloudfoundry/cli/plugin"
 	cw "github.com/ibmjstart/cf-object-storage/console_writer"
 	"github.com/ibmjstart/swiftlygo/auth"
 )
+
+// timeout represents the amount of time before explicit new token requests.
+// OpenStack Object Storage deploys define an auth token timeout value that
+// this should correspond to.
+const timeout = "1h"
 
 // flagVal holds the flag values.
 type flagVal struct {
@@ -40,6 +46,7 @@ type authInfo struct {
 	AuthToken  string
 	Service    string
 	StorageUrl string
+	Timestamp  time.Time
 }
 
 // authenticator holds the info required to authenticate with Object Storage.
@@ -141,18 +148,6 @@ func (a *authenticator) getJSONCredentials(serviceCredentialsName string) (strin
 	return serviceCredentialsJSON, nil
 }
 
-// unescape handles escaped unicode characters in JSON
-// see: https://github.com/cloudfoundry/cli/issues/794
-func unescape(escaped string) string {
-	return strings.Replace(
-		strings.Replace(
-			strings.Replace(
-				escaped,
-				"\u003c", "<", -1),
-			"\u003e", ">", -1),
-		"\u0026", "&", -1)
-}
-
 // extractAuthFromJSON unmarshalls the JSON saved with a successful connection.
 func (a *authenticator) extractAuthFromJSON(authInfoJSON string) error {
 	var authInfo authInfo
@@ -160,9 +155,6 @@ func (a *authenticator) extractAuthFromJSON(authInfoJSON string) error {
 	if err != nil {
 		return fmt.Errorf("Failed to unmarshall authentication info: %s", err)
 	}
-
-	authInfo.AuthToken = unescape(authInfo.AuthToken)
-	authInfo.StorageUrl = unescape(authInfo.StorageUrl)
 
 	a.authInfo = authInfo
 
@@ -175,6 +167,18 @@ func (a *authenticator) extractCredsFromJSON(serviceCredentialsJSON string) erro
 	err := json.Unmarshal([]byte(serviceCredentialsJSON), &creds)
 	if err != nil {
 		return fmt.Errorf("Failed to unmarshall JSON credentials: %s", err)
+	}
+
+	// unescape handles escaped unicode characters in JSON
+	// see: https://github.com/cloudfoundry/cli/issues/794
+	unescape := func(escaped string) string {
+		return strings.Replace(
+			strings.Replace(
+				strings.Replace(
+					escaped,
+					"\u003c", "<", -1),
+				"\u003e", ">", -1),
+			"\u0026", "&", -1)
 	}
 
 	creds.Auth_URL = unescape(creds.Auth_URL)
@@ -357,14 +361,20 @@ func Authenticate(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, 
 	// Determine if the found authentication corresponds to the target server
 	isTargetService := a.authInfo.Service == a.targetService
 
+	// Determine if the authentication token is still valid
+	timeoutDuration, err := time.ParseDuration(timeout)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse timeout duration: %s", err)
+	}
+	isTimedOut := time.Since(a.authInfo.Timestamp) > timeoutDuration
+
 	// Authenticate using service credentials
 	a.writer.SetCurrentStage("Authenticating")
-
-	if isTargetService {
+	if isTargetService && !isTimedOut {
 		destination, err = auth.AuthenticateWithToken(a.authInfo.AuthToken, a.authInfo.StorageUrl)
 	}
 
-	if !isTargetService || err != nil {
+	if !isTargetService || isTimedOut || err != nil {
 		err = a.getNewCredentials()
 		if err != nil {
 			return nil, fmt.Errorf("Failed to fetch a new set of credentials (Try running `cf login`): %s", err)
@@ -378,6 +388,7 @@ func Authenticate(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, 
 		a.authInfo.AuthToken = destination.(*auth.SwiftDestination).SwiftConnection.AuthToken
 		a.authInfo.StorageUrl = destination.(*auth.SwiftDestination).SwiftConnection.StorageUrl
 		a.authInfo.Service = a.targetService
+		a.authInfo.Timestamp = time.Now()
 	}
 
 	// Save the credentials, if necessary
