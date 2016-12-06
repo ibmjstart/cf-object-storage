@@ -31,21 +31,30 @@ type credentials struct {
 	ProjectID  string
 	Region     string
 	Role       string
-	Service    string
 	UserID     string
 	Username   string
 }
 
+// authInfo holds the info used to restablish an existing connection.
+type authInfo struct {
+	AuthToken  string
+	Service    string
+	StorageUrl string
+}
+
 // authenticator holds the info required to authenticate with Object Storage.
 type authenticator struct {
-	flagVals      flagVal
-	creds         credentials
-	logFile       *os.File
-	logFileSize   int64
 	cliConnection plugin.CliConnection
+	authInfo      authInfo
+	creds         credentials
+
 	writer        *cw.ConsoleWriter
+	flagVals      flagVal
 	targetService string
 	doSave        bool
+
+	logFile     *os.File
+	logFileSize int64
 }
 
 // findService returns true if the target service is present in the current space.
@@ -132,24 +141,40 @@ func (a *authenticator) getJSONCredentials(serviceCredentialsName string) (strin
 	return serviceCredentialsJSON, nil
 }
 
-// extractFromJSON unmarshalls the JSON returned by a new cliConnection.
-func (a *authenticator) extractFromJSON(serviceCredentialsJSON string) error {
+// unescape handles escaped unicode characters in JSON
+// see: https://github.com/cloudfoundry/cli/issues/794
+func unescape(escaped string) string {
+	return strings.Replace(
+		strings.Replace(
+			strings.Replace(
+				escaped,
+				"\u003c", "<", -1),
+			"\u003e", ">", -1),
+		"\u0026", "&", -1)
+}
+
+// extractAuthFromJSON unmarshalls the JSON saved with a successful connection.
+func (a *authenticator) extractAuthFromJSON(authInfoJSON string) error {
+	var authInfo authInfo
+	err := json.Unmarshal([]byte(authInfoJSON), &authInfo)
+	if err != nil {
+		return fmt.Errorf("Failed to unmarshall authentication info: %s", err)
+	}
+
+	authInfo.AuthToken = unescape(authInfo.AuthToken)
+	authInfo.StorageUrl = unescape(authInfo.StorageUrl)
+
+	a.authInfo = authInfo
+
+	return nil
+}
+
+// extractCredsFromJSON unmarshalls the JSON returned by a new cliConnection.
+func (a *authenticator) extractCredsFromJSON(serviceCredentialsJSON string) error {
 	var creds credentials
 	err := json.Unmarshal([]byte(serviceCredentialsJSON), &creds)
 	if err != nil {
 		return fmt.Errorf("Failed to unmarshall JSON credentials: %s", err)
-	}
-
-	// Handle escaped unicode characters in JSON
-	// see: https://github.com/cloudfoundry/cli/issues/794
-	unescape := func(escaped string) string {
-		return strings.Replace(
-			strings.Replace(
-				strings.Replace(
-					escaped,
-					"\u003c", "<", -1),
-				"\u003e", ">", -1),
-			"\u0026", "&", -1)
 	}
 
 	creds.Auth_URL = unescape(creds.Auth_URL)
@@ -200,13 +225,10 @@ func (a *authenticator) getNewCredentials() error {
 
 	// Parse the JSON credentials
 	a.writer.SetCurrentStage("Parsing credentials")
-	err = a.extractFromJSON(serviceCredentialsJSON)
+	err = a.extractCredsFromJSON(serviceCredentialsJSON)
 	if err != nil {
 		return fmt.Errorf("Failed to extract JSON credentials: %s", err)
 	}
-
-	// Note what Object Storage instance these credentials are for
-	a.creds.Service = a.targetService
 
 	// Ensure new credentails are saved
 	a.doSave = true
@@ -255,9 +277,9 @@ func (a *authenticator) getSavedCredentials() error {
 // saveCredentials writes the credentails to a local file.
 func (a *authenticator) saveCredentials() error {
 	// Encode JSON credentials
-	marshalledCredentials, err := json.Marshal(a.creds)
+	marshalledCredentials, err := json.Marshal(a.authInfo)
 	if err != nil {
-		return fmt.Errorf("Failed to JSON encode credentials: %s", err)
+		return fmt.Errorf("Failed to JSON encode authentication info: %s", err)
 	}
 
 	// Write credentails to file
@@ -271,7 +293,7 @@ func (a *authenticator) saveCredentials() error {
 	}
 	_, err = a.logFile.Write(marshalledCredentials)
 	if err != nil {
-		return fmt.Errorf("Failed to write credentials to file: %s", err)
+		return fmt.Errorf("Failed to write authentication info to file: %s", err)
 	}
 
 	return nil
@@ -300,12 +322,15 @@ func parseFlags(args []string) (*flagVal, error) {
 
 // Authenticate authenticates the current session with Object Storage and saves the credentails.
 func Authenticate(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, targetService string) (auth.Destination, error) {
-	var a = authenticator{
-		cliConnection: cliConnection,
-		writer:        writer,
-		targetService: targetService,
-		doSave:        false,
-	}
+	var (
+		destination auth.Destination
+		a           = authenticator{
+			cliConnection: cliConnection,
+			writer:        writer,
+			targetService: targetService,
+			doSave:        false,
+		}
+	)
 
 	// Check for and get saved service credentials
 	err := a.getSavedCredentials()
@@ -321,35 +346,38 @@ func Authenticate(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, 
 		return nil, fmt.Errorf("Failed to read credentials: %s", err)
 	}
 
+	// Extract authentication info from file, if not empty
 	if bytesRead > 0 {
-		// Parse the JSON credentials
-		a.writer.SetCurrentStage("Parsing credentials")
-		err = a.extractFromJSON(string(logContents))
+		err = a.extractAuthFromJSON(string(logContents))
 		if err != nil {
-			return nil, fmt.Errorf("Failed to extract JSON credentials: %s", err)
+			return nil, fmt.Errorf("Failed to parse JSON: %s", err)
 		}
 	}
 
-	if bytesRead <= 0 || a.creds.Service != a.targetService {
-		err = a.getNewCredentials()
-		if err != nil {
-			return nil, fmt.Errorf("Failed to fetch a new set of credentials: %s", err)
-		}
-	}
+	// Determine if the found authentication corresponds to the target server
+	isTargetService := a.authInfo.Service == a.targetService
 
 	// Authenticate using service credentials
 	a.writer.SetCurrentStage("Authenticating")
-	destination, err := auth.Authenticate(a.creds.Username, a.creds.Password, a.creds.Auth_URL+"/v3", a.creds.DomainName, "")
-	if err != nil {
+
+	if isTargetService {
+		destination, err = auth.AuthenticateWithToken(a.authInfo.AuthToken, a.authInfo.StorageUrl)
+	}
+
+	if !isTargetService || err != nil {
 		err = a.getNewCredentials()
 		if err != nil {
-			return nil, fmt.Errorf("Failed to fetch a new set of credentials: %s", err)
+			return nil, fmt.Errorf("Failed to fetch a new set of credentials (Try running `cf login`): %s", err)
 		}
 
 		destination, err = auth.Authenticate(a.creds.Username, a.creds.Password, a.creds.Auth_URL+"/v3", a.creds.DomainName, "")
 		if err != nil {
 			return nil, fmt.Errorf("Failed to authenticate: %s", err)
 		}
+
+		a.authInfo.AuthToken = destination.(*auth.SwiftDestination).SwiftConnection.AuthToken
+		a.authInfo.StorageUrl = destination.(*auth.SwiftDestination).SwiftConnection.StorageUrl
+		a.authInfo.Service = a.targetService
 	}
 
 	// Save the credentials, if necessary
