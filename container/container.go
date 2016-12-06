@@ -11,8 +11,8 @@ import (
 
 // shortHeaders define shortcuts for header input.
 var shortHeaders = map[string]string{
-	"r":  "X-Container-Read:.r:*",
-	"-r": "X-Remove-Container-Read:1",
+	"-gr":    "X-Container-Read:.r:*",
+	"-rm-gr": "X-Remove-Container-Read:1",
 }
 
 // ShowContainers displays the containers in a given Object Storage service.
