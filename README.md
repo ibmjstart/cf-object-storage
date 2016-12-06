@@ -1,6 +1,7 @@
 # cf-object-storage
 
-[![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ibmjstart/cf-object-storage)](https://goreportcard.com/report/github.com/ibmjstart/cf-object-storage)
+[![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg)](https://github.com/RichardLitt/standard-readme)
 
 > A CloudFoundry Plugin for interacting with OpenStack Object Storage
 
