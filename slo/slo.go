@@ -3,6 +3,7 @@ package slo
 import (
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"runtime"
@@ -91,26 +92,22 @@ func MakeSlo(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (st
 
 	writer.SetCurrentStage("Uploading SLO")
 
-	var uploader *sg.Uploader
+	var output io.Writer
 	if argVals.flagVals.output_file_flag == "" {
-		// Create SLO uploader without output file
-		uploader, err = sg.NewUploader(dest, uint(argVals.flagVals.chunk_size_flag),
-			argVals.SloContainer, argVals.SloName, file, uint(argVals.flagVals.num_threads_flag),
-			argVals.flagVals.only_missing_flag, ioutil.Discard)
+		output = ioutil.Discard
 	} else {
 		// Verify output file exists and create it if it does not
-		outFile, err := os.OpenFile(argVals.flagVals.output_file_flag, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		output, err = os.OpenFile(argVals.flagVals.output_file_flag, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		defer file.Close()
 		if err != nil {
 			return "", fmt.Errorf("Failed to open output file: %s", err)
 		}
-
-		// Create SLO uploader with output file
-		uploader, err = sg.NewUploader(dest, uint(argVals.flagVals.chunk_size_flag),
-			argVals.SloContainer, argVals.SloName, file, uint(argVals.flagVals.num_threads_flag),
-			argVals.flagVals.only_missing_flag, outFile)
 	}
 
+	// Create SLO uploader without output file
+	uploader, err := sg.NewUploader(dest, uint(argVals.flagVals.chunk_size_flag),
+		argVals.SloContainer, argVals.SloName, file, uint(argVals.flagVals.num_threads_flag),
+		argVals.flagVals.only_missing_flag, output)
 	if err != nil {
 		return "", fmt.Errorf("Failed to create SLO uploader: %s", err)
 	}
