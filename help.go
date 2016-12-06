@@ -43,10 +43,10 @@ var (
 			HelpText: "Create a new container in an Object Storage instance",
 			UsageDetails: plugin.Usage{
 				Usage: "cf " + namespace + " " + makeContainerCommand +
-					" service_name container_name [headers...] [r] [-r]",
+					" service_name container_name [headers...] [-gr] [-rm-gr]",
 				Options: map[string]string{
-					"r":  "Short name for global read header",
-					"-r": "Short name for remove read restrictions header",
+					"gr":    "Short name for global read header",
+					"rm-gr": "Short name for remove read restrictions header",
 				},
 			},
 		},
@@ -55,10 +55,10 @@ var (
 			HelpText: "Update a container's metadata",
 			UsageDetails: plugin.Usage{
 				Usage: "cf " + namespace + " " + updateContainerCommand +
-					" service_name container_name headers... [r] [-r]",
+					" service_name container_name headers... [-gr] [-rm-gr]",
 				Options: map[string]string{
-					"r":  "Short name for global read header",
-					"-r": "Short name for remove read restrictions header",
+					"gr":    "Short name for global read header",
+					"rm-gr": "Short name for remove read restrictions header",
 				},
 			},
 		},
@@ -203,11 +203,7 @@ func toString(s plugin.Command) string {
 	if len(s.UsageDetails.Options) > 0 {
 		help += fmt.Sprintf("\nOPTIONS:\n")
 		for k, v := range s.UsageDetails.Options {
-			if s.Name != makeContainerCommand && s.Name != updateContainerCommand {
-				help += fmt.Sprintf("\t-%s\t\t%v\n", k, v)
-			} else {
-				help += fmt.Sprintf("\t%s\t\t%v\n", k, v)
-			}
+			help += fmt.Sprintf("\t-%s\t\t%v\n", k, v)
 		}
 	}
 
