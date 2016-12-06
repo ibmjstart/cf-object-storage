@@ -227,7 +227,7 @@ func getSubcommandHelp(name string) (string, error) {
 // help prints help info for a given subcommand
 func (c *ObjectStoragePlugin) help(args []string) error {
 	if len(args) < 3 {
-		help := "Please provide a subcommand to fetch its help info\n" +
+		help := "Please provide a valid subcommand\n" +
 			"Available subcommands:\n" +
 			"      " + getAuthInfoCommand + "\n" +
 			"      " + showContainersCommand + "\n" +

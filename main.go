@@ -16,7 +16,8 @@ import (
 
 const (
 	// Name of this plugin for use installing and uninstalling it
-	pluginName string = "cf-object-storage"
+	pluginName       string = "cf-object-storage"
+	uninstallCommand string = "CLI-MESSAGE-UNINSTALL"
 
 	// Namespace for the plugin's subcommands
 	namespace string = "os"
@@ -239,7 +240,9 @@ func (c *ObjectStoragePlugin) Run(cliConnection plugin.CliConnection, args []str
 
 	// Dispatch the subcommand that the user wanted, if it exists
 	var err error
-	if len(args) < 2 || args[1] == helpCommand {
+	if len(args) == 1 && args[0] == uninstallCommand {
+		// Ensure nothing happens on an uninstall request
+	} else if len(args) < 2 || args[1] == helpCommand {
 		err = c.help(args)
 	} else {
 		subcommand, found := c.subcommands[args[1]]
