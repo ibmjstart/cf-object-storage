@@ -26,39 +26,59 @@ Object Storage from the command line without having to go through the long authe
 
 ## Install
 
+**Dependenies:** This plugin requires the Cloud Foundry CLI version 6.21.0 or later. Install and update instructions can
+be found [here](https://github.com/cloudfoundry/cli).
+
 Since this plugin is not currently in an offical Cloud Foundry plugin repo, it will need to be downloaded and installed
 manually. 
 
-#### Install From Binary (Recommended)
+### Install From Binary (Recommended)
 
 - Download the binary for your machine ([Linux](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/linux/cf-object-storage?raw=true), [Mac](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/darwin/cf-object-storage?raw=true), [Windows](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/windows/cf-object-storage.exe?raw=true))
-- Navigate to the downloaded binary
+- Navigate to the downloaded binary from within your terminal
 - Install the plugin with `cf install-plugin cf-object-storage`
- -  If installing gives you a permission error run `chmod +x cf-object-storage`
+ -  If installing gives you a permission error run `chmod +x cf-object-storage` (or the Windows equivalent)
 - Verify the plugin has been installed with `cf plugins`
 
-**Note:** If you are reinstalling, run `cf uninstall-plugin cf-object-storage` first to uninstall the outdated
-version.
+**Notes:** If you are reinstalling, run `cf uninstall-plugin cf-object-storage` first to uninstall the outdated
+version. If you are installing on Windows, replace `cf-object-storage` with `cf-object-storage.exe`.
 
-#### Install From Source
+### Install From Source
 
-Installing this way requires Go. To download the package, run
+Installing this way requires Go. Binaries and install instructions can be found on their [official website](https://golang.org/).
+To download this package, open your terminal and run
 ```
 go get github.com/ibmjstart/cf-object-storage
 ```
 
-The provided `reinstall.sh` script can then be ran to install the plugin.
+#### Mac & Linux
+Navigate to the project's root directory, which should be `$GOPATH/src/github.com/ibmjstart/cf-object-storage` with
+most standard Go setups. The provided `reinstall.sh` script can then be ran to install the plugin.
+```
+cd $GOPATH/src/github.com/ibmjstart/cf-object-storage
+./scripts/reinstall.sh
+```
 
-**Note:** `reinstall.sh` first attempts to uninstall the plugin, so you may get a failure message from the uninstall
-command. This will certainly happen the first time you install. However, as long as the following install succeeds all
-should work fine.
+**Note:** `reinstall.sh` first attempts to uninstall the plugin, so you will get a failure message from the uninstall
+command if the plugin is not already installed. However, as long as the following install succeeds all should work fine.
+
+#### Windows
+`reinstall.sh` is intended for use on Mac and Linux. To install on Windows, first navigate to the project's root 
+directory, which should be `%GOPATH%\src\github.com\ibmjstart\cf-object-storage` with most standard Go setups. Then
+build and install as shown.
+```
+cd %GOPATH%\src\github.com\ibmjstart\cf-object-storage
+go build
+cf install-plugin cf-object-storage
+```
 
 ## Usage
 
 This plugin is invoked as follows:
 `cf os SUBCOMMAND [ARGS...]`
 
-Sixteen subcommands are included in this plugin, described below. More information can be found by using `cf os help` followed by any of the subcommands.
+Sixteen subcommands are included in this plugin, described below. More information can be found by using `cf os help` 
+followed by any of the subcommands.
 
 #### Subcommand List
 
@@ -81,9 +101,10 @@ Subcommand		|Usage															|Description
 `create-dynamic-object`	| `cf os make-dlo service_name dlo_container dlo_name [-c object_container] [-p dlo_prefix]`				|Create a DLO manifest in Object Storage
 `put-large-object`	| `cf os make-slo service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-t num_threads]`	|Upload a file to Object Storage as an SLO
 
-**<sup>!</sup>** `auth` checks if `HOME/.cf/os_creds.json` exists and contains the target service's credentials. If it does,
-these credentials are used to authenticate with Object Storage (which saves a few http requests). Upon successful 
-authentication, `auth` will save a service's credentials to the above location to speed up subsequent commands.
+**<sup>!</sup>** `auth` checks if `HOME/.cf/os_creds.json` exists and contains the target service's x-auth token and 
+storage url. If it does, these credentials are used to authenticate with Object Storage (which saves a few http requests).
+Upon successful authentication, `auth` will save a service's x-auth info to the above location to speed up subsequent
+commands.
 
 **<sup>!!</sup>** `rename-container` should not be used (and will likely fail) on containers containing SLOs and DLOs. This is due to their strict naming conventions that expect certain containers to have certain names.
 
