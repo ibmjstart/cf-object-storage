@@ -2,7 +2,6 @@ package writer
 
 import (
 	"fmt"
-	"os"
 	"runtime"
 	"time"
 
@@ -50,7 +49,6 @@ func NewConsoleWriter() *ConsoleWriter {
 	// Disable color and escape sequences on unsupported systems
 	if runtime.GOOS == "windows" {
 		newWriter.Write = newWriter.writeWithoutANSI
-		os.Stdout = color.Output.(*os.File)
 		ClearLine = ""
 		upLine = ""
 	} else {
@@ -58,6 +56,11 @@ func NewConsoleWriter() *ConsoleWriter {
 	}
 
 	return newWriter
+}
+
+// Print prints using the color package's colored output writer
+func (c *ConsoleWriter) Print(format string, args ...interface{}) {
+	fmt.Fprintf(color.Output, format, args...)
 }
 
 // Quit sends a kill signal to this ConsoleWriter.

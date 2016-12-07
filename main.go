@@ -67,7 +67,7 @@ type command struct {
 }
 
 // displayUserInfo shows the username, org and space corresponding to the requested service.
-func displayUserInfo(cliConnection plugin.CliConnection, task string) error {
+func displayUserInfo(cliConnection plugin.CliConnection, writer *w.ConsoleWriter, task string) error {
 	// Find username
 	username, err := cliConnection.Username()
 	if err != nil {
@@ -86,7 +86,7 @@ func displayUserInfo(cliConnection plugin.CliConnection, task string) error {
 		return fmt.Errorf("Failed to get space: %s", err)
 	}
 
-	fmt.Printf("%s org %s / space %s as %s...\n", task, w.Cyan(org.Name), w.Cyan(space.Name), w.Cyan(username))
+	writer.Print("%s org %s / space %s as %s...\n", task, w.Cyan(org.Name), w.Cyan(space.Name), w.Cyan(username))
 
 	return nil
 }
@@ -98,7 +98,7 @@ func (c *ObjectStoragePlugin) executeCommand(cmd command, args []string) error {
 		return fmt.Errorf("Missing required arguments\n%s", help)
 	}
 
-	err := displayUserInfo(c.cliConnection, cmd.task)
+	err := displayUserInfo(c.cliConnection, c.writer, cmd.task)
 	if err != nil {
 		return err
 	}
@@ -117,8 +117,7 @@ func (c *ObjectStoragePlugin) executeCommand(cmd command, args []string) error {
 	}
 
 	c.writer.Quit()
-
-	fmt.Print(result)
+	c.writer.Print(result)
 
 	return nil
 }
@@ -255,7 +254,7 @@ func (c *ObjectStoragePlugin) Run(cliConnection plugin.CliConnection, args []str
 
 	// Report any fatal errors returned by the subcommand
 	if err != nil {
-		fmt.Printf("\r%s\n%s\n%s\n", w.ClearLine, w.Red("FAILED"), err)
+		c.writer.Print("\r%s\n%s\n%s\n", w.ClearLine, w.Red("FAILED"), err)
 		os.Exit(1)
 	}
 }
