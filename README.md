@@ -39,7 +39,10 @@ Download the binary for your machine ([Linux](https://github.com/ibmjstart/cf-la
 and navigate to the downloaded binary from within your terminal. Then run the following `cf` command from the directory
 the binary was downloaded to.
 
-**Mac & Linux**
+**Note:** If you are reinstalling, run `cf uninstall-plugin cf-object-storage` first to uninstall the outdated
+version.
+
+#### Mac & Linux
 ```
 cf install-plugin cf-object-storage
 ```
@@ -49,13 +52,10 @@ If you get a permission error, ensure that the binary has execute permissions.
 chmod +x cf-object-storage
 ```
 
-**Windows**
+#### Windows
 ```
 cf install-plugin cf-object-storage.exe
 ```
-
-**Notes:** If you are reinstalling, run `cf uninstall-plugin cf-object-storage` first to uninstall the outdated
-version.
 
 ### Install From Source
 
