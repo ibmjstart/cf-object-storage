@@ -35,7 +35,7 @@ manually.
 
 ### Install From Binary (Recommended)
 
-Download the binary for your machine ([Linux](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/linux/cf-object-storage?raw=true), [Mac](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/darwin/cf-object-storage?raw=true), [Windows](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/windows/cf-object-storage.exe?raw=true))
+Download the binary for your machine from the releases page ([Linux](https://github.com/ibmjstart/cf-object-storage/releases/tag/v1.0.0/cf-object-storage-linux.tar.gz), [Mac](https://github.com/ibmjstart/cf-object-storage/releases/tag/v1.0.0/cf-object-storage-darwin.tar.gz), [Windows](https://github.com/ibmjstart/cf-object-storage/releases/tag/v1.0.0/cf-object-storage-windows.tar.gz))
 and navigate to the downloaded binary from within your terminal. Then run the following `cf` command from the directory
 the binary was downloaded to.
 
