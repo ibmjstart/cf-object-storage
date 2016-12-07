@@ -2,6 +2,7 @@ package writer
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"time"
 
@@ -49,6 +50,7 @@ func NewConsoleWriter() *ConsoleWriter {
 	// Disable color and escape sequences on unsupported systems
 	if runtime.GOOS == "windows" {
 		newWriter.Write = newWriter.writeWithoutANSI
+		os.Stdout = color.Output.(*os.File)
 		ClearLine = ""
 		upLine = ""
 	} else {
