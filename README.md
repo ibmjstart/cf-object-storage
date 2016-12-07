@@ -27,22 +27,35 @@ Object Storage from the command line without having to go through the long authe
 
 ## Install
 
-**Dependenies:** This plugin requires the Cloud Foundry CLI version 6.21.0 or later. Install and update instructions can
-be found [here](https://github.com/cloudfoundry/cli).
+**Dependenies:** This plugin requires the Cloud Foundry CLI version 6.21.0 or later. You can check your version with
+`cf version`. Install and update instructions can be found [here](https://github.com/cloudfoundry/cli).
 
 Since this plugin is not currently in an offical Cloud Foundry plugin repo, it will need to be downloaded and installed
 manually. 
 
 ### Install From Binary (Recommended)
 
-- Download the binary for your machine ([Linux](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/linux/cf-object-storage?raw=true), [Mac](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/darwin/cf-object-storage?raw=true), [Windows](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/windows/cf-object-storage.exe?raw=true))
-- Navigate to the downloaded binary from within your terminal
-- Install the plugin with `cf install-plugin cf-object-storage`
- -  If installing gives you a permission error run `chmod +x cf-object-storage` (or the Windows equivalent)
-- Verify the plugin has been installed with `cf plugins`
+Download the binary for your machine ([Linux](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/linux/cf-object-storage?raw=true), [Mac](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/darwin/cf-object-storage?raw=true), [Windows](https://github.com/ibmjstart/cf-large-objects/tree/master/binaries/windows/cf-object-storage.exe?raw=true))
+and navigate to the downloaded binary from within your terminal. Then run the following `cf` command from the directory
+the binary was downloaded to.
+
+**Mac & Linux**
+```
+cf install-plugin cf-object-storage
+```
+
+If you get a permission error, ensure that the binary has execute permissions.
+```
+chmod +x cf-object-storage
+```
+
+**Windows**
+```
+cf install-plugin cf-object-storage.exe
+```
 
 **Notes:** If you are reinstalling, run `cf uninstall-plugin cf-object-storage` first to uninstall the outdated
-version. If you are installing on Windows, replace `cf-object-storage` with `cf-object-storage.exe`.
+version.
 
 ### Install From Source
 
@@ -70,7 +83,7 @@ build and install as shown.
 ```
 cd %GOPATH%\src\github.com\ibmjstart\cf-object-storage
 go build
-cf install-plugin cf-object-storage
+cf install-plugin cf-object-storage.exe
 ```
 
 ## Usage
