@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	cw "github.com/ibmjstart/cf-object-storage/console_writer"
+	w "github.com/ibmjstart/cf-object-storage/writer"
 	"github.com/ibmjstart/swiftlygo/auth"
 )
 
@@ -16,7 +16,7 @@ import (
 const maxObjectSize uint = 1000 * 1000 * 1000 * 5
 
 // GetObjectInfo returns metadata for a given object.
-func GetObjectInfo(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+func GetObjectInfo(dest auth.Destination, writer *w.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Fetching object info")
 
 	container := args[3]
@@ -28,7 +28,7 @@ func GetObjectInfo(dest auth.Destination, writer *cw.ConsoleWriter, args []strin
 	}
 
 	retval := fmt.Sprintf("\r%s%s\n\nName: %s\nContent type: %s\nSize: %d bytes\nLast modified: %s\n"+
-		"Hash: %s\nIs pseudo dir: %t\nSubdirectory: \n%sHeaders:", cw.ClearLine, cw.Green("OK"),
+		"Hash: %s\nIs pseudo dir: %t\nSubdirectory: \n%sHeaders:", w.ClearLine, w.Green("OK"),
 		objectInfo.Name, objectInfo.ContentType, objectInfo.Bytes, objectInfo.ServerLastModified,
 		objectInfo.Hash, objectInfo.PseudoDirectory, objectInfo.SubDir)
 	for k, h := range headers {
@@ -40,7 +40,7 @@ func GetObjectInfo(dest auth.Destination, writer *cw.ConsoleWriter, args []strin
 }
 
 // ShowObjects returns the names of all objects in a given container.
-func ShowObjects(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+func ShowObjects(dest auth.Destination, writer *w.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Displaying objects")
 
 	container := args[3]
@@ -50,11 +50,11 @@ func ShowObjects(dest auth.Destination, writer *cw.ConsoleWriter, args []string)
 		return "", fmt.Errorf("Failed to get objects: %s", err)
 	}
 
-	return fmt.Sprintf("\r%s%s\n\nObjects in container %s: %v\n", cw.ClearLine, cw.Green("OK"), container, objects), nil
+	return fmt.Sprintf("\r%s%s\n\nObjects in container %s: %v\n", w.ClearLine, w.Green("OK"), container, objects), nil
 }
 
 // PutObject uploads an object to Object Storage.
-func PutObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+func PutObject(dest auth.Destination, writer *w.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Uploading object")
 
 	container := args[3]
@@ -88,11 +88,11 @@ func PutObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (
 		return "", fmt.Errorf("Failed to close object writer: %s", err)
 	}
 
-	return fmt.Sprintf("\r%s%s\n\nUploaded object %s to container %s\n", cw.ClearLine, cw.Green("OK"), object, container), nil
+	return fmt.Sprintf("\r%s%s\n\nUploaded object %s to container %s\n", w.ClearLine, w.Green("OK"), object, container), nil
 }
 
 // CopyObject copies an object from one container to another
-func CopyObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+func CopyObject(dest auth.Destination, writer *w.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Copying object")
 
 	container := args[3]
@@ -104,11 +104,11 @@ func CopyObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) 
 		return "", fmt.Errorf("Failed to copy object: %s", err)
 	}
 
-	return fmt.Sprintf("\r%s%s\n\nCopied object %s to container %s\n", cw.ClearLine, cw.Green("OK"), object, newContainer), nil
+	return fmt.Sprintf("\r%s%s\n\nCopied object %s to container %s\n", w.ClearLine, w.Green("OK"), object, newContainer), nil
 }
 
 // GetObject downloads an object from object storage.
-func GetObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+func GetObject(dest auth.Destination, writer *w.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Downloading object")
 
 	container := args[3]
@@ -126,11 +126,11 @@ func GetObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (
 		return "", fmt.Errorf("Failed to get object %s: %s", objectName, err)
 	}
 
-	return fmt.Sprintf("\r%s%s\n\nDownloaded object %s to %s\n", cw.ClearLine, cw.Green("OK"), objectName, destinationPath), nil
+	return fmt.Sprintf("\r%s%s\n\nDownloaded object %s to %s\n", w.ClearLine, w.Green("OK"), objectName, destinationPath), nil
 }
 
 // RenameObject renames a given object.
-func RenameObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+func RenameObject(dest auth.Destination, writer *w.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Renaming object")
 
 	container := args[3]
@@ -147,11 +147,11 @@ func RenameObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string
 		return "", fmt.Errorf("Failed to delete object %s: %s", object, err)
 	}
 
-	return fmt.Sprintf("\r%s%s\n\nRenamed object %s to %s\n", cw.ClearLine, cw.Green("OK"), object, newName), nil
+	return fmt.Sprintf("\r%s%s\n\nRenamed object %s to %s\n", w.ClearLine, w.Green("OK"), object, newName), nil
 }
 
 //DeleteObject removes a given object from Object Storage.
-func DeleteObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+func DeleteObject(dest auth.Destination, writer *w.ConsoleWriter, args []string) (string, error) {
 	var err error
 
 	writer.SetCurrentStage("Deleting object")
@@ -168,7 +168,7 @@ func DeleteObject(dest auth.Destination, writer *cw.ConsoleWriter, args []string
 		return "", fmt.Errorf("Failed to delete object %s: %s", object, err)
 	}
 
-	return fmt.Sprintf("\r%s%s\n\nDeleted object %s from container %s\n", cw.ClearLine, cw.Green("OK"), object, container), nil
+	return fmt.Sprintf("\r%s%s\n\nDeleted object %s from container %s\n", w.ClearLine, w.Green("OK"), object, container), nil
 }
 
 //deleteObject deletes a regular object.

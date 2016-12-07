@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	cw "github.com/ibmjstart/cf-object-storage/console_writer"
+	w "github.com/ibmjstart/cf-object-storage/writer"
 	sg "github.com/ibmjstart/swiftlygo"
 	"github.com/ibmjstart/swiftlygo/auth"
 )
@@ -18,8 +18,8 @@ type argVal struct {
 
 // flagVal holds the flag values.
 type flagVal struct {
-	Container_flag string
-	Prefix_flag    string
+	ContainerFlag string
+	PrefixFlag    string
 }
 
 // parseArgs parses the arguments provided to make-dlo.
@@ -42,8 +42,8 @@ func parseArgs(args []string) (*argVal, error) {
 	}
 
 	flagVals := flagVal{
-		Container_flag: string(*container),
-		Prefix_flag:    string(*prefix),
+		ContainerFlag: string(*container),
+		PrefixFlag:    string(*prefix),
 	}
 
 	argVals := argVal{
@@ -56,16 +56,16 @@ func parseArgs(args []string) (*argVal, error) {
 }
 
 // MakeDlo uploads a DLO manifest to Object Storage.
-func MakeDlo(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+func MakeDlo(dest auth.Destination, writer *w.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Creating DLO")
 
 	argVals, err := parseArgs(args[3:])
 
-	uploader := sg.NewDloManifestUploader(dest, argVals.dloContainer, argVals.DloName, argVals.FlagVals.Container_flag, argVals.FlagVals.Prefix_flag)
+	uploader := sg.NewDloManifestUploader(dest, argVals.dloContainer, argVals.DloName, argVals.FlagVals.ContainerFlag, argVals.FlagVals.PrefixFlag)
 	err = uploader.Upload()
 	if err != nil {
 		return "", fmt.Errorf("Failed to upload DLO manifest: %s", err)
 	}
 
-	return fmt.Sprintf("\r%s%s\n\nCreated manifest for %s, upload segments to container %s prefixed with %s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(argVals.DloName), cw.Cyan(argVals.FlagVals.Container_flag), cw.Cyan(argVals.FlagVals.Prefix_flag)), nil
+	return fmt.Sprintf("\r%s%s\n\nCreated manifest for %s, upload segments to container %s prefixed with %s\n", w.ClearLine, w.Green("OK"), w.Cyan(argVals.DloName), w.Cyan(argVals.FlagVals.ContainerFlag), w.Cyan(argVals.FlagVals.PrefixFlag)), nil
 }

@@ -5,12 +5,12 @@ import (
 	"os"
 
 	"github.com/cloudfoundry/cli/plugin"
-	cw "github.com/ibmjstart/cf-object-storage/console_writer"
+	"github.com/ibmjstart/cf-object-storage/authenticate"
 	"github.com/ibmjstart/cf-object-storage/container"
 	"github.com/ibmjstart/cf-object-storage/dlo"
 	"github.com/ibmjstart/cf-object-storage/object"
 	"github.com/ibmjstart/cf-object-storage/slo"
-	"github.com/ibmjstart/cf-object-storage/x_auth"
+	w "github.com/ibmjstart/cf-object-storage/writer"
 	"github.com/ibmjstart/swiftlygo/auth"
 )
 
@@ -55,7 +55,7 @@ const (
 type ObjectStoragePlugin struct {
 	subcommands   map[string](command)
 	cliConnection plugin.CliConnection
-	writer        *cw.ConsoleWriter
+	writer        *w.ConsoleWriter
 }
 
 // command contains the info needed to execute a subcommand.
@@ -63,7 +63,7 @@ type command struct {
 	name            string
 	task            string
 	numExpectedArgs int
-	execute         func(auth.Destination, *cw.ConsoleWriter, []string) (string, error)
+	execute         func(auth.Destination, *w.ConsoleWriter, []string) (string, error)
 }
 
 // displayUserInfo shows the username, org and space corresponding to the requested service.
@@ -86,7 +86,7 @@ func displayUserInfo(cliConnection plugin.CliConnection, task string) error {
 		return fmt.Errorf("Failed to get space: %s", err)
 	}
 
-	fmt.Printf("%s org %s / space %s as %s...\n", task, cw.Cyan(org.Name), cw.Cyan(space.Name), cw.Cyan(username))
+	fmt.Printf("%s org %s / space %s as %s...\n", task, w.Cyan(org.Name), w.Cyan(space.Name), w.Cyan(username))
 
 	return nil
 }
@@ -106,7 +106,7 @@ func (c *ObjectStoragePlugin) executeCommand(cmd command, args []string) error {
 	go c.writer.Write()
 
 	serviceName := args[2]
-	destination, err := x_auth.Authenticate(c.cliConnection, c.writer, serviceName)
+	destination, err := authenticate.Authenticate(c.cliConnection, c.writer, serviceName)
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func (c *ObjectStoragePlugin) Run(cliConnection plugin.CliConnection, args []str
 			name:            getAuthInfoCommand,
 			task:            "Authenticating with",
 			numExpectedArgs: 3,
-			execute:         x_auth.DisplayAuthInfo,
+			execute:         authenticate.DisplayAuthInfo,
 		},
 
 		// Container commands
@@ -236,7 +236,7 @@ func (c *ObjectStoragePlugin) Run(cliConnection plugin.CliConnection, args []str
 	}
 
 	// Create writer to provide output
-	c.writer = cw.NewConsoleWriter()
+	c.writer = w.NewConsoleWriter()
 
 	// Dispatch the subcommand that the user wanted, if it exists
 	var err error
@@ -255,7 +255,7 @@ func (c *ObjectStoragePlugin) Run(cliConnection plugin.CliConnection, args []str
 
 	// Report any fatal errors returned by the subcommand
 	if err != nil {
-		fmt.Printf("\r%s\n%s\n%s\n", cw.ClearLine, cw.Red("FAILED"), err)
+		fmt.Printf("\r%s\n%s\n%s\n", w.ClearLine, w.Red("FAILED"), err)
 		os.Exit(1)
 	}
 }

@@ -1,4 +1,4 @@
-package x_auth
+package authenticate
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 
 	verbex "github.com/VerbalExpressions/GoVerbalExpressions"
 	"github.com/cloudfoundry/cli/plugin"
-	cw "github.com/ibmjstart/cf-object-storage/console_writer"
+	w "github.com/ibmjstart/cf-object-storage/writer"
 	"github.com/ibmjstart/swiftlygo/auth"
 )
 
@@ -23,13 +23,13 @@ const timeout = "1h"
 
 // flagVal holds the flag values.
 type flagVal struct {
-	Url_flag    bool
-	X_auth_flag bool
+	UrlFlag   bool
+	XAuthFlag bool
 }
 
 // credentials holds the info returned with a new cliConnection.
 type credentials struct {
-	Auth_URL   string
+	AuthUrl    string `json:"Auth_URL"`
 	DomainID   string
 	DomainName string
 	Password   string
@@ -55,7 +55,7 @@ type authenticator struct {
 	authInfo      authInfo
 	creds         credentials
 
-	writer        *cw.ConsoleWriter
+	writer        *w.ConsoleWriter
 	flagVals      flagVal
 	targetService string
 	doSave        bool
@@ -181,7 +181,7 @@ func (a *authenticator) extractCredsFromJSON(serviceCredentialsJSON string) erro
 			"\u0026", "&", -1)
 	}
 
-	creds.Auth_URL = unescape(creds.Auth_URL)
+	creds.AuthUrl = unescape(creds.AuthUrl)
 	creds.DomainID = unescape(creds.DomainID)
 	creds.DomainName = unescape(creds.DomainName)
 	creds.Password = unescape(creds.Password)
@@ -309,7 +309,7 @@ func parseFlags(args []string) (*flagVal, error) {
 	flagSet := flag.NewFlagSet("flagSet", flag.ContinueOnError)
 
 	url := flagSet.Bool("url", false, "Display auth url in quiet mode")
-	x_auth := flagSet.Bool("x", false, "Display x-auth token in quiet mode")
+	xAuth := flagSet.Bool("x", false, "Display x-auth token in quiet mode")
 
 	err := flagSet.Parse(flags)
 	if err != nil {
@@ -317,15 +317,15 @@ func parseFlags(args []string) (*flagVal, error) {
 	}
 
 	flagVals := flagVal{
-		Url_flag:    bool(*url),
-		X_auth_flag: bool(*x_auth),
+		UrlFlag:   bool(*url),
+		XAuthFlag: bool(*xAuth),
 	}
 
 	return &flagVals, nil
 }
 
 // Authenticate authenticates the current session with Object Storage and saves the credentails.
-func Authenticate(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, targetService string) (auth.Destination, error) {
+func Authenticate(cliConnection plugin.CliConnection, writer *w.ConsoleWriter, targetService string) (auth.Destination, error) {
 	var (
 		destination auth.Destination
 		a           = authenticator{
@@ -380,7 +380,7 @@ func Authenticate(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, 
 			return nil, fmt.Errorf("Failed to fetch a new set of credentials (Try running `cf login`): %s", err)
 		}
 
-		destination, err = auth.Authenticate(a.creds.Username, a.creds.Password, a.creds.Auth_URL+"/v3", a.creds.DomainName, "")
+		destination, err = auth.Authenticate(a.creds.Username, a.creds.Password, a.creds.AuthUrl+"/v3", a.creds.DomainName, "")
 		if err != nil {
 			return nil, fmt.Errorf("Failed to authenticate: %s", err)
 		}
@@ -404,7 +404,7 @@ func Authenticate(cliConnection plugin.CliConnection, writer *cw.ConsoleWriter, 
 }
 
 // DisplayAuthInfo prints the requested values.
-func DisplayAuthInfo(destination auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+func DisplayAuthInfo(destination auth.Destination, writer *w.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Fetching authentication info")
 
 	serviceName := args[2]
@@ -413,16 +413,16 @@ func DisplayAuthInfo(destination auth.Destination, writer *cw.ConsoleWriter, arg
 		return "", fmt.Errorf("Failed to parse flags: %s", err)
 	}
 
-	result := fmt.Sprintf("\r%s%s\n\nAuthenticated with %s\n", cw.ClearLine, cw.Green("OK"), cw.Cyan(serviceName))
+	result := fmt.Sprintf("\r%s%s\n\nAuthenticated with %s\n", w.ClearLine, w.Green("OK"), w.Cyan(serviceName))
 
 	// Print requested attributes
-	if flagVals.Url_flag {
+	if flagVals.UrlFlag {
 		authUrl := destination.(*auth.SwiftDestination).SwiftConnection.StorageUrl
-		result += fmt.Sprintf("%s%s\n", cw.White("auth url: "), authUrl)
+		result += fmt.Sprintf("%s%s\n", w.White("auth url: "), authUrl)
 	}
-	if flagVals.X_auth_flag {
+	if flagVals.XAuthFlag {
 		xAuth := destination.(*auth.SwiftDestination).SwiftConnection.AuthToken
-		result += fmt.Sprintf("%s%s\n", cw.White("x-auth: "), xAuth)
+		result += fmt.Sprintf("%s%s\n", w.White("x-auth: "), xAuth)
 	}
 
 	return result, nil

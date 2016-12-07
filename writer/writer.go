@@ -1,4 +1,4 @@
-package console_writer
+package writer
 
 import (
 	"fmt"

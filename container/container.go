@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	cw "github.com/ibmjstart/cf-object-storage/console_writer"
+	w "github.com/ibmjstart/cf-object-storage/writer"
 	"github.com/ibmjstart/swiftlygo/auth"
 	"github.com/ncw/swift"
 )
@@ -16,7 +16,7 @@ var shortHeaders = map[string]string{
 }
 
 // ShowContainers displays the containers in a given Object Storage service.
-func ShowContainers(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+func ShowContainers(dest auth.Destination, writer *w.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Displaying containers")
 
 	serviceName := args[2]
@@ -26,11 +26,11 @@ func ShowContainers(dest auth.Destination, writer *cw.ConsoleWriter, args []stri
 		return "", fmt.Errorf("Failed to get containers: %s", err)
 	}
 
-	return fmt.Sprintf("\r%s%s\n\nContainers in OS %s: %v\n", cw.ClearLine, cw.Green("OK"), serviceName, containers), nil
+	return fmt.Sprintf("\r%s%s\n\nContainers in OS %s: %v\n", w.ClearLine, w.Green("OK"), serviceName, containers), nil
 }
 
 // GetContainerInfo displays metadata for a given container.
-func GetContainerInfo(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+func GetContainerInfo(dest auth.Destination, writer *w.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Fetching container info")
 
 	container := args[3]
@@ -39,7 +39,7 @@ func GetContainerInfo(dest auth.Destination, writer *cw.ConsoleWriter, args []st
 		return "", fmt.Errorf("Failed to get container info for container %s: %s", container, err)
 	}
 
-	retval := fmt.Sprintf("\r%s%s\n\nName: %s\nnumber of objects: %d\nSize: %d bytes\nHeaders:", cw.ClearLine, cw.Green("OK"), containerInfo.Name, containerInfo.Count, containerInfo.Bytes)
+	retval := fmt.Sprintf("\r%s%s\n\nName: %s\nnumber of objects: %d\nSize: %d bytes\nHeaders:", w.ClearLine, w.Green("OK"), containerInfo.Name, containerInfo.Count, containerInfo.Bytes)
 	for k, h := range headers {
 		retval += fmt.Sprintf("\n\tName: %s Value: %s", k, h)
 	}
@@ -49,7 +49,7 @@ func GetContainerInfo(dest auth.Destination, writer *cw.ConsoleWriter, args []st
 }
 
 // MakeContainer creates a new container.
-func MakeContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+func MakeContainer(dest auth.Destination, writer *w.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Creating container")
 
 	headerMap := make(map[string]string)
@@ -78,11 +78,11 @@ func MakeContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []strin
 		return "", fmt.Errorf("Failed to create container: %s", err)
 	}
 
-	return fmt.Sprintf("\r%s%s\n\nCreated container %s in OS %s\n", cw.ClearLine, cw.Green("OK"), container, serviceName), nil
+	return fmt.Sprintf("\r%s%s\n\nCreated container %s in OS %s\n", w.ClearLine, w.Green("OK"), container, serviceName), nil
 }
 
 // DeleteContainer removes a container and all of its contents.
-func DeleteContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+func DeleteContainer(dest auth.Destination, writer *w.ConsoleWriter, args []string) (string, error) {
 	serviceName := args[2]
 	container := args[3]
 
@@ -109,11 +109,11 @@ func DeleteContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []str
 		return "", fmt.Errorf("Failed to delete container: %s", err)
 	}
 
-	return fmt.Sprintf("\r%s%s\n\nDeleted container %s from OS %s\n", cw.ClearLine, cw.Green("OK"), container, serviceName), nil
+	return fmt.Sprintf("\r%s%s\n\nDeleted container %s from OS %s\n", w.ClearLine, w.Green("OK"), container, serviceName), nil
 }
 
 // UpdateContainer updates a containers metadata.
-func UpdateContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+func UpdateContainer(dest auth.Destination, writer *w.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Updating container")
 
 	serviceName := args[2]
@@ -129,11 +129,11 @@ func UpdateContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []str
 		return "", fmt.Errorf("Failed to make container: %s", err)
 	}
 
-	return fmt.Sprintf("\r%s%s\n\nUpdated container %s in OS %s\n", cw.ClearLine, cw.Green("OK"), container, serviceName), nil
+	return fmt.Sprintf("\r%s%s\n\nUpdated container %s in OS %s\n", w.ClearLine, w.Green("OK"), container, serviceName), nil
 }
 
 // RenameContainer renames a container.
-func RenameContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []string) (string, error) {
+func RenameContainer(dest auth.Destination, writer *w.ConsoleWriter, args []string) (string, error) {
 	writer.SetCurrentStage("Renaming container")
 
 	container := args[3]
@@ -174,5 +174,5 @@ func RenameContainer(dest auth.Destination, writer *cw.ConsoleWriter, args []str
 		return "", fmt.Errorf("Failed to delete container: %s", err)
 	}
 
-	return fmt.Sprintf("\r%s%s\n\nRenamed container %s to %s\n", cw.ClearLine, cw.Green("OK"), container, newContainer), nil
+	return fmt.Sprintf("\r%s%s\n\nRenamed container %s to %s\n", w.ClearLine, w.Green("OK"), container, newContainer), nil
 }
