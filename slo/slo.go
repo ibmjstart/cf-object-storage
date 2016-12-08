@@ -9,8 +9,8 @@ import (
 	"runtime"
 
 	w "github.com/ibmjstart/cf-object-storage/writer"
+	sg "github.com/ibmjstart/swiftlygo"
 	"github.com/ibmjstart/swiftlygo/auth"
-	sg "github.com/ibmjstart/swiftlygo/slo"
 )
 
 // argVal holds the parsed argument values.
@@ -105,7 +105,7 @@ func MakeSlo(dest auth.Destination, writer *w.ConsoleWriter, args []string) (str
 	}
 
 	// Create SLO uploader without output file
-	uploader, err := sg.NewUploader(dest, uint(argVals.flagVals.chunkSizeFlag),
+	uploader, err := sg.NewSloUploader(dest, uint(argVals.flagVals.chunkSizeFlag),
 		argVals.SloContainer, argVals.SloName, file, uint(argVals.flagVals.numThreadsFlag),
 		argVals.flagVals.onlyMissingFlag, output)
 	if err != nil {
