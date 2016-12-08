@@ -4,6 +4,8 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -205,6 +207,12 @@ func deleteLargeObject(dest auth.Destination, container, objectName string) erro
 	}
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		return fmt.Errorf("Failed to delete object with status %s", response.Status)
+	}
+
+	defer response.Body.Close()
+	_, err = io.Copy(ioutil.Discard, response.Body)
+	if err != nil {
+		return fmt.Errorf("Failed to read response body: %s")
 	}
 
 	return nil
