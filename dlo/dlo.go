@@ -61,7 +61,7 @@ func MakeDlo(dest auth.Destination, writer *w.ConsoleWriter, args []string) (str
 
 	argVals, err := parseArgs(args[3:])
 
-	uploader := sg.NewDloManifestUploader(dest, argVals.dloContainer, argVals.DloName, argVals.FlagVals.ContainerFlag, argVals.FlagVals.PrefixFlag)
+	uploader := sg.NewDloUploader(dest, argVals.dloContainer, argVals.DloName, argVals.FlagVals.ContainerFlag, argVals.FlagVals.PrefixFlag)
 	err = uploader.Upload()
 	if err != nil {
 		return "", fmt.Errorf("Failed to upload DLO manifest: %s", err)
