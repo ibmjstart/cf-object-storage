@@ -112,8 +112,8 @@ Subcommand		|Usage															|Description
 `rename-object` | `cf os rename-object service_name container_name object_name new_object_name` | Rename an object
 `copy-object` | `cf os copy-object service_name container_name object_name new_container_name` | Copy an object from one container to another
 `delete-object` | `cf os delete-object service_name container_name object_name [-l]` | Remove an object from a container
-`create-dynamic-object`	| `cf os make-dlo service_name dlo_container dlo_name [-c object_container] [-p dlo_prefix]`				|Create a DLO manifest in Object Storage
-`put-large-object`	| `cf os make-slo service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-t num_threads]`	|Upload a file to Object Storage as an SLO
+`create-dynamic-object`	| `cf os create-dynamic-object service_name dlo_container dlo_name [-c object_container] [-p dlo_prefix]`				|Create a DLO manifest in Object Storage
+`put-large-object`	| `cf os put-large-object service_name slo_container slo_name source_file [-m] [-o output_file] [-s chunk_size] [-t num_threads]`	|Upload a file to Object Storage as an SLO
 
 **<sup>!</sup>** `auth` checks if `HOME/.cf/os_creds.json` exists and contains the target service's x-auth token and 
 storage url. If it does, these credentials are used to authenticate with Object Storage (which saves a few http requests).
